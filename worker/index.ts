@@ -53,9 +53,10 @@ async function run(job: Job) {
       fail(job.id, message);
       if (PIPELINE.has(job.kind)) updateDream(job.ref, { status: "failed", error: message });
     } else {
-      // A sealed provider being down is worth waiting out for hours; anything else gets a few tries.
-      const gaveUp = retryLater(job, message, error instanceof ZeroGError ? 40 : 8);
-      if (PIPELINE.has(job.kind)) updateDream(job.ref, { error: message, ...(gaveUp ? { status: "failed" } : {}) });
+      // A sealed provider being down, or storage waiting on gas, is worth waiting out for hours; anything else gets a few tries.
+      const gaveUp = retryLater(job, message, error instanceof ZeroGError || job.kind === "dream.store" ? 40 : 8);
+      // A painting that can't be stored yet still hangs on the wall; only a failed paint marks the dream failed.
+      if (PIPELINE.has(job.kind)) updateDream(job.ref, { error: message.slice(0, 300), ...(gaveUp && job.kind === "dream.paint" ? { status: "failed" } : {}) });
     }
     console.error(`[worker] ${job.kind} ${job.ref} attempt ${job.attempts}: ${message.slice(0, 200)}`);
   }
