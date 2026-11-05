@@ -1,6 +1,6 @@
 import { encodeFunctionData, type Hex } from "viem";
 import { getDb } from "@/lib/server/db";
-import { buyTxs, editionName, getPiece, holdsEdition, onChainPiece } from "@/lib/server/market";
+import { buyTxs, editionName, getPiece, holdsEdition, marketAddress, onChainPiece } from "@/lib/server/market";
 import { currentUser } from "@/lib/server/session";
 
 // One piece: what it is, what NightMarket says is left, and the two transactions a buyer signs.
@@ -24,8 +24,13 @@ export async function GET(_request: Request, ctx: RouteContext<"/api/market/[id]
     editions: piece.editions,
     sold: chain?.sold ?? 0,
     open: Boolean(chain?.active) && (chain?.sold ?? 0) < piece.editions,
-    holds: await holdsEdition(piece, wallet),
+    holds: user?.id === piece.user_id || (await holdsEdition(piece, wallet)),
     names: sales.map((s) => editionName(s.label, seller.handle)),
+    proof: {
+      market: `https://sepolia.etherscan.io/address/${marketAddress()}`,
+      listedTx: piece.market_tx?.startsWith("0x") ? `https://sepolia.etherscan.io/tx/${piece.market_tx}` : null,
+      arkiv: piece.arkiv_key ? `https://rabdi.explorer.arkiv.network/entity/${piece.arkiv_key}` : null,
+    },
     buy: chain ? buyTxs(piece.id, chain.priceUsdc).map((t) => ({ to: t.to, data: encodeFunctionData({ abi: t.abi, functionName: t.functionName, args: t.args as never }) as Hex })) : null,
   });
 }
