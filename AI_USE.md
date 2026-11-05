@@ -47,6 +47,9 @@ One AI coding assistant, used in agent mode from the terminal. No other AI tools
 | ENS names | Bootstrap, onboarding, scribe day records and the fork test (`src/lib/server/ens/`, `scripts/ens-*.ts`, `names.ts`) | Drafted by the assistant from the author's ENS plan and the ENS contracts source; tested on a local fork of Sepolia |
 | Arkiv data layer | Listings, stalls, commissions, knocks, visits and World Dream counts, with a test on a local Arkiv node (`src/lib/server/arkiv/`, `scripts/arkiv-test.ts`, `/arkiv/*.md`) | Drafted by the assistant from the author's Arkiv plan and the SDK source; friction notes written from what came up while building |
 | Privy sign-in and voice-plus-text | Privy token check, wallet lookup, gallery-name step (`privy.ts`, `session.ts`, `(gallery)/`), and a typed note beside a voice note | Drafted by the assistant at the author's request |
+| Night Market | Listing as editions, previews, NightMarket and Arkiv jobs, search, piece and buy pages, sell panel, stalls, and two tests (`market.ts`, `src/app/(gallery)/market/`, `scripts/market-*.ts`) | Drafted by the assistant from the author's market design; the full sale was tested on a Sepolia fork against the real contracts |
+| Painted sky and tab bar | `painted-sky.tsx`, `tab-bar.tsx`, the restyled tell screen | Drafted by the assistant from the author's own earlier mockup, written fresh |
+| Arkiv write-ups | `arkiv/why-arkiv.md`, `how-you-use-arkiv.md`, `reach.md` | Drafted by the assistant, to be edited by the author |
 | Morning Notes, Dream Weather, World Dream | `notes.ts`, `world.ts`, `weather.tsx`, `world-card.tsx` | Drafted by the assistant to the author's design, including the five-dreamer privacy floor |
 
 ## Totals
