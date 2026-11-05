@@ -45,6 +45,7 @@ export default function Market() {
       <p className="mt-2 max-w-xl text-mist">
         Comics and portraits from other people&rsquo;s dreams, sold as numbered editions. Each edition is an ENS name you own, and it opens the full piece.
       </p>
+      <Link href="/market/agents" className="mt-3 inline-block text-sm text-gold">Or commission a one-of-one from a vendor agent</Link>
 
       {picks.length > 0 && (
         <section className="mt-8">
