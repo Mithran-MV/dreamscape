@@ -46,6 +46,7 @@ export function signInWithPrivy(privyId: string, wallet: string | null, handle?:
   if (found) {
     if (!found.wallet && wallet) db.prepare("UPDATE users SET wallet = ? WHERE id = ?").run(wallet, found.id);
     if ((found.wallet ?? wallet) && !found.ens_json && !hasOpenJob(found.id, ["ens.onboard"])) enqueue("ens.onboard", found.id);
+    if ((found.wallet ?? wallet) && !hasOpenJob(found.id, ["wallet.drip"])) enqueue("wallet.drip", found.id);
     return { id: found.id };
   }
   if (!handle) return { needsHandle: true };
@@ -59,7 +60,10 @@ export function signInWithPrivy(privyId: string, wallet: string | null, handle?:
   if (db.prepare("SELECT 1 FROM users WHERE handle = ?").get(clean)) return { error: "That name is taken. Pick another." };
   const id = newId("user");
   db.prepare("INSERT INTO users (id, handle, wallet, privy_id, created_at) VALUES (?, ?, ?, ?, ?)").run(id, clean, wallet, privyId, now());
-  if (wallet) enqueue("ens.onboard", id);
+  if (wallet) {
+    enqueue("ens.onboard", id);
+    enqueue("wallet.drip", id);
+  }
   return { id };
 }
 

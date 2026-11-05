@@ -22,6 +22,8 @@ export const env = {
   sepoliaRpc: () => read("SEPOLIA_RPC_URL") ?? "https://ethereum-sepolia-rpc.publicnode.com",
   ensName: () => read("ENS_NAME") ?? "dream-scape.eth",
   nightMarket: () => read("NIGHT_MARKET_ADDRESS") as `0x${string}` | undefined,
+  // Circle's own USDC on Ethereum Sepolia (faucet.circle.com).
+  usdc: () => (read("USDC_ADDRESS") ?? "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238") as `0x${string}`,
   ensForkRpc: () => read("ENS_FORK_RPC_URL"),
   arkivAccessKey: () => read("ARKIV_ACCESS_KEY") ?? "",
   dreamRegistry: () => read("DREAM_REGISTRY_ADDRESS") as `0x${string}` | undefined,
