@@ -75,6 +75,15 @@ CREATE TABLE IF NOT EXISTS episodes (
   created_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS episodes_by_user_day ON episodes(user_id, day);
+CREATE TABLE IF NOT EXISTS world_dreams (
+  id TEXT PRIMARY KEY,
+  day INTEGER NOT NULL,
+  circle TEXT NOT NULL,                 -- 'world', or a circle code such as ethglobal-mumbai
+  status TEXT NOT NULL,                 -- painting, done, too-few
+  counts_json TEXT NOT NULL,            -- dreamers, shared themes (5 or more dreamers each), main feeling
+  error TEXT,
+  created_at INTEGER NOT NULL
+);
 CREATE TABLE IF NOT EXISTS push_subs (
   endpoint TEXT PRIMARY KEY,            -- the push service URL for one phone or browser
   user_id TEXT NOT NULL REFERENCES users(id),
@@ -95,6 +104,7 @@ export function getDb(): DatabaseSync {
   addColumn(db, "users", "nightly", "INTEGER NOT NULL DEFAULT 0"); // opted in to the nightly run
   addColumn(db, "users", "last_night", "INTEGER"); // utcDay of the last nightly run
   addColumn(db, "users", "character", "TEXT"); // the dreamer's cartoon, kept the same in every comic
+  addColumn(db, "users", "circle", "TEXT"); // one circle per dreamer, such as ethglobal-mumbai
   addColumn(db, "dreams", "saga", "TEXT");
   addColumn(db, "dreams", "video_job", "TEXT"); // the living portrait's job id on 0G
   addColumn(db, "dreams", "video_state", "TEXT"); // rendering, done or failed
