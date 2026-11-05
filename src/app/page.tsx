@@ -39,7 +39,10 @@ export default function Home() {
           <p className="text-xs uppercase tracking-[0.25em] text-gold">Dreamscape</p>
           <h1 className="font-display text-3xl">{user.handle}&rsquo;s gallery</h1>
         </div>
-        <p className="text-sm text-dim">{dreams.length} {dreams.length === 1 ? "dream" : "dreams"} kept</p>
+        <div className="text-right text-sm text-dim">
+          <p>{dreams.length} {dreams.length === 1 ? "dream" : "dreams"} kept</p>
+          <Link href="/0g" className="text-gold">0G credit</Link>
+        </div>
       </header>
 
       {dreams.length === 0 ? (
