@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,
   handle TEXT UNIQUE NOT NULL,
   wallet TEXT,
+  pass_hash TEXT,                     -- scrypt(salt, passphrase) for the stand-in sign-in
   created_at INTEGER NOT NULL
 );
 CREATE TABLE IF NOT EXISTS dreams (
@@ -70,6 +71,8 @@ export function getDb(): DatabaseSync {
   db = new DatabaseSync(`${env.dataDir()}/dreamscape.db`);
   db.exec("PRAGMA journal_mode = WAL; PRAGMA busy_timeout = 5000; PRAGMA foreign_keys = ON;");
   db.exec(SCHEMA);
+  const userColumns = (db.prepare("PRAGMA table_info(users)").all() as { name: string }[]).map((c) => c.name);
+  if (!userColumns.includes("pass_hash")) db.exec("ALTER TABLE users ADD COLUMN pass_hash TEXT");
   return db;
 }
 
