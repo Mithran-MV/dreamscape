@@ -84,6 +84,32 @@ CREATE TABLE IF NOT EXISTS world_dreams (
   error TEXT,
   created_at INTEGER NOT NULL
 );
+CREATE TABLE IF NOT EXISTS pieces (
+  id TEXT PRIMARY KEY,                  -- NightMarket's bytes32 piece id
+  user_id TEXT NOT NULL REFERENCES users(id),
+  kind TEXT NOT NULL,                   -- 'episode' or 'dream'
+  ref TEXT NOT NULL,                    -- the episode or dream it sells
+  title TEXT NOT NULL,
+  label_prefix TEXT NOT NULL,           -- edition n is <prefix>-<n>.<handle>.dream-scape.eth
+  price_usdc INTEGER NOT NULL,          -- 6 decimals
+  editions INTEGER NOT NULL,
+  status TEXT NOT NULL,                 -- listing, listed
+  error TEXT,
+  market_tx TEXT,
+  arkiv_key TEXT,
+  created_at INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS sales (
+  tx TEXT NOT NULL,
+  piece_id TEXT NOT NULL,
+  buyer TEXT NOT NULL,                  -- who paid; the edition's current owner is read from ENS
+  edition_no INTEGER NOT NULL,
+  label TEXT NOT NULL,
+  token_id TEXT,
+  price_usdc INTEGER NOT NULL,
+  created_at INTEGER NOT NULL,
+  PRIMARY KEY (tx, edition_no)
+);
 CREATE TABLE IF NOT EXISTS push_subs (
   endpoint TEXT PRIMARY KEY,            -- the push service URL for one phone or browser
   user_id TEXT NOT NULL REFERENCES users(id),
