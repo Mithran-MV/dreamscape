@@ -3,6 +3,7 @@ import { currentUser } from "@/lib/server/session";
 import { storageExplorer } from "@/lib/server/zerog/storage";
 import { txLink } from "@/lib/server/registry";
 import { noteLog, notesFor } from "@/lib/server/notes";
+import { dayRecordProof } from "@/lib/server/names";
 
 export async function GET(_request: Request, ctx: RouteContext<"/api/dreams/[id]">) {
   const { id } = await ctx.params;
@@ -34,6 +35,7 @@ export async function GET(_request: Request, ctx: RouteContext<"/api/dreams/[id]
         .filter(([, root]) => root)
         .map(([what, root]) => ({ what, root, link: storageExplorer(root as string) })),
       registry: dream.registry_tx ? { id: dream.registry_id, tx: dream.registry_tx, link: txLink(dream.registry_tx) } : null,
+      ens: dayRecordProof(user.handle, dream.day, dream.ens_tx),
     },
   });
 }

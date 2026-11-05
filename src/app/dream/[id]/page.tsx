@@ -109,7 +109,7 @@ function DreamView() {
 }
 
 function Proof({ dream }: { dream: DreamDetail }) {
-  const { traces, storage, registry } = dream.proof;
+  const { traces, storage, registry, ens } = dream.proof;
   if (!traces.length && !storage.length) return null;
   return (
     <section className="mt-12 rounded-2xl border border-edge bg-card/70 p-5">
@@ -142,6 +142,14 @@ function Proof({ dream }: { dream: DreamDetail }) {
         <a href={registry.link} target="_blank" rel="noreferrer" className="mt-4 block text-sm text-gold">
           Anchored on 0G Chain as record #{registry.id} ↗
         </a>
+      )}
+      {ens && (
+        <p className="mt-2 text-sm text-mist">
+          Named on ENS as{" "}
+          <a href={ens.link} target="_blank" rel="noreferrer" className="font-mono text-xs text-gold">{ens.name}</a>
+          , written by a scribe that may set only the day&rsquo;s four records.{" "}
+          <a href={ens.txLink} target="_blank" rel="noreferrer" className="text-gold">Transaction ↗</a>
+        </p>
       )}
     </section>
   );
