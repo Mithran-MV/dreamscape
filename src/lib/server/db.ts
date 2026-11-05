@@ -61,6 +61,12 @@ CREATE TABLE IF NOT EXISTS blobs (
   sealed BLOB NOT NULL,                 -- AES-256-GCM ciphertext under the dreamer's key
   created_at INTEGER NOT NULL
 );
+CREATE TABLE IF NOT EXISTS push_subs (
+  endpoint TEXT PRIMARY KEY,            -- the push service URL for one phone or browser
+  user_id TEXT NOT NULL REFERENCES users(id),
+  keys_json TEXT NOT NULL,              -- p256dh and auth, used to encrypt each notice
+  created_at INTEGER NOT NULL
+);
 `;
 
 let db: DatabaseSync | undefined;

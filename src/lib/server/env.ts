@@ -22,5 +22,8 @@ export const env = {
   sepoliaRpc: () => read("SEPOLIA_RPC_URL") ?? "https://ethereum-sepolia-rpc.publicnode.com",
   arkivAccessKey: () => read("ARKIV_ACCESS_KEY") ?? "",
   dreamRegistry: () => read("DREAM_REGISTRY_ADDRESS") as `0x${string}` | undefined,
+  vapidPublic: () => required("VAPID_PUBLIC_KEY"),
+  vapidPrivate: () => required("VAPID_PRIVATE_KEY"),
+  vapidSubject: () => required("VAPID_SUBJECT"),
   dataDir: () => read("DATA_DIR") ?? `${process.cwd()}/data`,
 };
