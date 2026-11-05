@@ -4,7 +4,7 @@ import { addTrace, FEELINGS, getBlob, getDream, putBlob, THEMES, updateDream, ty
 import { chatJson, paint, transcribe } from "./zerog/router";
 import { putEncrypted } from "./zerog/storage";
 import { dreamerKey } from "./crypto";
-import { enqueue } from "./jobs";
+import { enqueue, hasOpenJob } from "./jobs";
 import { anchorDream } from "./registry";
 import { notify } from "./push";
 
@@ -90,6 +90,14 @@ export async function paintDream(dreamId: string) {
   updateDream(dreamId, { status: "painted", error: null });
   enqueue("dream.store", dreamId);
   enqueue("dream.notify", dreamId);
+}
+
+// Puts a failed dream back in the queue from the step it stopped at. Finished steps are skipped.
+export function restartDream(dream: Dream) {
+  if (hasOpenJob(dream.id, ["dream.paint", "dream.store"])) return;
+  const painted = !!getBlob(dream.user_id, `dream/${dream.id}/portrait`);
+  updateDream(dream.id, { status: painted ? "painted" : "queued", error: null });
+  enqueue(painted ? "dream.store" : "dream.paint", dream.id);
 }
 
 // Step 1b: tell the dreamer's phone the painting is up. The notice says nothing about the dream itself.

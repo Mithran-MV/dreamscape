@@ -36,6 +36,13 @@ export function fail(id: number, error: string) {
   getDb().prepare("UPDATE jobs SET status = 'failed', last_error = ? WHERE id = ?").run(error.slice(0, 500), id);
 }
 
+export function hasOpenJob(ref: string, kinds: string[]) {
+  const marks = kinds.map(() => "?").join(", ");
+  return !!getDb()
+    .prepare(`SELECT 1 FROM jobs WHERE ref = ? AND kind IN (${marks}) AND status IN ('queued', 'running') LIMIT 1`)
+    .get(ref, ...kinds);
+}
+
 // A crashed worker leaves jobs 'running'; put them back in the queue on start-up.
 export function requeueStuck() {
   getDb().prepare("UPDATE jobs SET status = 'queued' WHERE status = 'running'").run();
