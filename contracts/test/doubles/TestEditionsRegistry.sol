@@ -6,7 +6,7 @@ import {IEditionsRegistry} from "../../src/interfaces/IEditionsRegistry.sol";
 /// @notice Stand-in for a dreamer's ENSv2 editions registry. Records every register call,
 /// hands out token ids 1, 2, 3, ... and rejects reused labels.
 /// It also rejects any call that does not use the exact mint arguments NightMarket promises.
-contract MockEditionsRegistry is IEditionsRegistry {
+contract TestEditionsRegistry is IEditionsRegistry {
     // Written out here, not imported, so a wrong constant in NightMarket fails the tests.
     uint256 public constant EXPECTED_ROLES = (1 << 28) << 128;
     uint64 public constant EXPECTED_EXPIRY = type(uint64).max;

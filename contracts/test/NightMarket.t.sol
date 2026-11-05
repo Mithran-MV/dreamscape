@@ -4,17 +4,17 @@ pragma solidity ^0.8.28;
 import {Test} from "forge-std/Test.sol";
 import {NightMarket} from "../src/NightMarket.sol";
 import {Owned} from "../src/Owned.sol";
-import {MockUSDC} from "./mocks/MockUSDC.sol";
-import {MockEditionsRegistry} from "./mocks/MockEditionsRegistry.sol";
-import {ReentrantUSDC, ReentrantRegistry} from "./mocks/Reentrant.sol";
+import {TestUSDC} from "./doubles/TestUSDC.sol";
+import {TestEditionsRegistry} from "./doubles/TestEditionsRegistry.sol";
+import {ReentrantUSDC, ReentrantRegistry} from "./doubles/Reentrant.sol";
 
 contract NightMarketTest is Test {
     // Written out independently of NightMarket on purpose.
     uint256 constant ROLE_CAN_TRANSFER_ADMIN = (uint256(1) << 28) << 128;
 
-    MockUSDC usdc;
-    MockEditionsRegistry editions; //       the seller's namespace
-    MockEditionsRegistry vendorEditions; // the vendor's namespace (commissions)
+    TestUSDC usdc;
+    TestEditionsRegistry editions; //       the seller's namespace
+    TestEditionsRegistry vendorEditions; // the vendor's namespace (commissions)
     NightMarket market;
 
     address commons = makeAddr("commons");
@@ -36,9 +36,9 @@ contract NightMarketTest is Test {
     uint16 constant VENDOR_BPS = 2000; // 20%
 
     function setUp() public {
-        usdc = new MockUSDC();
-        editions = new MockEditionsRegistry();
-        vendorEditions = new MockEditionsRegistry();
+        usdc = new TestUSDC();
+        editions = new TestEditionsRegistry();
+        vendorEditions = new TestEditionsRegistry();
         market = _deploy(address(usdc), COMMONS_BPS);
 
         usdc.mint(buyer, 1_000e6);
@@ -130,7 +130,7 @@ contract NightMarketTest is Test {
     // ---------------------------------------------------------------- bindings
 
     function test_BindRegistry_ByOperator() public {
-        MockEditionsRegistry other = new MockEditionsRegistry();
+        TestEditionsRegistry other = new TestEditionsRegistry();
         vm.expectEmit(address(market));
         emit NightMarket.RegistryBound(address(other), stranger);
         vm.prank(server);
@@ -227,7 +227,7 @@ contract NightMarketTest is Test {
     }
 
     function test_ListPiece_UnboundRegistryReverts() public {
-        MockEditionsRegistry unbound = new MockEditionsRegistry();
+        TestEditionsRegistry unbound = new TestEditionsRegistry();
 
         vm.prank(seller);
         vm.expectRevert(NightMarket.RegistryNotBound.selector);
@@ -394,7 +394,7 @@ contract NightMarketTest is Test {
 
         // Exact mint arguments: owner is the buyer, no subregistry, no resolver,
         // only the transfer-admin role, and no expiry. Called by the market.
-        MockEditionsRegistry.Registration memory r = editions.registration(t2);
+        TestEditionsRegistry.Registration memory r = editions.registration(t2);
         assertEq(r.label, "sea-roof-2");
         assertEq(r.owner, buyer);
         assertEq(r.registry, address(0));
@@ -455,7 +455,7 @@ contract NightMarketTest is Test {
     function test_Buy_WithoutAllowanceReverts() public {
         _list(1);
         vm.prank(stranger);
-        vm.expectRevert(MockUSDC.InsufficientAllowance.selector);
+        vm.expectRevert(TestUSDC.InsufficientAllowance.selector);
         market.buy(PIECE, PRICE);
     }
 
@@ -465,7 +465,7 @@ contract NightMarketTest is Test {
         editions.register("sea-roof-1", stranger, address(0), address(0), ROLE_CAN_TRANSFER_ADMIN, type(uint64).max);
 
         vm.prank(buyer);
-        vm.expectRevert(abi.encodeWithSelector(MockEditionsRegistry.LabelTaken.selector, "sea-roof-1"));
+        vm.expectRevert(abi.encodeWithSelector(TestEditionsRegistry.LabelTaken.selector, "sea-roof-1"));
         market.buy(PIECE, PRICE);
         assertEq(market.pieces(PIECE).sold, 0);
         assertEq(usdc.balanceOf(seller), 0);
@@ -581,7 +581,7 @@ contract NightMarketTest is Test {
         assertEq(tokenId, 1);
         assertEq(vendorEditions.tokenOfLabel("night-swim"), 1);
         assertEq(vendorEditions.ownerOf(1), buyer);
-        MockEditionsRegistry.Registration memory r = vendorEditions.registration(1);
+        TestEditionsRegistry.Registration memory r = vendorEditions.registration(1);
         assertEq(r.roleBitmap, ROLE_CAN_TRANSFER_ADMIN);
         assertEq(r.expiry, type(uint64).max);
 
@@ -655,7 +655,7 @@ contract NightMarketTest is Test {
         market.requestCommission(JOB, agent, agentOwner, FEE, deadline, address(editions), "x");
 
         // An unbound registry.
-        MockEditionsRegistry unbound = new MockEditionsRegistry();
+        TestEditionsRegistry unbound = new TestEditionsRegistry();
         vm.prank(buyer);
         vm.expectRevert(NightMarket.RegistryNotBound.selector);
         market.requestCommission(JOB, agent, agentOwner, FEE, deadline, address(unbound), "x");

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import {MockUSDC} from "./MockUSDC.sol";
+import {TestUSDC} from "./TestUSDC.sol";
 import {IEditionsRegistry} from "../../src/interfaces/IEditionsRegistry.sol";
 
 /// @notice One-shot hook: once armed, the next callback makes `data` call into `target`
@@ -29,7 +29,7 @@ abstract contract Hook {
 }
 
 /// @notice A USDC that calls back into the market on transfer and transferFrom.
-contract ReentrantUSDC is MockUSDC, Hook {
+contract ReentrantUSDC is TestUSDC, Hook {
     function transfer(address to, uint256 amount) public override returns (bool) {
         _fire();
         return super.transfer(to, amount);

@@ -2,8 +2,8 @@
 pragma solidity ^0.8.28;
 
 /// @notice Bare ERC-20 with 6 decimals and an open mint. Test use only.
-contract MockUSDC {
-    string public constant name = "Mock USDC";
+contract TestUSDC {
+    string public constant name = "Test USDC";
     string public constant symbol = "USDC";
     uint8 public constant decimals = 6;
 
