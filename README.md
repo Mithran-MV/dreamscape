@@ -61,6 +61,22 @@ cd contracts && forge build && forge test
 | `NightMarket` (checkout in Circle's USDC, and editions) | Ethereum Sepolia | [`0xD40165F204E4E1f8014d331e1d4c2CFe1eF904bC`](https://sepolia.etherscan.io/address/0xD40165F204E4E1f8014d331e1d4c2CFe1eF904bC) |
 | USDC (Circle, testnet) | Ethereum Sepolia | [`0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238`](https://sepolia.etherscan.io/address/0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238) |
 
+## Arkiv
+
+The server wallet `0x55fF4c231f90585a06dfC877af6D3001d9cf1496` writes every listing, stall, vendor stall, commission, knock, visit and World Dream count on Rabdi, then hands each one to the dreamer, buyer, visitor or agent it belongs to. Dreamers' and agents' own wallets sign their later edits. The entities, their columns and expiry are in [`arkiv/schema.md`](arkiv/schema.md), and [`arkiv/how-you-use-arkiv.md`](arkiv/how-you-use-arkiv.md) walks through each feature.
+
+Listings with the water theme at or under 10 USDC, cheapest first:
+
+```bash
+curl https://rpc.rabdi.db-chain.testnet.arkiv.network -H 'content-type: application/json' --data @- <<'EOF'
+{"jsonrpc":"2.0","id":1,"method":"arkiv_query","params":[
+ "arkiv.schema = str('dreamscape.listing.v1') AND th_water = true AND priceUsdc <= u64(10000000) AND $creator = addr(0x55fF4c231f90585a06dfC877af6D3001d9cf1496) ORDER BY priceUsdc:u64 ASC",
+ {"select":{"key":true,"owner":true,"creator":true,"expiresAt":true,"attributes":true},"limit":"0xa"}]}
+EOF
+```
+
+Tests: `pnpm market:arkiv-test` writes and searches on a local Arkiv node in Docker, and `pnpm market:fork-test` runs a whole sale on a fork of Sepolia.
+
 ## License
 
 MIT
