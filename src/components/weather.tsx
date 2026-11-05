@@ -1,12 +1,13 @@
 "use client";
 // Dream Weather: this month as a strip of days, each tinted by how that night's dream felt.
-import { useState } from "react";
+import { useClientValue } from "@/lib/use-client-value";
 import { feelingColor, FEELINGS } from "@/components/ui";
 
 const DAY_MS = 86_400_000;
 
 export function WeatherStrip({ dreams }: { dreams: { day: number; feeling: string | null }[] }) {
-  const [today] = useState(() => Math.floor(Date.now() / DAY_MS));
+  const today = useClientValue(() => Math.floor(Date.now() / DAY_MS), 0);
+  if (!today) return <div className="mt-4 h-[30px]" />;
   const now = new Date(today * DAY_MS);
   const first = Math.floor(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1) / DAY_MS);
   const length = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0)).getUTCDate();
