@@ -225,6 +225,17 @@ export async function notifyEpisode(episodeId: string) {
   if (ep) await notify(ep.user_id, { title: "Last night's comic is waiting", body: "Approve it or let it go.", url: `/episode/${ep.id}`, tag: ep.id });
 }
 
+// Why tonight's comic can't be made yet, in words for the dreamer, or null if it can.
+export function nightBlocker(userId: string): string | null {
+  const db = getDb();
+  if (db.prepare("SELECT 1 FROM episodes WHERE user_id = ? AND day = ? AND status IN ('draft', 'published')").get(userId, utcDay()))
+    return "Tonight's comic is already made.";
+  const recent = db.prepare("SELECT status FROM dreams WHERE user_id = ? AND created_at >= ? AND tags_json IS NOT NULL").all(userId, now() - DAY_MS) as { status: string }[];
+  if (!recent.some((d) => SHOWN[d.status])) return "Tell a dream first. Tonight's comic is made from your newest painted dream.";
+  if (spentTodayUsd(userId) + EPISODE_USD > DAILY_BUDGET_USD) return "Today's 0G credit is nearly used up. The comic can be made after the reset at midnight UTC.";
+  return null;
+}
+
 // The demo button, and a dreamer's own "make tonight's comic now".
 export function startNight(userId: string) {
   if (!hasOpenJob(userId, ["night.run"])) enqueue("night.run", userId);

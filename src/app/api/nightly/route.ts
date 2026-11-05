@@ -1,5 +1,5 @@
 import { getDb } from "@/lib/server/db";
-import { spentTodayUsd, startNight } from "@/lib/server/nightly";
+import { nightBlocker, spentTodayUsd, startNight } from "@/lib/server/nightly";
 import { currentUser } from "@/lib/server/session";
 
 export async function GET() {
@@ -14,8 +14,11 @@ export async function POST(request: Request) {
   const user = await currentUser();
   if (!user) return Response.json({ error: "Sign in first." }, { status: 401 });
   const { action } = (await request.json().catch(() => ({}))) as { action?: string };
-  if (action === "run") startNight(user.id);
-  else if (action === "opt-in" || action === "opt-out") getDb().prepare("UPDATE users SET nightly = ? WHERE id = ?").run(action === "opt-in" ? 1 : 0, user.id);
+  if (action === "run") {
+    const blocker = nightBlocker(user.id);
+    if (blocker) return Response.json({ error: blocker }, { status: 409 });
+    startNight(user.id);
+  } else if (action === "opt-in" || action === "opt-out") getDb().prepare("UPDATE users SET nightly = ? WHERE id = ?").run(action === "opt-in" ? 1 : 0, user.id);
   else return Response.json({ error: "Unknown action." }, { status: 400 });
   return Response.json({ ok: true });
 }
