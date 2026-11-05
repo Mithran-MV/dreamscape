@@ -32,6 +32,14 @@ export type DreamDetail = {
   };
 };
 
+export type EpisodeSummary = { id: string; day: number; status: string; title: string | null; saga: string | null; feeling: string | null; error: string | null };
+
+export type EpisodeDetail = EpisodeSummary & {
+  script: { title: string; panels: { scene: string; dialogue: { who: string; text: string }[]; caption: string | null }[] } | null;
+  dreamIds: string[];
+  traces: Trace[];
+};
+
 async function json<T>(res: Response): Promise<T> {
   const body = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error((body as { error?: string }).error ?? `Request failed (${res.status})`);
@@ -48,9 +56,17 @@ export const api = {
   pushSubscribe: (sub: PushSubscriptionJSON) =>
     fetch("/api/push", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(sub) }).then((r) => json<{ ok: true }>(r)),
   retry: (id: string) => fetch(`/api/dreams/${id}/retry`, { method: "POST" }).then((r) => json<{ ok: true }>(r)),
+  episodes: () => fetch("/api/episodes").then((r) => json<{ episodes: EpisodeSummary[] }>(r)),
+  episode: (id: string) => fetch(`/api/episodes/${id}`).then((r) => json<EpisodeDetail>(r)),
+  decide: (id: string, action: "publish" | "discard") =>
+    fetch(`/api/episodes/${id}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action }) }).then((r) => json<{ ok: true }>(r)),
+  nightly: () => fetch("/api/nightly").then((r) => json<{ optedIn: boolean; spentTodayUsd: number }>(r)),
+  night: (action: "run" | "opt-in" | "opt-out") =>
+    fetch("/api/nightly", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action }) }).then((r) => json<{ ok: true }>(r)),
   tell: (form: FormData) => fetch("/api/dreams", { method: "POST", body: form }).then((r) => json<{ id: string }>(r)),
 };
 
 export const portraitUrl = (id: string) => `/api/dreams/${id}/media/portrait`;
+export const panelUrl = (id: string, n: number) => `/api/episodes/${id}/panel/${n}`;
 export const voiceUrl = (id: string) => `/api/dreams/${id}/media/voice`;
 export const PAINTED = new Set(["painted", "storing", "done"]);
