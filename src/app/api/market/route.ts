@@ -1,10 +1,17 @@
 import { CATEGORIES, THEMES, type Category, type Theme } from "@/lib/server/arkiv/schemas";
-import { findListings, startListing, type PieceKind } from "@/lib/server/market";
+import { findListings, startListing, tonightsPicks, type PieceKind } from "@/lib/server/market";
 import { currentUser } from "@/lib/server/session";
 
 // Market search, straight from Arkiv: themes (any of), category, price range and sort.
 export async function GET(request: Request) {
   const q = new URL(request.url).searchParams;
+  if (q.get("picks")) {
+    try {
+      return Response.json({ listings: await tonightsPicks() });
+    } catch {
+      return Response.json({ listings: [] });
+    }
+  }
   const themes = (q.get("themes") ?? "").split(",").filter((t): t is Theme => (THEMES as readonly string[]).includes(t));
   const category = (CATEGORIES as readonly string[]).includes(q.get("category") ?? "") ? (q.get("category") as Category) : undefined;
   const max = Number(q.get("max"));

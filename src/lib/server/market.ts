@@ -7,10 +7,10 @@ import { sepolia } from "viem/chains";
 import { getDb, now } from "./db";
 import { env } from "./env";
 import { getBlob, getDream, putBlob, THEMES, type Dream } from "./dreams";
-import { enqueue } from "./jobs";
+import { enqueue, hasOpenJob } from "./jobs";
 import { getEpisode, panelKey } from "./nightly";
 import { registryAbi } from "./ens/contracts";
-import { listPiece as listOnArkiv, listingForPiece, searchMarket, type MarketSearch } from "./arkiv/market";
+import { listPiece as listOnArkiv, listingForPiece, nightOf, openStalls, searchMarket, tonightsStalls, type ListingRow, type MarketSearch } from "./arkiv/market";
 import type { Theme } from "./arkiv/schemas";
 
 export const marketAbi = parseAbi([
@@ -240,9 +240,7 @@ export async function holdsEdition(piece: Piece, wallet: string | null) {
 export const editionName = (label: string, handle: string) => `${label}.${handle}.${env.ensName()}`;
 export const getPreview = (pieceId: string) => getBlob(MARKET_OWNER, previewKey(pieceId));
 
-export async function findListings(search: MarketSearch) {
-  const { listings } = await searchMarket({ availableOnly: false, ...search });
-  return listings.map((r) => ({
+const card = (r: ListingRow) => ({
     pieceId: r.pieceId,
     title: r.title,
     category: r.category,
@@ -254,5 +252,26 @@ export async function findListings(search: MarketSearch) {
     model: r.model,
     themes: r.themes,
     preview: r.previewRef?.startsWith("/api/market/") ? r.previewRef : null,
-  }));
+});
+
+export async function findListings(search: MarketSearch) {
+  const { listings } = await searchMarket({ availableOnly: false, ...search });
+  return listings.map(card);
+}
+
+export const tonightsPicks = async () => (await tonightsStalls()).map(card);
+
+// Job 'market.stalls': at dusk the newest listings get one-night stalls on Arkiv, which close by themselves at dawn.
+export async function openTonightsStalls() {
+  const { night } = nightOf();
+  const opened = getDb().prepare("SELECT value FROM kv WHERE key = 'stalls_night'").get() as { value: string } | undefined;
+  if (opened?.value === night) return;
+  const keys = (getDb().prepare("SELECT arkiv_key FROM pieces WHERE arkiv_key IS NOT NULL ORDER BY created_at DESC LIMIT 12").all() as { arkiv_key: Hex }[]).map((r) => r.arkiv_key);
+  if (keys.length) await openStalls(keys);
+  getDb().prepare("INSERT INTO kv (key, value) VALUES ('stalls_night', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(night);
+}
+
+// Called by the worker every minute: dusk is 18:00 UTC, before the nightly comics.
+export function scheduleStalls(at = new Date()) {
+  if (at.getUTCHours() === 18 && !hasOpenJob("tonight", ["market.stalls"])) enqueue("market.stalls", "tonight");
 }
