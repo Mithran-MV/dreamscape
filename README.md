@@ -45,10 +45,12 @@ pnpm check
 
 `pnpm check` confirms the ENS deployment, the Arkiv network and the 0G router are reachable.
 
+Open http://localhost:3000. The worker runs the painting, the nightly comic, living portraits and the World Dream. The 0G credit page (`/0g`) uses 0G's own sign-in, which 0G allows on `localhost:3000` only, so run the dev server on that port.
+
 Contracts:
 
 ```bash
-cd contracts && forge build
+cd contracts && forge build && forge test
 ```
 
 ## License
