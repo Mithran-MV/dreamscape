@@ -71,7 +71,10 @@ function sellerOf(userId: string): Seller | null {
 
 // Edition n is "<prefix>-<n>.<handle>.dream-scape.eth", so the prefix must be a plain label, unique per dreamer.
 function labelPrefixFor(userId: string, title: string) {
-  const base = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 24).replace(/-+$/, "") || "piece";
+  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  // Cut at a whole word, so a long title never ends an edition name halfway through one.
+  const cut = slug.length <= 24 ? slug : slug.slice(0, 25).replace(/-[^-]*$/, "");
+  const base = (cut || slug.slice(0, 24)).replace(/-+$/, "") || "piece";
   const taken = new Set((getDb().prepare("SELECT label_prefix FROM pieces WHERE user_id = ?").all(userId) as { label_prefix: string }[]).map((r) => r.label_prefix));
   let prefix = base;
   for (let n = 2; taken.has(prefix); n++) prefix = `${base}-v${n}`;
