@@ -47,7 +47,9 @@ export function WorldCard() {
                 Paint {circle.name}&rsquo;s dream now
               </button>
             ) : (
-              <span className="text-dim">It can be painted once {circle.needed - circle.today} more dream today.</span>
+              <span className="text-dim">
+                It can be painted once {circle.needed - circle.today} more {circle.needed - circle.today === 1 ? "person dreams" : "people dream"} today.
+              </span>
             )}
             <button onClick={() => act("leave")} className="text-dim">Leave</button>
           </div>
