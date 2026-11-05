@@ -50,6 +50,7 @@ One AI coding assistant, used in agent mode from the terminal. No other AI tools
 | Night Market | Listing as editions, previews, NightMarket and Arkiv jobs, search, piece and buy pages, sell panel, stalls, and two tests (`market.ts`, `src/app/(gallery)/market/`, `scripts/market-*.ts`) | Drafted by the assistant from the author's market design; the full sale was tested on a Sepolia fork against the real contracts |
 | Painted sky and tab bar | `painted-sky.tsx`, `tab-bar.tsx`, the restyled tell screen | Drafted by the assistant from the author's own earlier mockup, written fresh |
 | Arkiv write-ups | `arkiv/why-arkiv.md`, `how-you-use-arkiv.md`, `reach.md` | Drafted by the assistant, to be edited by the author |
+| Family passes and visits | ENS passes, Arkiv knocks and visits, the door check, the visitor view and passes panel, and a fork plus local-node test (`ens/passes.ts`, `visits.ts`, `g/[handle]`, `passes-panel.tsx`) | Drafted by the assistant from the author's visits design |
 | Morning Notes, Dream Weather, World Dream | `notes.ts`, `world.ts`, `weather.tsx`, `world-card.tsx` | Drafted by the assistant to the author's design, including the five-dreamer privacy floor |
 
 ## Totals
