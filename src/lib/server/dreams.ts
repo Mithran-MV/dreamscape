@@ -28,6 +28,7 @@ export type Dream = {
   record_root: string | null;
   registry_tx: string | null;
   registry_id: number | null;
+  saga: string | null;
 };
 
 export function getOrCreateUser(handle: string): string {
@@ -57,7 +58,7 @@ export function listDreams(userId: string, limit = 120): Dream[] {
 
 const COLUMNS = new Set([
   "status", "error", "transcript", "title", "tags_json", "scene", "suggested_feeling",
-  "voice_root", "portrait_root", "record_root", "registry_tx", "registry_id",
+  "voice_root", "portrait_root", "record_root", "registry_tx", "registry_id", "saga",
 ]);
 
 export function updateDream(id: string, fields: Partial<Record<string, string | number | null>>) {

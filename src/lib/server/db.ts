@@ -61,6 +61,20 @@ CREATE TABLE IF NOT EXISTS blobs (
   sealed BLOB NOT NULL,                 -- AES-256-GCM ciphertext under the dreamer's key
   created_at INTEGER NOT NULL
 );
+CREATE TABLE IF NOT EXISTS episodes (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id),
+  day INTEGER NOT NULL,                 -- the night it was made
+  status TEXT NOT NULL,                 -- writing, drawing, draft, published, discarded, failed
+  error TEXT,
+  saga TEXT,
+  title TEXT,
+  feeling TEXT,                         -- picks the one spot colour
+  script_json TEXT,                     -- panels with scene, dialogue and caption; the app letters them
+  dream_ids TEXT,                       -- JSON array of the dreams it is drawn from
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS episodes_by_user_day ON episodes(user_id, day);
 CREATE TABLE IF NOT EXISTS push_subs (
   endpoint TEXT PRIMARY KEY,            -- the push service URL for one phone or browser
   user_id TEXT NOT NULL REFERENCES users(id),
@@ -77,9 +91,18 @@ export function getDb(): DatabaseSync {
   db = new DatabaseSync(`${env.dataDir()}/dreamscape.db`);
   db.exec("PRAGMA journal_mode = WAL; PRAGMA busy_timeout = 5000; PRAGMA foreign_keys = ON;");
   db.exec(SCHEMA);
-  const userColumns = (db.prepare("PRAGMA table_info(users)").all() as { name: string }[]).map((c) => c.name);
-  if (!userColumns.includes("pass_hash")) db.exec("ALTER TABLE users ADD COLUMN pass_hash TEXT");
+  addColumn(db, "users", "pass_hash", "TEXT");
+  addColumn(db, "users", "nightly", "INTEGER NOT NULL DEFAULT 0"); // opted in to the nightly run
+  addColumn(db, "users", "last_night", "INTEGER"); // utcDay of the last nightly run
+  addColumn(db, "users", "character", "TEXT"); // the dreamer's cartoon, kept the same in every comic
+  addColumn(db, "dreams", "saga", "TEXT");
   return db;
+}
+
+// Columns added after the first release, for databases made before them.
+function addColumn(db: DatabaseSync, table: string, column: string, type: string) {
+  const columns = (db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[]).map((c) => c.name);
+  if (!columns.includes(column)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`);
 }
 
 export const now = () => Date.now();
