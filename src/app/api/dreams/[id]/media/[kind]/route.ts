@@ -12,6 +12,11 @@ export async function GET(_request: Request, ctx: RouteContext<"/api/dreams/[id]
   const blob = getBlob(user.id, `dream/${id}/${kind}`);
   if (!blob) return new Response("Not ready", { status: 404 });
   return new Response(new Uint8Array(blob.bytes), {
-    headers: { "Content-Type": blob.mime, "Cache-Control": "private, max-age=3600" },
+    headers: {
+      "Content-Type": blob.mime,
+      "Cache-Control": "private, max-age=3600",
+      "X-Content-Type-Options": "nosniff",
+      "Content-Security-Policy": "sandbox; default-src 'none'",
+    },
   });
 }

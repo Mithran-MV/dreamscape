@@ -3,6 +3,7 @@ import { enqueue } from "@/lib/server/jobs";
 import { currentUser } from "@/lib/server/session";
 
 const MAX_AUDIO = 10 * 1024 * 1024;
+const AUDIO_TYPES = new Set(["audio/webm", "audio/mp4", "audio/mpeg", "audio/ogg", "audio/wav", "audio/x-m4a", "audio/aac"]);
 
 export async function GET() {
   const user = await currentUser();
@@ -32,8 +33,10 @@ export async function POST(request: Request) {
 
   if (audio instanceof File && audio.size > 0) {
     if (audio.size > MAX_AUDIO) return Response.json({ error: "That voice note is too long." }, { status: 413 });
+    const mime = (audio.type || "audio/webm").split(";")[0].trim().toLowerCase();
+    if (!AUDIO_TYPES.has(mime)) return Response.json({ error: "That isn't an audio recording." }, { status: 415 });
     const id = createDream(user.id, "voice", feeling, null);
-    putBlob(user.id, `dream/${id}/voice`, audio.type || "audio/webm", new Uint8Array(await audio.arrayBuffer()));
+    putBlob(user.id, `dream/${id}/voice`, mime, new Uint8Array(await audio.arrayBuffer()));
     enqueue("dream.paint", id);
     return Response.json({ id }, { status: 201 });
   }
