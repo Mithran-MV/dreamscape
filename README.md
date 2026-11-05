@@ -6,6 +6,8 @@ Tell your phone a dream when you wake up, and it becomes a painting on your gall
 
 Built at ETHGlobal Mumbai, November 5–7, 2026. Scaffolded with `create-next-app` and `forge init`.
 
+The first two commits are generated: the `create-next-app` template, then the dependency pins, whose size is `pnpm-lock.yaml`, written by pnpm. Everything after that is written during the event in small commits.
+
 ## How it's built
 
 - **0G Private Computer** for the AI. Transcription, tagging and the portrait run on sealed models, and every piece keeps its request ID.
