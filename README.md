@@ -63,7 +63,7 @@ cd contracts && forge build && forge test
 
 ## Arkiv
 
-The server wallet `0x55fF4c231f90585a06dfC877af6D3001d9cf1496` writes every listing, stall, vendor stall, commission, knock, visit and World Dream count on Rabdi, then hands each one to the dreamer, buyer, visitor or agent it belongs to. Dreamers' and agents' own wallets sign their later edits. The entities, their columns and expiry are in [`arkiv/schema.md`](arkiv/schema.md), and [`arkiv/how-you-use-arkiv.md`](arkiv/how-you-use-arkiv.md) walks through each feature.
+The server wallet `0x55fF4c231f90585a06dfC877af6D3001d9cf1496` writes every listing, stall, vendor stall, commission, knock, visit and World Dream count on Rabdi, then hands each one to the dreamer, buyer, visitor or agent it belongs to. Dreamers' and agents' own wallets sign their later edits; the vendor agent `portraits.market.dream-scape.eth` signs with `0x8e83bD26d3d7c622aCc532C032093288934B2464`. The entities, their columns and expiry are in [`arkiv/schema.md`](arkiv/schema.md), and [`arkiv/how-you-use-arkiv.md`](arkiv/how-you-use-arkiv.md) walks through each feature.
 
 Listings with the water theme at or under 10 USDC, cheapest first:
 
