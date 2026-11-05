@@ -18,6 +18,7 @@ export async function GET(_request: Request, ctx: RouteContext<"/api/dreams/[id]
     error: dream.error,
     inputKind: dream.input_kind,
     transcript: dream.transcript,
+    note: dream.note,
     title: dream.title,
     tags: dream.tags_json ? JSON.parse(dream.tags_json) : null,
     feeling: dream.feeling,

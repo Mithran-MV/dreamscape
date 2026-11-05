@@ -92,6 +92,12 @@ function DreamView() {
 
           {dream.transcript && <blockquote className="mt-5 border-l-2 border-gold pl-4 font-display text-lg italic leading-relaxed">&ldquo;{dream.transcript}&rdquo;</blockquote>}
           {dream.inputKind === "voice" && <audio controls src={voiceUrl(dream.id)} className="mt-4 w-full" />}
+          {dream.note && (
+            <div className="mt-4">
+              <p className="text-xs text-dim">You also wrote</p>
+              <p className="mt-1 whitespace-pre-line text-mist">{dream.note}</p>
+            </div>
+          )}
 
           {dream.tags && dream.tags.themes.length > 0 && (
             <div className="mt-5 flex flex-wrap gap-2">

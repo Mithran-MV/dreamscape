@@ -1,5 +1,5 @@
 "use client";
-// The morning screen: hold to tell a dream (or type it), tap how it felt, done.
+// The morning screen: hold to tell a dream, type anything you'd rather write, tap how it felt, done.
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -13,7 +13,7 @@ function pickMime() {
 
 export default function Tell() {
   const router = useRouter();
-  const [mode, setMode] = useState<"voice" | "text">("voice");
+  const [micOff, setMicOff] = useState(false);
   const [recording, setRecording] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [clip, setClip] = useState<Blob | null>(null);
@@ -50,8 +50,8 @@ export default function Tell() {
       setSeconds(0);
       timer.current = setInterval(() => setSeconds((s) => s + 1), 1000);
     } catch {
-      setError("The microphone isn't available here. Allow it, or type the dream instead.");
-      setMode("text");
+      setError("The microphone isn't available here. Allow it, or type the dream below.");
+      setMicOff(true);
     }
   }
 
@@ -66,8 +66,8 @@ export default function Tell() {
     setBusy(true);
     setError(null);
     const form = new FormData();
-    if (mode === "voice" && clip) form.append("audio", clip, "dream");
-    if (mode === "text") form.append("text", text);
+    if (clip) form.append("audio", clip, "dream");
+    if (text.trim()) form.append("text", text.trim());
     if (feeling) form.append("feeling", feeling);
     try {
       const { id } = await api.tell(form);
@@ -78,20 +78,17 @@ export default function Tell() {
     }
   }
 
-  const ready = mode === "voice" ? Boolean(clip) : text.trim().length >= 3;
+  const ready = Boolean(clip) || text.trim().length >= 3;
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col items-center px-6 pb-10 pt-8 text-center">
       <div className="flex w-full items-center justify-between">
         <Link href="/" className="text-sm text-dim">← Gallery</Link>
-        <button type="button" className="text-sm text-gold" onClick={() => setMode(mode === "voice" ? "text" : "voice")}>
-          {mode === "voice" ? "Type it instead" : "Say it instead"}
-        </button>
       </div>
 
       <h1 className="mt-10 font-display text-3xl">Before it fades:<br /><em className="text-gold">what did you dream?</em></h1>
 
-      {mode === "voice" ? (
+      {!micOff && (
         <div className="mt-12 flex flex-col items-center">
           <button
             type="button"
@@ -112,16 +109,18 @@ export default function Tell() {
           <p className="mt-4 text-sm text-dim">{recording ? "Let go when you're done." : clip ? "Got it. Listen back, or keep it." : "Hold the button and talk. Ten seconds is plenty."}</p>
           {clip && !recording && <audio controls src={URL.createObjectURL(clip)} className="mt-4 w-full" />}
         </div>
-      ) : (
+      )}
+
+      <label className="mt-8 block w-full text-left">
+        <span className="text-sm text-mist">{clip ? "Anything to add in words?" : micOff ? "Write the dream" : "Or write it, or add to your voice note"}</span>
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
-          rows={5}
-          autoFocus
+          rows={4}
           placeholder="I was flying over my old school, and the roof turned into the sea…"
-          className="mt-10 w-full rounded-2xl border border-line bg-card p-4 text-paper placeholder:text-dim focus:border-gold focus:outline-none"
+          className="mt-2 w-full rounded-2xl border border-line bg-card p-4 text-paper placeholder:text-dim focus:border-gold focus:outline-none"
         />
-      )}
+      </label>
 
       <div className="mt-10 w-full">
         <p className="mb-3 text-xs uppercase tracking-[0.2em] text-dim">How did it feel?</p>

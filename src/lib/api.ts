@@ -24,6 +24,7 @@ export type DreamDetail = {
   error: string | null;
   inputKind: "voice" | "text";
   transcript: string | null;
+  note: string | null;
   title: string | null;
   tags: { themes: string[]; people: string[]; places: string[]; objects: string[]; scene: string } | null;
   feeling: string | null;
