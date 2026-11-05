@@ -2,6 +2,7 @@ import { getDream, tracesFor } from "@/lib/server/dreams";
 import { currentUser } from "@/lib/server/session";
 import { storageExplorer } from "@/lib/server/zerog/storage";
 import { txLink } from "@/lib/server/registry";
+import { noteLog, notesFor } from "@/lib/server/notes";
 
 export async function GET(_request: Request, ctx: RouteContext<"/api/dreams/[id]">) {
   const { id } = await ctx.params;
@@ -22,6 +23,7 @@ export async function GET(_request: Request, ctx: RouteContext<"/api/dreams/[id]
     suggestedFeeling: dream.suggested_feeling,
     saga: dream.saga,
     video: dream.video_state,
+    notes: notesFor(noteLog(user.id), dream.id),
     proof: {
       traces: tracesFor(dream.id),
       storage: [

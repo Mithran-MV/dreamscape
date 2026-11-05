@@ -12,6 +12,8 @@ export type DreamSummary = {
   moving: boolean;
 };
 
+export type Note = { kind: string; text: string; saga?: string };
+
 export type Trace = { step: string; model: string; request_id: string | null; provider: string | null; tee_verified: number | null; cost_usd: number | null; ms: number };
 
 export type DreamDetail = {
@@ -28,6 +30,7 @@ export type DreamDetail = {
   suggestedFeeling: string | null;
   saga: string | null;
   video: "rendering" | "done" | "failed" | null;
+  notes: Note[];
   proof: {
     traces: Trace[];
     storage: { what: string; root: string; link: string }[];
@@ -53,7 +56,7 @@ export const api = {
   session: () => fetch("/api/session").then((r) => json<{ user: { handle: string } | null }>(r)),
   signIn: (handle: string, passphrase: string) =>
     fetch("/api/session", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ handle, passphrase }) }).then((r) => json<{ handle: string }>(r)),
-  dreams: () => fetch("/api/dreams").then((r) => json<{ dreams: DreamSummary[] }>(r)),
+  dreams: () => fetch("/api/dreams").then((r) => json<{ dreams: DreamSummary[]; notes: Note[] }>(r)),
   dream: (id: string) => fetch(`/api/dreams/${id}`).then((r) => json<DreamDetail>(r)),
   pushKey: () => fetch("/api/push").then((r) => json<{ publicKey: string }>(r)),
   pushSubscribe: (sub: PushSubscriptionJSON) =>

@@ -1,5 +1,6 @@
 import { createDream, FEELINGS, listDreams, putBlob, type Feeling } from "@/lib/server/dreams";
 import { enqueue } from "@/lib/server/jobs";
+import { noteLog, notesFor } from "@/lib/server/notes";
 import { currentUser } from "@/lib/server/session";
 
 const MAX_AUDIO = 10 * 1024 * 1024;
@@ -19,7 +20,9 @@ export async function GET() {
     anchored: Boolean(d.registry_tx),
     moving: d.video_state === "done",
   }));
-  return Response.json({ dreams });
+  const log = noteLog(user.id);
+  const notes = log.length ? notesFor(log, log[log.length - 1].id).slice(0, 2) : [];
+  return Response.json({ dreams, notes });
 }
 
 // A voice note (field "audio") or one line of text (field "text"), plus an optional feeling.
