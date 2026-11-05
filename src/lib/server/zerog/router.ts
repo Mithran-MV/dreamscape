@@ -82,7 +82,8 @@ export async function transcribe(audio: Uint8Array, mime: string) {
 }
 
 // Sealed chat that must answer with a JSON object.
-// 0gm reasons before it answers, and its reasoning counts against max_tokens, so leave it plenty of room.
+// Minimal reasoning: these are short JSON tasks, and at "low" 0gm spent over 5,000 tokens thinking
+// before a comic script, which ran past the cap. The cap still leaves room if it does reason.
 export async function chatJson<T>(system: string, user: string, maxTokens = 3000) {
   const model = "0gm-1.0-35b-a3b";
   const { data, trace } = await call<{ choices: { message: { content: string }; finish_reason?: string }[] }>("/chat/completions", model, {
@@ -95,7 +96,7 @@ export async function chatJson<T>(system: string, user: string, maxTokens = 3000
         { role: "user", content: user },
       ],
       response_format: { type: "json_object" },
-      reasoning_effort: "low",
+      reasoning_effort: "minimal",
       max_tokens: maxTokens,
       temperature: 0.7,
       verify_tee: true,
