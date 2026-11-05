@@ -131,6 +131,7 @@ export async function storeDream(dreamId: string) {
     if (anchored) updateDream(dreamId, { registry_tx: anchored.tx, registry_id: anchored.id });
   }
   updateDream(dreamId, { status: "done", error: null });
+  enqueue("dream.ens", dreamId);
 }
 
 function mustGet(id: string): Dream {
