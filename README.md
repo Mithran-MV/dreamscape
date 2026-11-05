@@ -59,6 +59,7 @@ cd contracts && forge build && forge test
 |---|---|---|
 | `DreamscapeRegistry` (names under `dream-scape.eth`) | Ethereum Sepolia | [`0xCB61EabBFdb446a561A29814312F5ECB542d5C87`](https://sepolia.etherscan.io/address/0xCB61EabBFdb446a561A29814312F5ECB542d5C87) |
 | `NightMarket` (checkout in Circle's USDC, and editions) | Ethereum Sepolia | [`0xD40165F204E4E1f8014d331e1d4c2CFe1eF904bC`](https://sepolia.etherscan.io/address/0xD40165F204E4E1f8014d331e1d4c2CFe1eF904bC) |
+| `DreamRegistry` (one record per kept dream) | 0G Galileo | [`0x1622A080E8c5c47b12CB6364D248228c7bF86B66`](https://chainscan-galileo.0g.ai/address/0x1622A080E8c5c47b12CB6364D248228c7bF86B66) |
 | USDC (Circle, testnet) | Ethereum Sepolia | [`0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238`](https://sepolia.etherscan.io/address/0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238) |
 
 ## Arkiv
