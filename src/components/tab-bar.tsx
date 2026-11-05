@@ -23,6 +23,12 @@ const TABS = [
     ),
   },
   {
+    key: "market",
+    href: "/market",
+    label: "Market",
+    icon: <path d="M4 9.5 5.5 4h13L20 9.5M4 9.5h16M4 9.5v10h16v-10M9 19.5v-5h6v5" />,
+  },
+  {
     key: "comics",
     href: "/#comics",
     label: "Comics",
@@ -47,7 +53,7 @@ export function TabBar({ active }: { active: (typeof TABS)[number]["key"] }) {
             <Link
               href={t.href}
               aria-current={t.key === active ? "page" : undefined}
-              className={`flex flex-col items-center gap-1 px-5 py-2.5 text-[11px] ${t.key === active ? "text-gold" : "text-dim"}`}
+              className={`flex flex-col items-center gap-1 px-4 py-2.5 text-[11px] ${t.key === active ? "text-gold" : "text-dim"}`}
             >
               <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" aria-hidden>
                 {t.icon}
