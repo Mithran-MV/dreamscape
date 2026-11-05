@@ -104,11 +104,13 @@ export function getDb(): DatabaseSync {
   addColumn(db, "users", "nightly", "INTEGER NOT NULL DEFAULT 0"); // opted in to the nightly run
   addColumn(db, "users", "last_night", "INTEGER"); // utcDay of the last nightly run
   addColumn(db, "users", "character", "TEXT"); // the dreamer's cartoon, kept the same in every comic
-  addColumn(db, "users", "circle", "TEXT"); // one circle per dreamer, such as ethglobal-mumbai
+  addColumn(db, "users", "circle", "TEXT");
+  addColumn(db, "users", "ens_json", "TEXT"); // gallery name, resolver and registries once onboarded // one circle per dreamer, such as ethglobal-mumbai
   addColumn(db, "dreams", "saga", "TEXT");
   addColumn(db, "dreams", "video_job", "TEXT"); // the living portrait's job id on 0G
   addColumn(db, "dreams", "video_state", "TEXT"); // rendering, done or failed
   addColumn(db, "dreams", "video_at", "INTEGER");
+  addColumn(db, "dreams", "ens_tx", "TEXT"); // the scribe's day-record transaction on Sepolia
   return db;
 }
 

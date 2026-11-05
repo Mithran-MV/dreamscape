@@ -32,6 +32,7 @@ export type Dream = {
   video_job: string | null;
   video_state: "rendering" | "done" | "failed" | null;
   video_at: number | null;
+  ens_tx: string | null;
 };
 
 export function createDream(userId: string, kind: "voice" | "text", feeling: Feeling | null, text: string | null): string {
@@ -52,7 +53,7 @@ export function listDreams(userId: string, limit = 120): Dream[] {
 
 const COLUMNS = new Set([
   "status", "error", "transcript", "title", "tags_json", "scene", "suggested_feeling",
-  "voice_root", "portrait_root", "record_root", "registry_tx", "registry_id", "saga", "video_job", "video_state", "video_at",
+  "voice_root", "portrait_root", "record_root", "registry_tx", "registry_id", "saga", "video_job", "video_state", "video_at", "ens_tx",
 ]);
 
 export function updateDream(id: string, fields: Partial<Record<string, string | number | null>>) {
