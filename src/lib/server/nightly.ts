@@ -180,7 +180,7 @@ async function makeEpisode(ep: Episode, newest: Dream, earlier: Dream[]) {
 
   let saga = newest.saga;
   if (!saga) {
-    const { value, trace } = await chatJson<{ saga?: string; links?: string[] }>(SAGA_SYSTEM, JSON.stringify({ newest: tags(newest), earlier: earlier.map(tags) }), 300);
+    const { value, trace } = await chatJson<{ saga?: string; links?: string[] }>(SAGA_SYSTEM, JSON.stringify({ newest: tags(newest), earlier: earlier.map(tags) }), 2000);
     addTrace(ep.id, "saga", trace);
     saga = words(value.saga, 4) || newest.title || "A new saga";
     updateDream(newest.id, { saga });
@@ -190,7 +190,7 @@ async function makeEpisode(ep: Episode, newest: Dream, earlier: Dream[]) {
   const user = db.prepare("SELECT character FROM users WHERE id = ?").get(ep.user_id) as { character: string | null };
   let character = user.character;
   if (!character) {
-    const { value, trace } = await chatJson<{ character?: string }>(CHARACTER_SYSTEM, "Invent the hero.", 200);
+    const { value, trace } = await chatJson<{ character?: string }>(CHARACTER_SYSTEM, "Invent the hero.", 2000);
     addTrace(ep.id, "character", trace);
     character = String(value.character ?? "").slice(0, 300) || "a small cartoon person with a round head, a striped scarf and a tuft of messy hair";
     db.prepare("UPDATE users SET character = ? WHERE id = ?").run(character, ep.user_id);
@@ -202,7 +202,7 @@ async function makeEpisode(ep: Episode, newest: Dream, earlier: Dream[]) {
       | { title: string }
       | undefined;
     const input = { dream: newest.transcript, alsoWrote: newest.note, scene: newest.scene, ...tags(newest), saga, previousEpisode: previous?.title ?? null };
-    const { value, trace } = await chatJson<Partial<Script>>(scriptSystem(character), JSON.stringify(input), 1200);
+    const { value, trace } = await chatJson<Partial<Script>>(scriptSystem(character), JSON.stringify(input), 4000);
     addTrace(ep.id, "script", trace);
     script = cleanScript(value);
     updateEpisode(ep.id, { script_json: JSON.stringify(script), title: script.title, saga, status: "drawing" });

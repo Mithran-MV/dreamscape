@@ -82,9 +82,10 @@ export async function transcribe(audio: Uint8Array, mime: string) {
 }
 
 // Sealed chat that must answer with a JSON object.
-export async function chatJson<T>(system: string, user: string, maxTokens = 900) {
+// 0gm reasons before it answers, and its reasoning counts against max_tokens, so leave it plenty of room.
+export async function chatJson<T>(system: string, user: string, maxTokens = 3000) {
   const model = "0gm-1.0-35b-a3b";
-  const { data, trace } = await call<{ choices: { message: { content: string } }[] }>("/chat/completions", model, {
+  const { data, trace } = await call<{ choices: { message: { content: string }; finish_reason?: string }[] }>("/chat/completions", model, {
     method: "POST",
     headers: headers("private", true),
     body: JSON.stringify({
@@ -102,7 +103,12 @@ export async function chatJson<T>(system: string, user: string, maxTokens = 900)
   });
   const content = data.choices?.[0]?.message?.content ?? "";
   const json = content.slice(content.indexOf("{"), content.lastIndexOf("}") + 1);
-  return { value: JSON.parse(json) as T, trace };
+  // An answer cut off by the token cap, or one with no JSON in it, is worth asking for again.
+  try {
+    return { value: JSON.parse(json) as T, trace };
+  } catch {
+    throw new ZeroGError(502, `0gm returned no usable JSON (finish: ${data.choices?.[0]?.finish_reason ?? "unknown"})`, trace);
+  }
 }
 
 // Sealed painting. z-image-turbo takes text only and needs b64_json.
