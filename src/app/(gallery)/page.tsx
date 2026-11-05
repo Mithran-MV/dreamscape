@@ -2,13 +2,14 @@
 // Home: sign in, then the gallery wall of framed dream portraits.
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { usePrivy } from "@privy-io/react-auth";
 import { api, PAINTED, panelUrl, portraitUrl, videoUrl, type DreamSummary, type EpisodeSummary, type Note } from "@/lib/api";
 import { WeatherStrip } from "@/components/weather";
 import { WorldCard } from "@/components/world-card";
 import { dayLabel, Frame } from "@/components/ui";
 
 export default function Home() {
-  const [user, setUser] = useState<{ handle: string } | null | undefined>(undefined);
+  const [user, setUser] = useState<{ handle: string; ensName: string | null } | null | undefined>(undefined);
   const [dreams, setDreams] = useState<DreamSummary[]>([]);
   const [episodes, setEpisodes] = useState<EpisodeSummary[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
@@ -49,6 +50,7 @@ export default function Home() {
         <div>
           <p className="text-xs uppercase tracking-[0.25em] text-gold">Dreamscape</p>
           <h1 className="font-display text-3xl">{user.handle}&rsquo;s gallery</h1>
+          {user.ensName && <p className="mt-1 font-mono text-xs text-gold">{user.ensName}</p>}
         </div>
         <div className="text-right text-sm text-dim">
           <p>{dreams.length} {dreams.length === 1 ? "dream" : "dreams"} kept</p>
@@ -153,9 +155,7 @@ function Comics({ episodes, nightly, onChange }: { episodes: EpisodeSummary[]; n
 }
 
 function SignIn({ onDone }: { onDone: () => void }) {
-  const [handle, setHandle] = useState("");
-  const [pass, setPass] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [withPass, setWithPass] = useState(false);
   return (
     <main className="flex flex-1 flex-col items-center justify-center px-6 text-center">
       <p className="text-xs uppercase tracking-[0.3em] text-gold">Dreamscape</p>
@@ -163,37 +163,118 @@ function SignIn({ onDone }: { onDone: () => void }) {
         Your brain deletes your dreams. <em className="text-gold">Dreamscape keeps them.</em>
       </h1>
       <p className="mt-4 max-w-sm text-mist">Ten seconds when you wake. It&rsquo;s painted, sealed and kept, with your own voice beside it.</p>
+      <div className="mt-8 w-full max-w-xs">
+        {withPass ? <PassSignIn onDone={onDone} /> : <PrivySignIn onDone={onDone} />}
+        <button onClick={() => setWithPass(!withPass)} className="mt-4 text-xs text-dim">
+          {withPass ? "Sign in with email or Google instead" : "Use a name and passphrase instead"}
+        </button>
+      </div>
+    </main>
+  );
+}
+
+// Email or Google through Privy. A new dreamer then picks the name their gallery gets on ENS.
+function PrivySignIn({ onDone }: { onDone: () => void }) {
+  const { ready, authenticated, login, getAccessToken, user } = usePrivy();
+  const [needsName, setNeedsName] = useState(false);
+  const [handle, setHandle] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const walletReady = Boolean(user?.wallet?.address);
+
+  const exchange = useCallback(
+    (name?: string) =>
+      getAccessToken()
+        .then((token) => {
+          if (!token) throw new Error("Sign in again.");
+          return api.privySignIn(token, name);
+        })
+        .then((res) => (res.needsHandle ? setNeedsName(true) : onDone())),
+    [getAccessToken, onDone],
+  );
+
+  // Once Privy has signed them in and made their wallet, swap that for our own session.
+  useEffect(() => {
+    if (!ready || !authenticated || !walletReady) return;
+    exchange().catch((e: Error) => setError(e.message));
+  }, [ready, authenticated, walletReady, exchange]);
+
+  if (needsName) {
+    return (
       <form
-        className="mt-8 flex w-full max-w-xs flex-col gap-3"
-        onSubmit={async (e) => {
+        className="flex flex-col gap-3 text-left"
+        onSubmit={(e) => {
           e.preventDefault();
-          try {
-            await api.signIn(handle, pass);
-            onDone();
-          } catch (err) {
-            setError((err as Error).message);
-          }
+          setBusy(true);
+          setError(null);
+          exchange(handle)
+            .catch((err: Error) => setError(err.message))
+            .finally(() => setBusy(false));
         }}
       >
+        <label className="text-sm text-mist" htmlFor="handle">Pick your gallery&rsquo;s name</label>
         <input
+          id="handle"
           value={handle}
           onChange={(e) => setHandle(e.target.value)}
-          placeholder="Pick a name, like mithran"
-          autoComplete="username"
+          placeholder="mithran"
+          autoFocus
           className="rounded-xl border border-line bg-card px-4 py-3 text-paper placeholder:text-dim focus:border-gold focus:outline-none"
         />
-        <input
-          value={pass}
-          onChange={(e) => setPass(e.target.value)}
-          type="password"
-          placeholder="Passphrase (6+ characters)"
-          autoComplete="current-password"
-          className="rounded-xl border border-line bg-card px-4 py-3 text-paper placeholder:text-dim focus:border-gold focus:outline-none"
-        />
-        <p className="text-left text-xs text-dim">New name? This passphrase claims it. Same name later? Use the same passphrase.</p>
-        <button className="rounded-xl bg-gold px-4 py-3 font-medium text-gold-ink">Open my gallery</button>
+        <p className="text-xs text-dim">It becomes {handle.trim() ? handle.trim().toLowerCase() : "yourname"}.dream-scape.eth, a name you own.</p>
+        <button disabled={busy} className="rounded-xl bg-gold px-4 py-3 font-medium text-gold-ink disabled:opacity-60">
+          {busy ? "Opening…" : "Open my gallery"}
+        </button>
         {error && <p className="text-sm text-danger">{error}</p>}
       </form>
-    </main>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      <button disabled={!ready || (authenticated && !error)} onClick={login} className="rounded-xl bg-gold px-4 py-3 font-medium text-gold-ink disabled:opacity-60">
+        {authenticated && !error ? "Opening your gallery…" : "Sign in with email or Google"}
+      </button>
+      {error && <p className="text-sm text-danger">{error}</p>}
+    </div>
+  );
+}
+
+function PassSignIn({ onDone }: { onDone: () => void }) {
+  const [handle, setHandle] = useState("");
+  const [pass, setPass] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  return (
+    <form
+      className="flex flex-col gap-3"
+      onSubmit={async (e) => {
+        e.preventDefault();
+        try {
+          await api.signIn(handle, pass);
+          onDone();
+        } catch (err) {
+          setError((err as Error).message);
+        }
+      }}
+    >
+      <input
+        value={handle}
+        onChange={(e) => setHandle(e.target.value)}
+        placeholder="Pick a name, like mithran"
+        autoComplete="username"
+        className="rounded-xl border border-line bg-card px-4 py-3 text-paper placeholder:text-dim focus:border-gold focus:outline-none"
+      />
+      <input
+        value={pass}
+        onChange={(e) => setPass(e.target.value)}
+        type="password"
+        placeholder="Passphrase (6+ characters)"
+        autoComplete="current-password"
+        className="rounded-xl border border-line bg-card px-4 py-3 text-paper placeholder:text-dim focus:border-gold focus:outline-none"
+      />
+      <p className="text-left text-xs text-dim">New name? This passphrase claims it. These galleries get no ENS name or wallet.</p>
+      <button className="rounded-xl bg-gold px-4 py-3 font-medium text-gold-ink">Open my gallery</button>
+      {error && <p className="text-sm text-danger">{error}</p>}
+    </form>
   );
 }

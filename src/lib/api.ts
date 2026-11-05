@@ -61,7 +61,11 @@ async function json<T>(res: Response): Promise<T> {
 }
 
 export const api = {
-  session: () => fetch("/api/session").then((r) => json<{ user: { handle: string } | null }>(r)),
+  session: () => fetch("/api/session").then((r) => json<{ user: { handle: string; wallet: string | null; ensName: string | null } | null }>(r)),
+  privySignIn: (token: string, handle?: string) =>
+    fetch("/api/session/privy", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token, handle }) }).then((r) =>
+      json<{ ok?: true; needsHandle?: true; hasWallet: boolean }>(r),
+    ),
   signIn: (handle: string, passphrase: string) =>
     fetch("/api/session", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ handle, passphrase }) }).then((r) => json<{ handle: string }>(r)),
   dreams: () => fetch("/api/dreams").then((r) => json<{ dreams: DreamSummary[]; notes: Note[] }>(r)),
