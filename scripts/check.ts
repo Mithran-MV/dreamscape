@@ -1,8 +1,7 @@
 // Checks that ENS, Arkiv and 0G are reachable and haven't moved. Run with `pnpm check` at H0, H24 and before submitting.
 import { createPublicClient, http, parseAbi } from "viem";
 import { sepolia } from "viem/chains";
-import { createPublicClient as createArkivClient } from "@arkiv-network/sdk";
-import { rabdi } from "@arkiv-network/sdk/chains";
+import { arkiv } from "../src/lib/server/arkiv/client";
 
 const UNIVERSAL_RESOLVER = "0xeEeEEEeE14D718C2B47D9923Deab1335E144EeEe";
 const EXPECTED_ROOT = "0xb458d6a3a77919449d03e7a6903c26827c1ec43f"; // ENSv2 Sepolia deployment of 2026-10-01
@@ -27,10 +26,10 @@ async function checkEns() {
 }
 
 async function checkArkiv() {
-  const chain = rabdi({ accessKey: process.env.ARKIV_ACCESS_KEY ?? "" });
-  const client = createArkivClient({ chain, transport: http(undefined, { retryCount: 0, timeout: 15_000 }) });
-  const timing = await client.getBlockTiming();
-  report(chain.id === 7794095, "Arkiv Rabdi", `chain ${chain.id}, block ${timing.currentBlock}`);
+  // The shared client sends the access key as a header, so it never shows up in an error's URL.
+  const { reader } = arkiv();
+  const [id, timing] = await Promise.all([reader.getChainId(), reader.getBlockTiming()]);
+  report(id === 7794095, "Arkiv Rabdi", `chain ${id}, block ${timing.currentBlock}`);
 }
 
 async function checkZeroG() {
