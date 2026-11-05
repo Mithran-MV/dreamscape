@@ -69,6 +69,19 @@ body {
   overflow: hidden;
 }
 
+/* The record button: a lit gold sphere. While listening, a halo ring pulses around it. */
+.sphere {
+  background: radial-gradient(circle at 37% 33%, #fff3d2 0%, #f0c878 48%, #c9954b 100%);
+  box-shadow: 0 0 60px rgb(240 200 120 / 0.28), inset 0 -6px 18px rgb(120 80 20 / 0.35);
+}
+.sphere.listening {
+  box-shadow: 0 0 0 14px rgb(240 200 120 / 0.08), 0 0 0 15px rgb(240 200 120 / 0.35), 0 0 70px rgb(240 200 120 / 0.4);
+  animation: listen 1.8s ease-in-out infinite;
+}
+@keyframes listen {
+  50% { box-shadow: 0 0 0 22px rgb(240 200 120 / 0.04), 0 0 0 23px rgb(240 200 120 / 0.25), 0 0 80px rgb(240 200 120 / 0.45); }
+}
+
 @keyframes breathe {
   0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgb(240 200 120 / 0.45); }
   50% { transform: scale(1.04); box-shadow: 0 0 0 18px rgb(240 200 120 / 0); }
@@ -86,5 +99,5 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .breathe, .painting { animation: none; }
+  .breathe, .painting, .sphere.listening { animation: none; }
 }

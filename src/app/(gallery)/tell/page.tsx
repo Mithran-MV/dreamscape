@@ -5,6 +5,28 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
 import { FeelingChips } from "@/components/ui";
+import { useClientValue } from "@/lib/use-client-value";
+
+function Mic() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-9 w-9" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden>
+      <rect x="9" y="3" width="6" height="11" rx="3" />
+      <path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" />
+    </svg>
+  );
+}
+
+// A sound wave while recording; the bars are fixed, so it reads as a voice without faking levels.
+function Wave() {
+  const bars = [4, 9, 6, 13, 18, 11, 16, 8, 14, 10, 5, 8];
+  return (
+    <svg viewBox="0 0 60 24" className="h-9 w-20" aria-hidden>
+      {bars.map((h, i) => (
+        <rect key={i} x={i * 5 + 1} y={12 - h / 2} width="2.2" height={h} rx="1.1" fill="currentColor" />
+      ))}
+    </svg>
+  );
+}
 
 function pickMime() {
   const options = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg;codecs=opus"];
@@ -14,6 +36,7 @@ function pickMime() {
 export default function Tell() {
   const router = useRouter();
   const [micOff, setMicOff] = useState(false);
+  const today = useClientValue(() => new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" }), "");
   const [recording, setRecording] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [clip, setClip] = useState<Blob | null>(null);
@@ -86,10 +109,18 @@ export default function Tell() {
         <Link href="/" className="text-sm text-dim">← Gallery</Link>
       </div>
 
-      <h1 className="mt-10 font-display text-3xl">Before it fades:<br /><em className="text-gold">what did you dream?</em></h1>
+      <div className="mt-8 w-full text-left">
+        <p className="h-5 text-sm text-mist">{today}</p>
+        <h1 className="mt-2 font-display text-4xl leading-[1.1]">
+          Before it <em className="text-gold">fades</em>:<br />what did you dream?
+        </h1>
+      </div>
 
       {!micOff && (
         <div className="mt-12 flex flex-col items-center">
+          <p className={`mb-4 h-6 font-mono text-xl text-gold ${recording ? "" : "invisible"}`} aria-live="polite">
+            {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")}
+          </p>
           <button
             type="button"
             aria-label={recording ? "Release to stop" : "Hold to tell your dream"}
@@ -100,13 +131,12 @@ export default function Tell() {
             onPointerUp={stop}
             onPointerCancel={stop}
             onContextMenu={(e) => e.preventDefault()}
-            className={`flex h-44 w-44 select-none items-center justify-center rounded-full border-2 text-lg font-medium touch-none ${
-              recording ? "breathe border-gold bg-gold text-gold-ink" : "border-gold/60 bg-card text-gold"
-            }`}
+            className={`sphere flex h-40 w-40 select-none items-center justify-center rounded-full text-gold-ink touch-none ${recording ? "listening" : ""}`}
           >
-            {recording ? `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}` : clip ? "Hold to redo" : "Hold to tell"}
+            {recording ? <Wave /> : <Mic />}
           </button>
-          <p className="mt-4 text-sm text-dim">{recording ? "Let go when you're done." : clip ? "Got it. Listen back, or keep it." : "Hold the button and talk. Ten seconds is plenty."}</p>
+          <p className="mt-5 font-medium text-paper">{recording ? "Let go when you're done" : clip ? "Hold to tell it again" : "Hold to tell it"}</p>
+          <p className="mt-1 text-sm text-dim">{recording ? "Tell it any way it comes." : clip ? "Got it. Listen back, add words, or keep it." : "Ten seconds is plenty."}</p>
           {clip && !recording && <audio controls src={URL.createObjectURL(clip)} className="mt-4 w-full" />}
         </div>
       )}
