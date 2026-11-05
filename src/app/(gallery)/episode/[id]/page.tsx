@@ -6,6 +6,7 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 import { api, panelUrl, type EpisodeDetail } from "@/lib/api";
 import { ComicPage } from "@/components/comic";
 import { dayLabel } from "@/components/ui";
+import { SellPanel } from "@/components/sell-panel";
 
 const STEPS: Record<string, string> = {
   writing: "Writing tonight's script",
@@ -73,6 +74,8 @@ function EpisodeView() {
           <p className="w-full text-xs text-dim">Only you can see a draft. Hanging it adds it to your gallery; nothing is shared or sold.</p>
         </div>
       )}
+
+      {ep.status === "published" && <SellPanel kind="episode" refId={ep.id} suggested={3} />}
 
       {ep.traces.length > 0 && (
         <section className="mt-10 rounded-2xl border border-edge bg-card/70 p-5">

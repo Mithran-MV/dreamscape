@@ -6,6 +6,7 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 import { api, PAINTED, portraitUrl, videoUrl, voiceUrl, type DreamDetail } from "@/lib/api";
 import { dayLabel, FEELINGS, feelingColor, Frame } from "@/components/ui";
 import { NotifyButton } from "@/components/notify-button";
+import { SellPanel } from "@/components/sell-panel";
 
 const STEPS: Record<string, string> = {
   queued: "Waiting for the painter",
@@ -98,6 +99,8 @@ function DreamView() {
               <p className="mt-1 whitespace-pre-line text-mist">{dream.note}</p>
             </div>
           )}
+
+          {painted && <SellPanel kind="dream" refId={dream.id} suggested={2} />}
 
           {dream.tags && dream.tags.themes.length > 0 && (
             <div className="mt-5 flex flex-wrap gap-2">
