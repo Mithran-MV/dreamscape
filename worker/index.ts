@@ -36,7 +36,8 @@ async function run(job: Job) {
       fail(job.id, message);
       if (PIPELINE.has(job.kind)) updateDream(job.ref, { status: "failed", error: message });
     } else {
-      const gaveUp = retryLater(job, message);
+      // A sealed provider being down is worth waiting out for hours; anything else gets a few tries.
+      const gaveUp = retryLater(job, message, error instanceof ZeroGError ? 40 : 8);
       if (PIPELINE.has(job.kind)) updateDream(job.ref, { error: message, ...(gaveUp ? { status: "failed" } : {}) });
     }
     console.error(`[worker] ${job.kind} ${job.ref} attempt ${job.attempts}: ${message.slice(0, 200)}`);
