@@ -49,10 +49,9 @@ html {
   color-scheme: dark;
 }
 
+/* The painted sky (components/painted-sky.tsx) sits behind the page, so body stays clear. */
 body {
-  background:
-    radial-gradient(ellipse 80% 50% at 50% -10%, #2b2258 0%, transparent 60%),
-    var(--ground);
+  background: transparent;
   color: var(--paper);
   font-family: var(--font-instrument), system-ui, sans-serif;
 }
