@@ -36,11 +36,14 @@ export function FeelingChips({ value, onChange }: { value: string | null; onChan
   );
 }
 
-export function Frame({ src, glow, alt, className = "", failed = false }: { src?: string | null; glow?: string | null; alt: string; className?: string; failed?: boolean }) {
+// A living portrait plays muted on a loop over its still, which stays as the poster.
+export function Frame({ src, video, glow, alt, className = "", failed = false }: { src?: string | null; video?: string | null; glow?: string | null; alt: string; className?: string; failed?: boolean }) {
   return (
     <div className={`frame ${className}`} style={{ boxShadow: glow ? `0 0 34px -4px ${feelingColor(glow)}, 0 10px 30px rgb(0 0 0 / .55)` : undefined }}>
       <div className="mat aspect-square w-full">
-        {src ? (
+        {src && video ? (
+          <video src={video} poster={src} autoPlay loop muted playsInline aria-label={alt} className="h-full w-full object-cover" />
+        ) : src ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={src} alt={alt} className="h-full w-full object-cover" />
         ) : (

@@ -2,7 +2,7 @@
 // Home: sign in, then the gallery wall of framed dream portraits.
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { api, PAINTED, panelUrl, portraitUrl, type DreamSummary, type EpisodeSummary } from "@/lib/api";
+import { api, PAINTED, panelUrl, portraitUrl, videoUrl, type DreamSummary, type EpisodeSummary } from "@/lib/api";
 import { dayLabel, Frame } from "@/components/ui";
 
 export default function Home() {
@@ -74,7 +74,7 @@ export default function Home() {
         <section className="grid grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
           {dreams.map((d) => (
             <Link key={d.id} href={`/dream/${d.id}`} className="group block">
-              <Frame src={PAINTED.has(d.status) ? portraitUrl(d.id) : null} failed={d.status === "failed"} glow={d.feeling} alt={d.title ?? "A dream"} className="transition-transform group-hover:-translate-y-0.5" />
+              <Frame src={PAINTED.has(d.status) ? portraitUrl(d.id) : null} video={d.moving ? videoUrl(d.id) : null} failed={d.status === "failed"} glow={d.feeling} alt={d.title ?? "A dream"} className="transition-transform group-hover:-translate-y-0.5" />
               <p className="mt-2 text-[11px] uppercase tracking-[0.18em] text-gold">{dayLabel(d.day)}</p>
               <p className="truncate font-display text-base">{d.status === "failed" ? "Couldn't paint this one" : d.title ?? "Painting…"}</p>
             </Link>

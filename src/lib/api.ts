@@ -9,6 +9,7 @@ export type DreamSummary = {
   feeling: string | null;
   stored: boolean;
   anchored: boolean;
+  moving: boolean;
 };
 
 export type Trace = { step: string; model: string; request_id: string | null; provider: string | null; tee_verified: number | null; cost_usd: number | null; ms: number };
@@ -25,6 +26,8 @@ export type DreamDetail = {
   tags: { themes: string[]; people: string[]; places: string[]; objects: string[]; scene: string } | null;
   feeling: string | null;
   suggestedFeeling: string | null;
+  saga: string | null;
+  video: "rendering" | "done" | "failed" | null;
   proof: {
     traces: Trace[];
     storage: { what: string; root: string; link: string }[];
@@ -68,5 +71,6 @@ export const api = {
 
 export const portraitUrl = (id: string) => `/api/dreams/${id}/media/portrait`;
 export const panelUrl = (id: string, n: number) => `/api/episodes/${id}/panel/${n}`;
+export const videoUrl = (id: string) => `/api/dreams/${id}/media/video`;
 export const voiceUrl = (id: string) => `/api/dreams/${id}/media/voice`;
 export const PAINTED = new Set(["painted", "storing", "done"]);

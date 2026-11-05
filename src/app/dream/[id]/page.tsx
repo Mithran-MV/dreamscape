@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
-import { api, PAINTED, portraitUrl, voiceUrl, type DreamDetail } from "@/lib/api";
+import { api, PAINTED, portraitUrl, videoUrl, voiceUrl, type DreamDetail } from "@/lib/api";
 import { dayLabel, FEELINGS, feelingColor, Frame } from "@/components/ui";
 import { NotifyButton } from "@/components/notify-button";
 
@@ -54,7 +54,7 @@ function DreamView() {
       <Link href="/" className="text-sm text-dim">← Gallery</Link>
 
       <div className="mt-6 grid gap-8 md:grid-cols-[1.1fr_1fr]">
-        <Frame src={painted ? portraitUrl(dream.id) : null} failed={dream.status === "failed"} glow={feeling} alt={dream.title ?? "Your dream"} />
+        <Frame src={painted ? portraitUrl(dream.id) : null} video={dream.video === "done" ? videoUrl(dream.id) : null} failed={dream.status === "failed"} glow={feeling} alt={dream.title ?? "Your dream"} />
 
         <section>
           <p className="text-xs uppercase tracking-[0.22em] text-gold">{dayLabel(dream.day)}</p>
@@ -83,6 +83,9 @@ function DreamView() {
               Try again
             </button>
           )}
+
+          {dream.video === "rendering" && <p className="mt-2 text-xs text-dim">The portrait is learning to move. This takes a few minutes.</p>}
+          {dream.saga && <p className="mt-2 text-sm text-mist">Part of <span className="font-display italic text-paper">{dream.saga}</span></p>}
 
           {dream.transcript && <blockquote className="mt-5 border-l-2 border-gold pl-4 font-display text-lg italic leading-relaxed">&ldquo;{dream.transcript}&rdquo;</blockquote>}
           {dream.inputKind === "voice" && <audio controls src={voiceUrl(dream.id)} className="mt-4 w-full" />}
