@@ -1,13 +1,16 @@
 // Background worker: claims one job at a time from the SQLite queue and runs it.
 import { claimNext, fail, finish, requeueStuck, retryLater, type Job } from "../src/lib/server/jobs";
-import { paintDream, storeDream } from "../src/lib/server/pipeline";
+import { notifyPainted, paintDream, storeDream } from "../src/lib/server/pipeline";
 import { updateDream } from "../src/lib/server/dreams";
 import { ZeroGError } from "../src/lib/server/zerog/router";
 
 const handlers: Record<string, (ref: string) => Promise<void>> = {
   "dream.paint": paintDream,
   "dream.store": storeDream,
+  "dream.notify": notifyPainted,
 };
+// Jobs whose failure means the dream itself is stuck. A failed notice leaves the dream alone.
+const PIPELINE = new Set(["dream.paint", "dream.store"]);
 
 async function run(job: Job) {
   const handler = handlers[job.kind];
@@ -22,10 +25,10 @@ async function run(job: Job) {
     // Bad keys and bad requests won't fix themselves; everything else (busy enclaves, gas, network) gets retried.
     if (error instanceof ZeroGError && !error.retryable) {
       fail(job.id, message);
-      updateDream(job.ref, { status: "failed", error: message });
+      if (PIPELINE.has(job.kind)) updateDream(job.ref, { status: "failed", error: message });
     } else {
       const gaveUp = retryLater(job, message);
-      updateDream(job.ref, { error: message, ...(gaveUp ? { status: "failed" } : {}) });
+      if (PIPELINE.has(job.kind)) updateDream(job.ref, { error: message, ...(gaveUp ? { status: "failed" } : {}) });
     }
     console.error(`[worker] ${job.kind} ${job.ref} attempt ${job.attempts}: ${message.slice(0, 200)}`);
   }

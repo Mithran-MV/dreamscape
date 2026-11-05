@@ -6,6 +6,7 @@ import { putEncrypted } from "./zerog/storage";
 import { dreamerKey } from "./crypto";
 import { enqueue } from "./jobs";
 import { anchorDream } from "./registry";
+import { notify } from "./push";
 
 export type Tags = {
   title: string;
@@ -88,6 +89,13 @@ export async function paintDream(dreamId: string) {
 
   updateDream(dreamId, { status: "painted", error: null });
   enqueue("dream.store", dreamId);
+  enqueue("dream.notify", dreamId);
+}
+
+// Step 1b: tell the dreamer's phone the painting is up. The notice says nothing about the dream itself.
+export async function notifyPainted(dreamId: string) {
+  const dream = mustGet(dreamId);
+  await notify(dream.user_id, { title: "Your dream is on the wall", body: "Last night's painting is ready.", url: `/dream/${dreamId}`, tag: dreamId });
 }
 
 // Step 2: encrypted copies on 0G Storage, then one anchor on 0G Chain.
