@@ -44,6 +44,8 @@ One AI coding assistant, used in agent mode from the terminal. No other AI tools
 | Nightly comics | Saga linking, comic script, textless panels, credit budget, scheduler (`src/lib/server/nightly.ts`) | Drafted by the assistant to the author's comic rules; tested by the assistant against a stubbed 0G router |
 | Comic lettering and episodes | `src/components/comic.tsx`, `src/app/episode/`, gallery comics section | Drafted by the assistant to the author's newspaper-strip brief |
 | Living portraits | Image to video after the comic, with the credit left (`nightly.ts`, `router.ts`) | Drafted by the assistant from 0G's video docs |
+| ENS names | Bootstrap, onboarding, scribe day records and the fork test (`src/lib/server/ens/`, `scripts/ens-*.ts`, `names.ts`) | Drafted by the assistant from the author's ENS plan and the ENS contracts source; tested on a local fork of Sepolia |
+| Morning Notes, Dream Weather, World Dream | `notes.ts`, `world.ts`, `weather.tsx`, `world-card.tsx` | Drafted by the assistant to the author's design, including the five-dreamer privacy floor |
 
 ## Totals
 
