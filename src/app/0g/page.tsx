@@ -58,7 +58,7 @@ export default function ZeroGPage() {
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-16 pt-8">
       <Link href="/" className="text-sm text-dim">← Gallery</Link>
-      <p className="mt-8 text-xs uppercase tracking-[0.25em] text-gold">Your 0G credit</p>
+      <p className="mt-8 text-sm text-gold">Your 0G credit</p>
       <h1 className="mt-2 font-display text-3xl leading-tight">Dreams paid for by your own 0G account.</h1>
       <p className="mt-3 text-sm text-mist">
         Dreamscape&rsquo;s painter runs on 0G with a key from your account, so every dream you tell spends from this balance. Your

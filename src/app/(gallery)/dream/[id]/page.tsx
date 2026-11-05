@@ -57,7 +57,7 @@ function DreamView() {
         <Frame src={painted ? portraitUrl(dream.id) : null} video={dream.video === "done" ? videoUrl(dream.id) : null} failed={dream.status === "failed"} glow={feeling} alt={dream.title ?? "Your dream"} />
 
         <section>
-          <p className="text-xs uppercase tracking-[0.22em] text-gold">{dayLabel(dream.day)}</p>
+          <p className="text-sm text-gold">{dayLabel(dream.day)}</p>
           <h1 className="mt-1 font-display text-3xl leading-tight">{dream.title ?? "Untitled dream"}</h1>
           {feelingLabel && (
             <p className="mt-3 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-sm" style={{ borderColor: feelingColor(feeling) }}>

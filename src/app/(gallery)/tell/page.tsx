@@ -123,7 +123,7 @@ export default function Tell() {
       </label>
 
       <div className="mt-10 w-full">
-        <p className="mb-3 text-xs uppercase tracking-[0.2em] text-dim">How did it feel?</p>
+        <p className="mb-3 text-sm text-mist">How did it feel?</p>
         <FeelingChips value={feeling} onChange={setFeeling} />
       </div>
 

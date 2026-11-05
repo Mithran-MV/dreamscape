@@ -48,7 +48,7 @@ export default function Home() {
     <main className="mx-auto w-full max-w-5xl flex-1 px-5 pb-28 pt-8">
       <header className="mb-8 flex items-end justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.25em] text-gold">Dreamscape</p>
+          <p className="font-display text-lg italic text-gold">Dreamscape</p>
           <h1 className="font-display text-3xl">{user.handle}&rsquo;s gallery</h1>
           {user.ensName && <p className="mt-1 font-mono text-xs text-gold">{user.ensName}</p>}
         </div>
@@ -90,7 +90,7 @@ export default function Home() {
           {dreams.map((d) => (
             <Link key={d.id} href={`/dream/${d.id}`} className="group block">
               <Frame src={PAINTED.has(d.status) ? portraitUrl(d.id) : null} video={d.moving ? videoUrl(d.id) : null} failed={d.status === "failed"} glow={d.feeling} alt={d.title ?? "A dream"} className="transition-transform group-hover:-translate-y-0.5" />
-              <p className="mt-2 text-[11px] uppercase tracking-[0.18em] text-gold">{dayLabel(d.day)}</p>
+              <p className="mt-2 text-xs text-gold">{dayLabel(d.day)}</p>
               <p className="truncate font-display text-base">{d.status === "failed" ? "Couldn't paint this one" : d.title ?? "Painting…"}</p>
             </Link>
           ))}
@@ -126,7 +126,7 @@ function Comics({ episodes, nightly, onChange }: { episodes: EpisodeSummary[]; n
                 {/* eslint-disable-next-line @next/next/no-img-element -- private, decrypted per request */}
                 <img src={panelUrl(e.id, 0)} alt="" className="aspect-square w-full border-2 border-[#1d1a17] object-cover" />
               </div>
-              <p className="mt-2 text-[11px] uppercase tracking-[0.18em] text-gold">{dayLabel(e.day)}</p>
+              <p className="mt-2 text-xs text-gold">{dayLabel(e.day)}</p>
               <p className="truncate font-display text-base">{e.title}</p>
             </Link>
           ))}
@@ -158,7 +158,7 @@ function SignIn({ onDone }: { onDone: () => void }) {
   const [withPass, setWithPass] = useState(false);
   return (
     <main className="flex flex-1 flex-col items-center justify-center px-6 text-center">
-      <p className="text-xs uppercase tracking-[0.3em] text-gold">Dreamscape</p>
+      <p className="font-display text-2xl italic text-gold">Dreamscape</p>
       <h1 className="mt-3 max-w-md font-display text-4xl leading-tight">
         Your brain deletes your dreams. <em className="text-gold">Dreamscape keeps them.</em>
       </h1>
