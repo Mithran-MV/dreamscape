@@ -18,7 +18,8 @@ export async function putEncrypted(bytes: Uint8Array, key: Uint8Array): Promise<
   const [res, err] = await indexer.upload(file, env.galileoRpc(), serverSigner(), {
     encryption: { type: "aes256", key },
   });
-  if (err) throw err;
+  // The SDK's gas errors dump the whole transaction; the dreamer only needs to know why it's waiting.
+  if (err) throw /insufficient funds/i.test(String(err)) ? new Error("Waiting for the server's wallet to get Galileo 0G to pay for storage.") : err;
   return "rootHash" in res ? { root: res.rootHash, tx: res.txHash } : { root: res.rootHashes[0], tx: res.txHashes[0] };
 }
 
