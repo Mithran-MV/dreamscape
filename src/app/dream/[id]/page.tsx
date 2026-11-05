@@ -54,7 +54,7 @@ function DreamView() {
       <Link href="/" className="text-sm text-dim">← Gallery</Link>
 
       <div className="mt-6 grid gap-8 md:grid-cols-[1.1fr_1fr]">
-        <Frame src={painted ? portraitUrl(dream.id) : null} glow={feeling} alt={dream.title ?? "Your dream"} />
+        <Frame src={painted ? portraitUrl(dream.id) : null} failed={dream.status === "failed"} glow={feeling} alt={dream.title ?? "Your dream"} />
 
         <section>
           <p className="text-xs uppercase tracking-[0.22em] text-gold">{dayLabel(dream.day)}</p>

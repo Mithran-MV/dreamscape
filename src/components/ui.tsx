@@ -36,7 +36,7 @@ export function FeelingChips({ value, onChange }: { value: string | null; onChan
   );
 }
 
-export function Frame({ src, glow, alt, className = "" }: { src?: string | null; glow?: string | null; alt: string; className?: string }) {
+export function Frame({ src, glow, alt, className = "", failed = false }: { src?: string | null; glow?: string | null; alt: string; className?: string; failed?: boolean }) {
   return (
     <div className={`frame ${className}`} style={{ boxShadow: glow ? `0 0 34px -4px ${feelingColor(glow)}, 0 10px 30px rgb(0 0 0 / .55)` : undefined }}>
       <div className="mat aspect-square w-full">
@@ -44,8 +44,8 @@ export function Frame({ src, glow, alt, className = "" }: { src?: string | null;
           // eslint-disable-next-line @next/next/no-img-element
           <img src={src} alt={alt} className="h-full w-full object-cover" />
         ) : (
-          <div className="painting flex h-full w-full items-center justify-center">
-            <span className="font-display text-sm italic text-mist">Painting…</span>
+          <div className={`${failed ? "" : "painting "}flex h-full w-full items-center justify-center`}>
+            <span className="font-display text-sm italic text-mist">{failed ? "Not painted" : "Painting…"}</span>
           </div>
         )}
       </div>
