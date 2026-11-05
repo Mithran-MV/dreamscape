@@ -1,9 +1,11 @@
-// A signed session cookie behind a name + passphrase. A stand-in for Privy sign-in until the Privy app is configured.
+// A signed session cookie, issued after Privy sign-in or a name + passphrase (kept for testing without email).
 import { createHmac, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { env } from "./env";
 import { getDb, now } from "./db";
 import { newId } from "./crypto";
+import { enqueue, hasOpenJob } from "./jobs";
+import { checkHandle } from "./ens/client";
 
 const COOKIE = "ds_session";
 const MAX_AGE = 60 * 60 * 24 * 60;
@@ -34,6 +36,31 @@ export function signInOrClaim(handle: string, pass: string): { id: string } | { 
   // A name with no passphrase can't be claimed by whoever asks first.
   if (!user.pass_hash) return { error: "That name is taken, or the passphrase is wrong." };
   return passMatches(pass, user.pass_hash) ? { id: user.id } : { error: "That name is taken, or the passphrase is wrong." };
+}
+
+// Privy sign-in. A known Privy user signs straight in; a new one picks a handle first, which becomes
+// <handle>.dream-scape.eth. Either way, a dreamer with a wallet and no name yet gets one queued.
+export function signInWithPrivy(privyId: string, wallet: string | null, handle?: string): { id: string } | { needsHandle: true } | { error: string } {
+  const db = getDb();
+  const found = db.prepare("SELECT id, wallet, ens_json FROM users WHERE privy_id = ?").get(privyId) as { id: string; wallet: string | null; ens_json: string | null } | undefined;
+  if (found) {
+    if (!found.wallet && wallet) db.prepare("UPDATE users SET wallet = ? WHERE id = ?").run(wallet, found.id);
+    if ((found.wallet ?? wallet) && !found.ens_json && !hasOpenJob(found.id, ["ens.onboard"])) enqueue("ens.onboard", found.id);
+    return { id: found.id };
+  }
+  if (!handle) return { needsHandle: true };
+  const clean = cleanHandle(handle);
+  if (clean.length < 3) return { error: "Pick a name of at least 3 letters or digits." };
+  try {
+    checkHandle(clean);
+  } catch {
+    return { error: "That name is reserved. Pick another." };
+  }
+  if (db.prepare("SELECT 1 FROM users WHERE handle = ?").get(clean)) return { error: "That name is taken. Pick another." };
+  const id = newId("user");
+  db.prepare("INSERT INTO users (id, handle, wallet, privy_id, created_at) VALUES (?, ?, ?, ?, ?)").run(id, clean, wallet, privyId, now());
+  if (wallet) enqueue("ens.onboard", id);
+  return { id };
 }
 
 export function sessionSetCookie(userId: string) {
