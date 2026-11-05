@@ -34,15 +34,6 @@ export type Dream = {
   video_at: number | null;
 };
 
-export function getOrCreateUser(handle: string): string {
-  const db = getDb();
-  const found = db.prepare("SELECT id FROM users WHERE handle = ?").get(handle) as { id: string } | undefined;
-  if (found) return found.id;
-  const id = newId("user");
-  db.prepare("INSERT INTO users (id, handle, created_at) VALUES (?, ?, ?)").run(id, handle, now());
-  return id;
-}
-
 export function createDream(userId: string, kind: "voice" | "text", feeling: Feeling | null, text: string | null): string {
   const id = newId("dream");
   getDb()

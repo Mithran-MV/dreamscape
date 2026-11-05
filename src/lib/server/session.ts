@@ -31,10 +31,8 @@ export function signInOrClaim(handle: string, pass: string): { id: string } | { 
     db.prepare("INSERT INTO users (id, handle, pass_hash, created_at) VALUES (?, ?, ?, ?)").run(id, handle, hashPass(pass), now());
     return { id };
   }
-  if (!user.pass_hash) {
-    db.prepare("UPDATE users SET pass_hash = ? WHERE id = ?").run(hashPass(pass), user.id);
-    return { id: user.id };
-  }
+  // A name with no passphrase can't be claimed by whoever asks first.
+  if (!user.pass_hash) return { error: "That name is taken, or the passphrase is wrong." };
   return passMatches(pass, user.pass_hash) ? { id: user.id } : { error: "That name is taken, or the passphrase is wrong." };
 }
 
