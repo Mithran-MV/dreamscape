@@ -9,6 +9,7 @@
     "lint": "eslint",
     "worker": "node --env-file-if-exists=.env.local --import tsx --watch worker/index.ts",
     "check": "node --env-file-if-exists=.env.local --import tsx scripts/check.ts",
+    "ens:fork-test": "node --env-file-if-exists=.env.local --import tsx scripts/ens-fork-test.ts",
     "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
