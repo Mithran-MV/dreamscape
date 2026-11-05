@@ -2,7 +2,7 @@
 // The day view: the portrait, your words and voice, its tags, and the proof of how it was made.
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { api, PAINTED, portraitUrl, voiceUrl, type DreamDetail } from "@/lib/api";
 import { dayLabel, FEELINGS, feelingColor, Frame } from "@/components/ui";
 
@@ -17,7 +17,16 @@ const STEPS: Record<string, string> = {
 };
 const SEALED_STEPS = new Set(["transcribe", "tag", "portrait"]);
 
+// useParams() is request data, so Cache Components needs it inside a Suspense boundary.
 export default function DreamPage() {
+  return (
+    <Suspense fallback={<main className="flex-1" />}>
+      <DreamView />
+    </Suspense>
+  );
+}
+
+function DreamView() {
   const { id } = useParams<{ id: string }>();
   const [dream, setDream] = useState<DreamDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
