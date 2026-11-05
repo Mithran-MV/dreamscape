@@ -207,7 +207,13 @@ export async function setupVendor(ens: Ens = ensClients(), ctx: Arkiv = arkiv(),
 // Live stalls, straight from Arkiv: only those the server opened, and only while their agents keep beating.
 export async function liveStalls(ctx: Arkiv = arkiv()) {
   const suffix = `.${marketName()}`;
-  return (await liveVendors({ openOnly: true }, ctx)).map((v) => {
+  // One stall per agent name: if a setup ever wrote two, show the one that checked in last.
+  const latest = new Map<string, Awaited<ReturnType<typeof liveVendors>>[number]>();
+  for (const v of await liveVendors({ openOnly: true }, ctx)) {
+    const seen = latest.get(v.ens);
+    if (!seen || v.lastBeat > seen.lastBeat) latest.set(v.ens, v);
+  }
+  return [...latest.values()].map((v) => {
     const menu = (v.menu ?? {}) as { prices?: unknown };
     return {
       label: v.ens.endsWith(suffix) ? v.ens.slice(0, -suffix.length) : null,
