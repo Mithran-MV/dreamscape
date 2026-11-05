@@ -46,6 +46,7 @@ One AI coding assistant, used in agent mode from the terminal. No other AI tools
 | Living portraits | Image to video after the comic, with the credit left (`nightly.ts`, `router.ts`) | Drafted by the assistant from 0G's video docs |
 | ENS names | Bootstrap, onboarding, scribe day records and the fork test (`src/lib/server/ens/`, `scripts/ens-*.ts`, `names.ts`) | Drafted by the assistant from the author's ENS plan and the ENS contracts source; tested on a local fork of Sepolia |
 | Arkiv data layer | Listings, stalls, commissions, knocks, visits and World Dream counts, with a test on a local Arkiv node (`src/lib/server/arkiv/`, `scripts/arkiv-test.ts`, `/arkiv/*.md`) | Drafted by the assistant from the author's Arkiv plan and the SDK source; friction notes written from what came up while building |
+| Privy sign-in and voice-plus-text | Privy token check, wallet lookup, gallery-name step (`privy.ts`, `session.ts`, `(gallery)/`), and a typed note beside a voice note | Drafted by the assistant at the author's request |
 | Morning Notes, Dream Weather, World Dream | `notes.ts`, `world.ts`, `weather.tsx`, `world-card.tsx` | Drafted by the assistant to the author's design, including the five-dreamer privacy floor |
 
 ## Totals
