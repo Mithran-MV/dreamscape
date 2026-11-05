@@ -1,26 +1,91 @@
 @import "tailwindcss";
 
+/* Night Gallery: a dark wall, gilt frames, paper-white words. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --ground: #0f0c1c;
+  --wall: #151026;
+  --card: #1c1636;
+  --edge: #2a2348;
+  --line: #3d3460;
+  --paper: #f5efe3;
+  --mist: #c4bcd6;
+  --dim: #8f86ab;
+  --gold: #f0c878;
+  --gold-ink: #231a05;
+  --rose: #f3a9c1;
+  --ok: #6fd3bc;
+  --danger: #f08a8a;
+
+  /* Dream Weather: always shown with its label too */
+  --wonder: #5b92f2;
+  --joy: #b68e16;
+  --calm: #2da28c;
+  --confused: #b85ec6;
+  --scared: #cb5656;
+  --sad: #3662a0;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-ground: var(--ground);
+  --color-wall: var(--wall);
+  --color-card: var(--card);
+  --color-edge: var(--edge);
+  --color-line: var(--line);
+  --color-paper: var(--paper);
+  --color-mist: var(--mist);
+  --color-dim: var(--dim);
+  --color-gold: var(--gold);
+  --color-gold-ink: var(--gold-ink);
+  --color-rose: var(--rose);
+  --color-ok: var(--ok);
+  --color-danger: var(--danger);
+  --font-display: var(--font-fraunces);
+  --font-sans: var(--font-instrument);
+  --font-mono: var(--font-dm-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--ground);
+  color-scheme: dark;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, #2b2258 0%, transparent 60%),
+    var(--ground);
+  color: var(--paper);
+  font-family: var(--font-instrument), system-ui, sans-serif;
+}
+
+/* A gilt picture frame around a portrait. */
+.frame {
+  padding: 6px;
+  border-radius: 3px;
+  background: linear-gradient(135deg, #f6d999 0%, #b8862e 35%, #f2cf80 62%, #8f611c 100%);
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.55);
+}
+.frame > .mat {
+  background: #0b0918;
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.5), inset 0 0 22px rgb(0 0 0 / 0.45);
+  overflow: hidden;
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgb(240 200 120 / 0.45); }
+  50% { transform: scale(1.04); box-shadow: 0 0 0 18px rgb(240 200 120 / 0); }
+}
+.breathe { animation: breathe 1.6s ease-in-out infinite; }
+
+@keyframes shimmer {
+  from { background-position: -200% 0; }
+  to { background-position: 200% 0; }
+}
+.painting {
+  background: linear-gradient(90deg, #1c1636 0%, #2d2557 50%, #1c1636 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2.4s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .breathe, .painting { animation: none; }
 }
