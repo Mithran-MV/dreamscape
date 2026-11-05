@@ -15,9 +15,10 @@ export class ZeroGError extends Error {
   constructor(public status: number, public body: string, public trace?: Partial<Trace>) {
     super(`0G router ${status}: ${body.slice(0, 300)}`);
   }
-  // 503 no_provider_for_trust_mode, 429 and 5xx are worth retrying later; 4xx errors are not.
+  // 503 no_provider_for_trust_mode, 429 and 5xx are worth retrying later, and so is a model 0G has
+  // pulled from its list while its provider is down. Other 4xx errors are not.
   get retryable() {
-    return this.status === 429 || this.status >= 500;
+    return this.status === 429 || this.status >= 500 || (this.status === 404 && this.body.includes("model_not_found"));
   }
 }
 
