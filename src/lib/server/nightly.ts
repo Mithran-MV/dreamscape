@@ -2,11 +2,11 @@
 // then draw the panels with no words in them. The app letters the page itself, so dialogue never
 // reaches an image model, and image models never get to garble it.
 import { getDb, now, utcDay } from "./db";
-import { addTrace, getBlob, putBlob, updateDream, type Dream, type Feeling, FEELINGS } from "./dreams";
+import { addTrace, getBlob, getDream, putBlob, updateDream, type Dream, type Feeling, FEELINGS } from "./dreams";
 import { newId } from "./crypto";
 import { enqueue, hasOpenJob } from "./jobs";
 import { notify } from "./push";
-import { chatJson, drawPanel } from "./zerog/router";
+import { chatJson, downloadVideo, drawPanel, pollVideo, submitVideo } from "./zerog/router";
 
 export type Line = { who: string; text: string };
 export type Panel = { scene: string; dialogue: Line[]; caption: string | null };
@@ -32,6 +32,8 @@ export const NIGHT_HOUR_UTC = 20; // before the 00:00 UTC credit reset, with tim
 const DAILY_BUDGET_USD = 1.0;
 const PANEL_USD = 0.0252;
 const EPISODE_USD = 4 * PANEL_USD + 0.005; // four panels plus the saga and script calls
+const VIDEO_USD = 0.35; // a 5-second Seedance clip, billed when it finishes
+const VIDEO_WAIT_MS = 30 * 60_000;
 
 const INK_SPOT: Record<Feeling, string> = {
   wonder: "cobalt blue",
@@ -127,8 +129,14 @@ function imageMime(bytes: Buffer) {
 
 const SHOWN: Record<string, true> = { painted: true, storing: true, done: true };
 
-// Job 'night.run', ref = user id. Each step is skipped if an earlier attempt finished it.
+// Job 'night.run', ref = user id: the comic first, then a living portrait with whatever credit is left.
 export async function runNight(userId: string) {
+  await makeComic(userId);
+  await startLivingPortrait(userId);
+}
+
+// Each step is skipped if an earlier attempt finished it.
+async function makeComic(userId: string) {
   const db = getDb();
   const day = utcDay();
   const dreams = (db.prepare("SELECT * FROM dreams WHERE user_id = ? AND created_at >= ? ORDER BY created_at DESC").all(userId, now() - 7 * DAY_MS) as Dream[])
@@ -217,6 +225,49 @@ async function makeEpisode(ep: Episode, newest: Dream, earlier: Dream[]) {
 
   updateEpisode(ep.id, { status: "draft", error: null });
   enqueue("episode.notify", ep.id);
+}
+
+const MOTION: Record<Feeling, string> = {
+  wonder: "slow drifting light and a gentle floating motion",
+  joy: "bright shimmering light and a soft bounce",
+  calm: "slow breathing movement and soft ripples",
+  confused: "a slow swirl, shapes quietly shifting",
+  scared: "flickering shadows and a slow push in",
+  sad: "slow falling light and a gentle drift",
+};
+
+// One clip per dream, for the newest painted one only.
+export async function startLivingPortrait(userId: string) {
+  const dream = getDb()
+    .prepare("SELECT * FROM dreams WHERE user_id = ? AND created_at >= ? AND status IN ('painted', 'storing', 'done') ORDER BY created_at DESC LIMIT 1")
+    .get(userId, now() - DAY_MS) as Dream | undefined;
+  if (!dream || dream.video_state) return;
+  if (spentTodayUsd(userId) + VIDEO_USD > DAILY_BUDGET_USD) return;
+  const portrait = getBlob(userId, `dream/${dream.id}/portrait`);
+  if (!portrait) return;
+  const feeling = (dream.feeling ?? dream.suggested_feeling ?? "wonder") as Feeling;
+  const prompt = `Animate this painting with ${MOTION[feeling] ?? MOTION.wonder}. Keep its painted style and composition, the camera nearly still. No text.`;
+  const { job, trace } = await submitVideo(prompt, `data:${portrait.mime};base64,${portrait.bytes.toString("base64")}`);
+  addTrace(dream.id, "video", trace);
+  updateDream(dream.id, { video_job: job.id, video_state: "rendering", video_at: now() });
+  enqueue("dream.video", dream.id, 60_000);
+}
+
+// Job 'dream.video': look at the clip, download it when it's done, or look again in 30 seconds.
+export async function pollLivingPortrait(dreamId: string) {
+  const dream = getDream(dreamId);
+  if (!dream?.video_job || dream.video_state !== "rendering") return;
+  const { job, trace } = await pollVideo(dream.video_job);
+  if (job.status === "completed") {
+    putBlob(dream.user_id, `dream/${dream.id}/video`, "video/mp4", await downloadVideo(job.id));
+    addTrace(dream.id, "video done", trace);
+    updateDream(dream.id, { video_state: "done" });
+  } else if (job.status === "failed" || now() - (dream.video_at ?? 0) > VIDEO_WAIT_MS) {
+    updateDream(dream.id, { video_state: "failed" });
+    console.warn(`[nightly] living portrait for ${dream.id} stopped: ${job.error?.message ?? job.status}`);
+  } else {
+    enqueue("dream.video", dream.id, 30_000);
+  }
 }
 
 // Job 'episode.notify'. Like every notice, it says nothing about the dream.

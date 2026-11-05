@@ -96,6 +96,9 @@ export function getDb(): DatabaseSync {
   addColumn(db, "users", "last_night", "INTEGER"); // utcDay of the last nightly run
   addColumn(db, "users", "character", "TEXT"); // the dreamer's cartoon, kept the same in every comic
   addColumn(db, "dreams", "saga", "TEXT");
+  addColumn(db, "dreams", "video_job", "TEXT"); // the living portrait's job id on 0G
+  addColumn(db, "dreams", "video_state", "TEXT"); // rendering, done or failed
+  addColumn(db, "dreams", "video_at", "INTEGER");
   return db;
 }
 
