@@ -1,6 +1,7 @@
 // Background worker: claims one job at a time from the SQLite queue and runs it.
 import { claimNext, fail, finish, requeueStuck, retryLater, type Job } from "../src/lib/server/jobs";
 import { notifyPainted, paintDream, storeDream } from "../src/lib/server/pipeline";
+import { notifyEpisode, runNight, scheduleNights } from "../src/lib/server/nightly";
 import { updateDream } from "../src/lib/server/dreams";
 import { ZeroGError } from "../src/lib/server/zerog/router";
 
@@ -8,6 +9,8 @@ const handlers: Record<string, (ref: string) => Promise<void>> = {
   "dream.paint": paintDream,
   "dream.store": storeDream,
   "dream.notify": notifyPainted,
+  "night.run": runNight,
+  "episode.notify": notifyEpisode,
 };
 // Jobs whose failure means the dream itself is stuck. A failed notice leaves the dream alone.
 const PIPELINE = new Set(["dream.paint", "dream.store"]);
@@ -37,7 +40,12 @@ async function run(job: Job) {
 async function loop() {
   requeueStuck();
   console.log("[worker] started");
+  let scheduled = 0;
   for (;;) {
+    if (Date.now() - scheduled > 60_000) {
+      scheduleNights();
+      scheduled = Date.now();
+    }
     const job = claimNext();
     if (job) await run(job);
     else await new Promise((resolve) => setTimeout(resolve, 1500));

@@ -1,8 +1,12 @@
 // The nightly run: link the newest dream to the past week (its saga), write a 4-panel comic script,
 // then draw the panels with no words in them. The app letters the page itself, so dialogue never
 // reaches an image model, and image models never get to garble it.
-import { getDb, utcDay } from "./db";
-import type { Feeling } from "./dreams";
+import { getDb, now, utcDay } from "./db";
+import { addTrace, getBlob, putBlob, updateDream, type Dream, type Feeling, FEELINGS } from "./dreams";
+import { newId } from "./crypto";
+import { enqueue, hasOpenJob } from "./jobs";
+import { notify } from "./push";
+import { chatJson, drawPanel } from "./zerog/router";
 
 export type Line = { who: string; text: string };
 export type Panel = { scene: string; dialogue: Line[]; caption: string | null };
@@ -119,3 +123,120 @@ function imageMime(bytes: Buffer) {
   return "image/png";
 }
 
+// ---------------------------------------------------------------- the run
+
+const SHOWN: Record<string, true> = { painted: true, storing: true, done: true };
+
+// Job 'night.run', ref = user id. Each step is skipped if an earlier attempt finished it.
+export async function runNight(userId: string) {
+  const db = getDb();
+  const day = utcDay();
+  const dreams = (db.prepare("SELECT * FROM dreams WHERE user_id = ? AND created_at >= ? ORDER BY created_at DESC").all(userId, now() - 7 * DAY_MS) as Dream[])
+    .filter((d) => SHOWN[d.status] && d.tags_json);
+  const newest = dreams[0];
+  if (!newest || newest.created_at < now() - DAY_MS) return; // nothing dreamed since last night
+
+  let ep = db.prepare("SELECT * FROM episodes WHERE user_id = ? AND day = ? AND status != 'discarded' ORDER BY created_at DESC LIMIT 1").get(userId, day) as
+    | Episode
+    | undefined;
+  if (ep && ep.status !== "writing" && ep.status !== "drawing") return; // tonight's comic is already made
+  if (!ep) {
+    if (spentTodayUsd(userId) + EPISODE_USD > DAILY_BUDGET_USD) return; // not enough credit left today
+    const feeling = (newest.feeling ?? newest.suggested_feeling ?? "wonder") as Feeling;
+    const id = newId("episode");
+    db.prepare("INSERT INTO episodes (id, user_id, day, status, feeling, dream_ids, created_at) VALUES (?, ?, ?, 'writing', ?, ?, ?)").run(
+      id,
+      userId,
+      day,
+      FEELINGS.includes(feeling) ? feeling : "wonder",
+      JSON.stringify([newest.id]),
+      now(),
+    );
+    ep = getEpisode(id)!;
+  }
+
+  try {
+    await makeEpisode(ep, newest, dreams.slice(1));
+  } catch (error) {
+    updateEpisode(ep.id, { error: error instanceof Error ? error.message : String(error) });
+    throw error;
+  }
+}
+
+async function makeEpisode(ep: Episode, newest: Dream, earlier: Dream[]) {
+  const db = getDb();
+  const tags = (d: Dream) => {
+    const t = JSON.parse(d.tags_json ?? "{}");
+    return { id: d.id, title: d.title, saga: d.saga, themes: t.themes, places: t.places, objects: t.objects, people: t.people };
+  };
+
+  let saga = newest.saga;
+  if (!saga) {
+    const { value, trace } = await chatJson<{ saga?: string; links?: string[] }>(SAGA_SYSTEM, JSON.stringify({ newest: tags(newest), earlier: earlier.map(tags) }), 300);
+    addTrace(ep.id, "saga", trace);
+    saga = words(value.saga, 4) || newest.title || "A new saga";
+    updateDream(newest.id, { saga });
+    for (const id of value.links ?? []) if (earlier.some((d) => d.id === id && !d.saga)) updateDream(id, { saga });
+  }
+
+  const user = db.prepare("SELECT character FROM users WHERE id = ?").get(ep.user_id) as { character: string | null };
+  let character = user.character;
+  if (!character) {
+    const { value, trace } = await chatJson<{ character?: string }>(CHARACTER_SYSTEM, "Invent the hero.", 200);
+    addTrace(ep.id, "character", trace);
+    character = String(value.character ?? "").slice(0, 300) || "a small cartoon person with a round head, a striped scarf and a tuft of messy hair";
+    db.prepare("UPDATE users SET character = ? WHERE id = ?").run(character, ep.user_id);
+  }
+
+  let script = ep.script_json ? (JSON.parse(ep.script_json) as Script) : null;
+  if (!script) {
+    const previous = db.prepare("SELECT title FROM episodes WHERE user_id = ? AND saga = ? AND status = 'published' ORDER BY created_at DESC LIMIT 1").get(ep.user_id, saga) as
+      | { title: string }
+      | undefined;
+    const input = { dream: newest.transcript, scene: newest.scene, ...tags(newest), saga, previousEpisode: previous?.title ?? null };
+    const { value, trace } = await chatJson<Partial<Script>>(scriptSystem(character), JSON.stringify(input), 1200);
+    addTrace(ep.id, "script", trace);
+    script = cleanScript(value);
+    updateEpisode(ep.id, { script_json: JSON.stringify(script), title: script.title, saga, status: "drawing" });
+  }
+
+  // Panel 1 is the reference for panels 2 to 4, which keeps the hero looking the same.
+  let first: string | null = null;
+  for (let n = 0; n < 4; n++) {
+    const saved = getBlob(ep.user_id, panelKey(ep.id, n));
+    if (saved) {
+      if (n === 0) first = `data:${saved.mime};base64,${saved.bytes.toString("base64")}`;
+      continue;
+    }
+    const { png, trace } = await drawPanel(panelPrompt(script.panels[n].scene, character, ep.feeling), first ? [first] : []);
+    addTrace(ep.id, `panel ${n + 1}`, trace);
+    const mime = imageMime(png);
+    putBlob(ep.user_id, panelKey(ep.id, n), mime, png);
+    if (n === 0) first = `data:${mime};base64,${png.toString("base64")}`;
+  }
+
+  updateEpisode(ep.id, { status: "draft", error: null });
+  enqueue("episode.notify", ep.id);
+}
+
+// Job 'episode.notify'. Like every notice, it says nothing about the dream.
+export async function notifyEpisode(episodeId: string) {
+  const ep = getEpisode(episodeId);
+  if (ep) await notify(ep.user_id, { title: "Last night's comic is waiting", body: "Approve it or let it go.", url: `/episode/${ep.id}`, tag: ep.id });
+}
+
+// The demo button, and a dreamer's own "make tonight's comic now".
+export function startNight(userId: string) {
+  if (!hasOpenJob(userId, ["night.run"])) enqueue("night.run", userId);
+}
+
+// Called by the worker every minute: during the night hour, queue one run per opted-in dreamer.
+export function scheduleNights(at = new Date()) {
+  if (at.getUTCHours() !== NIGHT_HOUR_UTC) return;
+  const day = utcDay(at.getTime());
+  const due = getDb().prepare("SELECT id FROM users WHERE nightly = 1 AND (last_night IS NULL OR last_night < ?)").all(day) as { id: string }[];
+  for (const { id } of due) {
+    getDb().prepare("UPDATE users SET last_night = ? WHERE id = ?").run(day, id);
+    startNight(id);
+  }
+}
