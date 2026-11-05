@@ -3,6 +3,7 @@
 import { createPublicClient, createWalletClient, defineChain, http, parseAbi, parseEventLogs } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { env } from "./env";
+import { getDb } from "./db";
 import { tracesFor, type Dream } from "./dreams";
 
 export const galileo = defineChain({
@@ -21,6 +22,11 @@ const abi = parseAbi([
 export const KIND = { portrait: 0, comic: 1, living: 2, narration: 3, world: 4 } as const;
 
 // Returns undefined when no registry is configured yet, so the rest of the pipeline still runs.
+function ownerOf(dream: Dream) {
+  const row = getDb().prepare("SELECT wallet FROM users WHERE id = ?").get(dream.user_id) as { wallet: string | null } | undefined;
+  return row?.wallet && /^0x[0-9a-fA-F]{40}$/.test(row.wallet) ? (row.wallet as `0x${string}`) : undefined;
+}
+
 export async function anchorDream(dream: Dream, kind: number = KIND.portrait) {
   const address = env.dreamRegistry();
   if (!address || !dream.portrait_root) return undefined;
@@ -33,8 +39,8 @@ export async function anchorDream(dream: Dream, kind: number = KIND.portrait) {
     address,
     abi,
     functionName: "anchor",
-    // Dreamers have no wallet in this first cut, so the server's address stands in until sign-in lands.
-    args: [account.address, BigInt(dream.day), kind, dream.portrait_root as `0x${string}`, portraitTrace?.model ?? "z-image-turbo", portraitTrace?.request_id ?? ""],
+    // The record names the dreamer's own wallet; the server's address stands in for accounts made without one.
+    args: [ownerOf(dream) ?? account.address, BigInt(dream.day), kind, dream.portrait_root as `0x${string}`, portraitTrace?.model ?? "z-image-turbo", portraitTrace?.request_id ?? ""],
   });
   const receipt = await reader.waitForTransactionReceipt({ hash });
   const [event] = parseEventLogs({ abi, logs: receipt.logs, eventName: "Anchored" });
