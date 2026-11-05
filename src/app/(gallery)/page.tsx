@@ -7,6 +7,7 @@ import { api, PAINTED, panelUrl, portraitUrl, videoUrl, type DreamSummary, type 
 import { WeatherStrip } from "@/components/weather";
 import { WorldCard } from "@/components/world-card";
 import { TabBar } from "@/components/tab-bar";
+import { PassesPanel } from "@/components/passes-panel";
 import { dayLabel, Frame } from "@/components/ui";
 
 export default function Home() {
@@ -99,6 +100,7 @@ export default function Home() {
       )}
 
       <Comics episodes={episodes} nightly={nightly} onChange={load} />
+      <PassesPanel />
       <WorldCard />
 
       <Link

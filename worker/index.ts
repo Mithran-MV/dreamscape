@@ -5,6 +5,7 @@ import { notifyEpisode, pollLivingPortrait, runNight, scheduleNights } from "../
 import { paintWorld, publishWorldJob, scheduleWorld } from "../src/lib/server/world";
 import { dayRecordJob, onboardJob } from "../src/lib/server/names";
 import { dripJob } from "../src/lib/server/drip";
+import { grantPassJob, knockNoticeJob } from "../src/lib/server/visits";
 import { arkivJob, listJob, openTonightsStalls, scheduleStalls } from "../src/lib/server/market";
 import { updateDream } from "../src/lib/server/dreams";
 import { ZeroGError } from "../src/lib/server/zerog/router";
@@ -24,6 +25,8 @@ const handlers: Record<string, (ref: string) => Promise<void>> = {
   "piece.arkiv": arkivJob,
   "market.stalls": openTonightsStalls,
   "world.arkiv": publishWorldJob,
+  "pass.grant": grantPassJob,
+  "knock.notify": knockNoticeJob,
 };
 // Jobs whose failure means the dream itself is stuck. A failed notice leaves the dream alone.
 const PIPELINE = new Set(["dream.paint", "dream.store"]);
