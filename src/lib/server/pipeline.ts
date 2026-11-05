@@ -72,7 +72,8 @@ export async function paintDream(dreamId: string) {
 
   if (!dream.tags_json) {
     updateDream(dreamId, { status: "tagging" });
-    const { value, trace } = await chatJson<Partial<Tags>>(TAG_SYSTEM, `Dream report:\n"""${dream.transcript}"""`);
+    const report = dream.note ? `${dream.transcript}"""\nThey also wrote:\n"""${dream.note}` : dream.transcript;
+    const { value, trace } = await chatJson<Partial<Tags>>(TAG_SYSTEM, `Dream report:\n"""${report}"""`);
     addTrace(dreamId, "tag", trace);
     const tags = cleanTags(value, (dream.feeling as Feeling) ?? "wonder");
     updateDream(dreamId, { tags_json: JSON.stringify(tags), title: tags.title, scene: tags.scene, suggested_feeling: tags.feeling });
@@ -121,7 +122,7 @@ export async function storeDream(dreamId: string) {
   }
   dream = mustGet(dreamId);
   if (!dream.record_root) {
-    const record = { id: dream.id, day: dream.day, transcript: dream.transcript, tags: JSON.parse(dream.tags_json ?? "{}"), feeling: dream.feeling, voiceRoot: dream.voice_root, portraitRoot: dream.portrait_root };
+    const record = { id: dream.id, day: dream.day, transcript: dream.transcript, note: dream.note, tags: JSON.parse(dream.tags_json ?? "{}"), feeling: dream.feeling, voiceRoot: dream.voice_root, portraitRoot: dream.portrait_root };
     updateDream(dreamId, { record_root: (await putEncrypted(Buffer.from(JSON.stringify(record)), key)).root });
   }
 

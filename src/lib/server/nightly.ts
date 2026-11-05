@@ -201,7 +201,7 @@ async function makeEpisode(ep: Episode, newest: Dream, earlier: Dream[]) {
     const previous = db.prepare("SELECT title FROM episodes WHERE user_id = ? AND saga = ? AND status = 'published' ORDER BY created_at DESC LIMIT 1").get(ep.user_id, saga) as
       | { title: string }
       | undefined;
-    const input = { dream: newest.transcript, scene: newest.scene, ...tags(newest), saga, previousEpisode: previous?.title ?? null };
+    const input = { dream: newest.transcript, alsoWrote: newest.note, scene: newest.scene, ...tags(newest), saga, previousEpisode: previous?.title ?? null };
     const { value, trace } = await chatJson<Partial<Script>>(scriptSystem(character), JSON.stringify(input), 1200);
     addTrace(ep.id, "script", trace);
     script = cleanScript(value);

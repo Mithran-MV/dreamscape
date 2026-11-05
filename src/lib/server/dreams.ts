@@ -33,13 +33,15 @@ export type Dream = {
   video_state: "rendering" | "done" | "failed" | null;
   video_at: number | null;
   ens_tx: string | null;
+  note: string | null;
 };
 
-export function createDream(userId: string, kind: "voice" | "text", feeling: Feeling | null, text: string | null): string {
+// A voice dream may also carry a typed note; a text dream is its own transcript.
+export function createDream(userId: string, kind: "voice" | "text", feeling: Feeling | null, text: string | null, note: string | null = null): string {
   const id = newId("dream");
   getDb()
-    .prepare("INSERT INTO dreams (id, user_id, day, created_at, input_kind, feeling, status, transcript) VALUES (?, ?, ?, ?, ?, ?, 'queued', ?)")
-    .run(id, userId, utcDay(), now(), kind, feeling, text);
+    .prepare("INSERT INTO dreams (id, user_id, day, created_at, input_kind, feeling, status, transcript, note) VALUES (?, ?, ?, ?, ?, ?, 'queued', ?, ?)")
+    .run(id, userId, utcDay(), now(), kind, feeling, text, note);
   return id;
 }
 

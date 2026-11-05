@@ -25,7 +25,7 @@ export async function GET() {
   return Response.json({ dreams, notes });
 }
 
-// A voice note (field "audio") or one line of text (field "text"), plus an optional feeling.
+// A voice note (field "audio"), a line of text (field "text"), or both, plus an optional feeling.
 export async function POST(request: Request) {
   const user = await currentUser();
   if (!user) return Response.json({ error: "Sign in first." }, { status: 401 });
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     if (audio.size > MAX_AUDIO) return Response.json({ error: "That voice note is too long." }, { status: 413 });
     const mime = (audio.type || "audio/webm").split(";")[0].trim().toLowerCase();
     if (!AUDIO_TYPES.has(mime)) return Response.json({ error: "That isn't an audio recording." }, { status: 415 });
-    const id = createDream(user.id, "voice", feeling, null);
+    const id = createDream(user.id, "voice", feeling, null, text.length ? text : null);
     putBlob(user.id, `dream/${id}/voice`, mime, new Uint8Array(await audio.arrayBuffer()));
     enqueue("dream.paint", id);
     return Response.json({ id }, { status: 201 });
