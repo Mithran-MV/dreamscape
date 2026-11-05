@@ -70,6 +70,9 @@ function DreamView() {
             {STEPS[dream.status] ?? dream.status}
             {dream.status === "failed" && dream.error ? `: ${dream.error.slice(0, 160)}` : ""}
           </p>
+          {dream.status !== "failed" && dream.status !== "done" && dream.error && (
+            <p className="mt-1 text-xs text-dim">Retrying: {dream.error.slice(0, 140)}</p>
+          )}
 
           {dream.transcript && <blockquote className="mt-5 border-l-2 border-gold pl-4 font-display text-lg italic leading-relaxed">&ldquo;{dream.transcript}&rdquo;</blockquote>}
           {dream.inputKind === "voice" && <audio controls src={voiceUrl(dream.id)} className="mt-4 w-full" />}

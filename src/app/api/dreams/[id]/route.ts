@@ -13,7 +13,7 @@ export async function GET(_request: Request, ctx: RouteContext<"/api/dreams/[id]
     day: dream.day,
     createdAt: dream.created_at,
     status: dream.status,
-    error: dream.status === "failed" ? dream.error : null,
+    error: dream.error,
     inputKind: dream.input_kind,
     transcript: dream.transcript,
     title: dream.title,
