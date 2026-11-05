@@ -17,6 +17,7 @@ export async function GET() {
     feeling: d.feeling ?? d.suggested_feeling,
     stored: Boolean(d.portrait_root),
     anchored: Boolean(d.registry_tx),
+    moving: d.video_state === "done",
   }));
   return Response.json({ dreams });
 }

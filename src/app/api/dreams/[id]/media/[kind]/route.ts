@@ -1,8 +1,8 @@
-// Decrypts a dream's portrait or voice note for its owner only. Keys never leave the server.
+// Decrypts a dream's portrait, voice note or living portrait for its owner only. Keys never leave the server.
 import { getBlob, getDream } from "@/lib/server/dreams";
 import { currentUser } from "@/lib/server/session";
 
-const KINDS = new Set(["portrait", "voice"]);
+const KINDS = new Set(["portrait", "voice", "video"]);
 
 export async function GET(_request: Request, ctx: RouteContext<"/api/dreams/[id]/media/[kind]">) {
   const { id, kind } = await ctx.params;

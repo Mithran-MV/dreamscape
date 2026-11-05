@@ -20,6 +20,8 @@ export async function GET(_request: Request, ctx: RouteContext<"/api/dreams/[id]
     tags: dream.tags_json ? JSON.parse(dream.tags_json) : null,
     feeling: dream.feeling,
     suggestedFeeling: dream.suggested_feeling,
+    saga: dream.saga,
+    video: dream.video_state,
     proof: {
       traces: tracesFor(dream.id),
       storage: [
