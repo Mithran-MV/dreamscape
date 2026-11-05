@@ -21,7 +21,8 @@ export class ZeroGError extends Error {
   }
 }
 
-type Sealing = "private" | "standard";
+// private: sealed enclave (TeeML). verified: a TeeTLS relay, where the vendor sees the input.
+type Sealing = "private" | "verified" | "standard";
 
 function headers(sealing: Sealing, json: boolean): Record<string, string> {
   const h: Record<string, string> = {
@@ -29,7 +30,7 @@ function headers(sealing: Sealing, json: boolean): Record<string, string> {
     "X-Title": "Dreamscape",
     "HTTP-Referer": "https://dreamscape.hacklabs.in",
   };
-  if (sealing === "private") h["X-0G-Provider-Trust-Mode"] = "private";
+  if (sealing !== "standard") h["X-0G-Provider-Trust-Mode"] = sealing;
   if (json) h["Content-Type"] = "application/json";
   return h;
 }
@@ -128,4 +129,30 @@ export async function drawPanel(prompt: string, references: string[] = [], seed?
   const item = data.data[0];
   const png = item.b64_json ? Buffer.from(item.b64_json, "base64") : Buffer.from(await (await fetch(item.url!)).arrayBuffer());
   return { png, trace };
+}
+
+// Living portraits: image to video, submitted, polled, then downloaded. Seedance runs on a verified
+// relay whose vendor sees the input, so it only ever gets the painted portrait and a motion line.
+export type VideoJob = { id: string; status: string; error?: { message?: string } };
+const VIDEO_MODEL = "bytedance/seedance-2.0";
+
+export async function submitVideo(prompt: string, firstFrame: string, seconds = 5, size = "480p") {
+  const { data, trace } = await call<VideoJob>("/videos", VIDEO_MODEL, {
+    method: "POST",
+    headers: headers("verified", true),
+    body: JSON.stringify({ model: VIDEO_MODEL, prompt, input_reference: firstFrame, seconds, size, generate_audio: false }),
+  });
+  return { job: data, trace };
+}
+
+// verify_tee on the poll is the proof for video, since response signatures don't cover it.
+export async function pollVideo(id: string) {
+  const { data, trace } = await call<VideoJob>(`/videos/${encodeURIComponent(id)}?verify_tee=true`, VIDEO_MODEL, { headers: headers("verified", false) });
+  return { job: data, trace };
+}
+
+export async function downloadVideo(id: string) {
+  const res = await fetch(`${env.zgRouter()}/videos/${encodeURIComponent(id)}/content`, { headers: headers("verified", false), signal: AbortSignal.timeout(180_000) });
+  if (!res.ok) throw new ZeroGError(res.status, await res.text());
+  return Buffer.from(await res.arrayBuffer());
 }
