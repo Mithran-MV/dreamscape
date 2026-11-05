@@ -68,7 +68,7 @@ export async function transcribe(audio: Uint8Array, mime: string) {
   const model = "whisper-large-v3";
   const form = new FormData();
   const ext = mime.includes("mp4") ? "m4a" : mime.includes("ogg") ? "ogg" : mime.includes("wav") ? "wav" : "webm";
-  form.append("file", new Blob([audio], { type: mime }), `dream.${ext}`);
+  form.append("file", new Blob([new Uint8Array(audio)], { type: mime }), `dream.${ext}`);
   form.append("model", model);
   form.append("response_format", "json");
   const { data, trace } = await call<{ text: string }>("/audio/transcriptions?verify_tee=true", model, {
