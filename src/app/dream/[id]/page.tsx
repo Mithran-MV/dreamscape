@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { api, PAINTED, portraitUrl, voiceUrl, type DreamDetail } from "@/lib/api";
 import { dayLabel, FEELINGS, feelingColor, Frame } from "@/components/ui";
+import { NotifyButton } from "@/components/notify-button";
 
 const STEPS: Record<string, string> = {
   queued: "Waiting for the painter",
@@ -73,6 +74,7 @@ function DreamView() {
           {dream.status !== "failed" && dream.status !== "done" && dream.error && (
             <p className="mt-1 text-xs text-dim">Retrying: {dream.error.slice(0, 140)}</p>
           )}
+          {!painted && dream.status !== "failed" && <NotifyButton />}
 
           {dream.transcript && <blockquote className="mt-5 border-l-2 border-gold pl-4 font-display text-lg italic leading-relaxed">&ldquo;{dream.transcript}&rdquo;</blockquote>}
           {dream.inputKind === "voice" && <audio controls src={voiceUrl(dream.id)} className="mt-4 w-full" />}

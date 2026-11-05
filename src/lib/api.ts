@@ -44,6 +44,9 @@ export const api = {
     fetch("/api/session", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ handle, passphrase }) }).then((r) => json<{ handle: string }>(r)),
   dreams: () => fetch("/api/dreams").then((r) => json<{ dreams: DreamSummary[] }>(r)),
   dream: (id: string) => fetch(`/api/dreams/${id}`).then((r) => json<DreamDetail>(r)),
+  pushKey: () => fetch("/api/push").then((r) => json<{ publicKey: string }>(r)),
+  pushSubscribe: (sub: PushSubscriptionJSON) =>
+    fetch("/api/push", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(sub) }).then((r) => json<{ ok: true }>(r)),
   tell: (form: FormData) => fetch("/api/dreams", { method: "POST", body: form }).then((r) => json<{ id: string }>(r)),
 };
 
