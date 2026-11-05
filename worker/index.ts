@@ -1,10 +1,44 @@
-// Background worker: runs the dream pipeline and the nightly job. For now it only proves it's alive.
-const started = new Date();
+// Background worker: claims one job at a time from the SQLite queue and runs it.
+import { claimNext, fail, finish, requeueStuck, retryLater, type Job } from "../src/lib/server/jobs";
+import { paintDream, storeDream } from "../src/lib/server/pipeline";
+import { updateDream } from "../src/lib/server/dreams";
+import { ZeroGError } from "../src/lib/server/zerog/router";
 
-function heartbeat() {
-  const minutes = Math.round((Date.now() - started.getTime()) / 60_000);
-  console.log(`[worker] alive, up ${minutes} min`);
+const handlers: Record<string, (ref: string) => Promise<void>> = {
+  "dream.paint": paintDream,
+  "dream.store": storeDream,
+};
+
+async function run(job: Job) {
+  const handler = handlers[job.kind];
+  if (!handler) return fail(job.id, `No handler for ${job.kind}`);
+  const started = Date.now();
+  try {
+    await handler(job.ref);
+    finish(job.id);
+    console.log(`[worker] ${job.kind} ${job.ref} done in ${Math.round((Date.now() - started) / 1000)}s`);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    // Bad keys and bad requests won't fix themselves; everything else (busy enclaves, gas, network) gets retried.
+    if (error instanceof ZeroGError && !error.retryable) {
+      fail(job.id, message);
+      updateDream(job.ref, { status: "failed", error: message });
+    } else {
+      const gaveUp = retryLater(job, message);
+      updateDream(job.ref, { error: message, ...(gaveUp ? { status: "failed" } : {}) });
+    }
+    console.error(`[worker] ${job.kind} ${job.ref} attempt ${job.attempts}: ${message.slice(0, 200)}`);
+  }
 }
 
-heartbeat();
-setInterval(heartbeat, 60_000);
+async function loop() {
+  requeueStuck();
+  console.log("[worker] started");
+  for (;;) {
+    const job = claimNext();
+    if (job) await run(job);
+    else await new Promise((resolve) => setTimeout(resolve, 1500));
+  }
+}
+
+loop();
