@@ -1,0 +1,35 @@
+import { getDream, tracesFor } from "@/lib/server/dreams";
+import { currentUser } from "@/lib/server/session";
+import { storageExplorer } from "@/lib/server/zerog/storage";
+import { txLink } from "@/lib/server/registry";
+
+export async function GET(_request: Request, ctx: RouteContext<"/api/dreams/[id]">) {
+  const { id } = await ctx.params;
+  const user = await currentUser();
+  const dream = getDream(id);
+  if (!user || !dream || dream.user_id !== user.id) return Response.json({ error: "Not found." }, { status: 404 });
+  return Response.json({
+    id: dream.id,
+    day: dream.day,
+    createdAt: dream.created_at,
+    status: dream.status,
+    error: dream.status === "failed" ? dream.error : null,
+    inputKind: dream.input_kind,
+    transcript: dream.transcript,
+    title: dream.title,
+    tags: dream.tags_json ? JSON.parse(dream.tags_json) : null,
+    feeling: dream.feeling,
+    suggestedFeeling: dream.suggested_feeling,
+    proof: {
+      traces: tracesFor(dream.id),
+      storage: [
+        ["voice", dream.voice_root],
+        ["portrait", dream.portrait_root],
+        ["record", dream.record_root],
+      ]
+        .filter(([, root]) => root)
+        .map(([what, root]) => ({ what, root, link: storageExplorer(root as string) })),
+      registry: dream.registry_tx ? { id: dream.registry_id, tx: dream.registry_tx, link: txLink(dream.registry_tx) } : null,
+    },
+  });
+}
