@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { api, PAINTED, panelUrl, portraitUrl, videoUrl, type DreamSummary, type EpisodeSummary, type Note } from "@/lib/api";
 import { WeatherStrip } from "@/components/weather";
+import { WorldCard } from "@/components/world-card";
 import { dayLabel, Frame } from "@/components/ui";
 
 export default function Home() {
@@ -95,6 +96,7 @@ export default function Home() {
       )}
 
       <Comics episodes={episodes} nightly={nightly} onChange={load} />
+      <WorldCard />
 
       <Link
         href="/tell"
