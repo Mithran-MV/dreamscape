@@ -12,7 +12,8 @@
     "ens:fork-test": "node --env-file-if-exists=.env.local --import tsx scripts/ens-fork-test.ts",
     "typecheck": "next typegen && tsc --noEmit",
     "market:fork-test": "node --env-file-if-exists=.env.local --import tsx scripts/market-fork-test.ts",
-    "market:arkiv-test": "node --env-file-if-exists=.env.local --import tsx scripts/market-arkiv-test.ts"
+    "market:arkiv-test": "node --env-file-if-exists=.env.local --import tsx scripts/market-arkiv-test.ts",
+    "passes:fork-test": "node --env-file-if-exists=.env.local --import tsx scripts/passes-fork-test.ts"
   },
   "dependencies": {
     "@0gfoundation/0g-compute-ts-sdk": "0.9.0",
