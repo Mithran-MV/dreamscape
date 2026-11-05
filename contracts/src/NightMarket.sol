@@ -14,6 +14,9 @@ import {IEditionsRegistry} from "./interfaces/IEditionsRegistry.sol";
 /// Every sale and delivery sends `commonsBps` of the price to the commons fund.
 /// @dev NightMarket holds ROLE_REGISTRAR on each editions registry. It never holds or
 /// requests a role on a minted name: the buyer is the owner and gets the only role bits.
+/// Because it can mint in every registry, operators bind each registry to the account whose
+/// namespace it is, and each vendor agent to its owner. Listings and commissions may only
+/// mint into a registry bound to the account that gets paid.
 contract NightMarket is Owned {
     // ---------------------------------------------------------------- constants
 
@@ -64,8 +67,13 @@ contract NightMarket is Owned {
     uint16 public immutable commonsBps;
     address public commonsFund;
 
-    /// @notice Trusted callers (the app server) that may list and delist for sellers.
+    /// @notice Trusted callers (the app server) that bind registries and agents, and may
+    /// list and delist for sellers.
     mapping(address => bool) public operators;
+    /// @notice Editions registry => the account whose namespace it is (0 = unbound).
+    mapping(address => address) public registryOwner;
+    /// @notice Vendor agent => its human owner, who is paid on delivery (0 = unbound).
+    mapping(address => address) public agentOwner;
 
     mapping(bytes32 => Piece) private _pieces;
     mapping(bytes32 => Commission) private _commissions;
@@ -76,6 +84,8 @@ contract NightMarket is Owned {
 
     event OperatorSet(address indexed operator, bool allowed);
     event CommonsFundSet(address indexed commonsFund);
+    event RegistryBound(address indexed registry, address indexed owner);
+    event AgentBound(address indexed agent, address indexed owner);
 
     event PieceListed(
         bytes32 indexed pieceId,
@@ -111,6 +121,10 @@ contract NightMarket is Owned {
     error BpsTooHigh();
     error NotContract();
     error NotAuthorized();
+    error NotOperator();
+    error RegistryNotBound();
+    error AgentNotBound();
+    error PriceTooHigh();
     error NotSeller();
     error PieceExists();
     error ZeroPrice();
@@ -139,6 +153,11 @@ contract NightMarket is Owned {
         _entered = false;
     }
 
+    modifier onlyOperator() {
+        if (!operators[msg.sender]) revert NotOperator();
+        _;
+    }
+
     constructor(address usdc_, address commonsFund_, uint16 commonsBps_) {
         if (usdc_.code.length == 0) revert NotContract();
         if (commonsFund_ == address(0)) revert ZeroAddress();
@@ -161,10 +180,26 @@ contract NightMarket is Owned {
         emit CommonsFundSet(commonsFund_);
     }
 
+    /// @notice Bind an editions registry to the account whose namespace it is.
+    /// `owner_ = address(0)` unbinds it. Existing listings are not affected.
+    function bindRegistry(address registry, address owner_) external onlyOperator {
+        if (registry == address(0)) revert ZeroAddress();
+        registryOwner[registry] = owner_;
+        emit RegistryBound(registry, owner_);
+    }
+
+    /// @notice Bind a vendor agent to its owner. `owner_ = address(0)` unbinds it.
+    function bindAgent(address agent, address owner_) external onlyOperator {
+        if (agent == address(0)) revert ZeroAddress();
+        agentOwner[agent] = owner_;
+        emit AgentBound(agent, owner_);
+    }
+
     // ---------------------------------------------------------------- pieces
 
     /// @notice List a piece for sale as `maxEditions` numbered editions.
-    /// Callable by an operator or by the seller. `vendorPayout`/`vendorBps` may be zero.
+    /// Callable by an operator or by the seller. `editionsRegistry` must be bound to `seller`.
+    /// `vendorPayout`/`vendorBps` may be zero.
     function listPiece(
         bytes32 pieceId,
         address seller,
@@ -177,6 +212,7 @@ contract NightMarket is Owned {
     ) external {
         if (msg.sender != seller && !operators[msg.sender]) revert NotAuthorized();
         if (seller == address(0) || editionsRegistry == address(0)) revert ZeroAddress();
+        if (registryOwner[editionsRegistry] != seller) revert RegistryNotBound();
         if (_pieces[pieceId].seller != address(0)) revert PieceExists();
         if (priceUsdc == 0) revert ZeroPrice();
         if (maxEditions == 0) revert ZeroEditions();
@@ -217,16 +253,18 @@ contract NightMarket is Owned {
     }
 
     /// @notice Buy the next edition. The caller must have approved `priceUsdc`.
+    /// Reverts if the price is above `maxPrice`, so a last-second price rise cannot overcharge.
     /// The split: commons = price * commonsBps / 10000, vendor = price * vendorBps / 10000,
     /// seller = the remainder, so the three parts always sum to the price.
-    function buy(bytes32 pieceId) external nonReentrant returns (uint32 editionNo, uint256 tokenId) {
+    function buy(bytes32 pieceId, uint256 maxPrice) external nonReentrant returns (uint32 editionNo, uint256 tokenId) {
         Piece storage p = _pieces[pieceId];
         if (!p.active) revert NotListed();
         if (p.sold >= p.maxEditions) revert SoldOut();
+        uint256 price = p.priceUsdc;
+        if (price > maxPrice) revert PriceTooHigh();
 
         // Effects: claim the edition number and work out the split before any external call.
         editionNo = ++p.sold;
-        uint256 price = p.priceUsdc;
         uint256 toCommons = (price * commonsBps) / BPS;
         uint256 toVendor = (price * p.vendorBps) / BPS;
         string memory label = string.concat(p.labelPrefix, "-", _toString(editionNo));
@@ -250,6 +288,8 @@ contract NightMarket is Owned {
     // ---------------------------------------------------------------- commissions
 
     /// @notice Pay `priceUsdc` into escrow for a vendor agent to make a one-of-one piece.
+    /// The agent must be bound to `vendorOwner`, and the name is minted in `vendorOwner`'s own
+    /// editions registry.
     function requestCommission(
         bytes32 commissionId,
         address vendorAgent,
@@ -263,6 +303,8 @@ contract NightMarket is Owned {
         if (vendorAgent == address(0) || vendorOwner == address(0) || editionsRegistry == address(0)) {
             revert ZeroAddress();
         }
+        if (agentOwner[vendorAgent] != vendorOwner) revert AgentNotBound();
+        if (registryOwner[editionsRegistry] != vendorOwner) revert RegistryNotBound();
         if (priceUsdc == 0) revert ZeroPrice();
         // Deadlines are hours or days out, so a few seconds of block-time drift do not matter.
         // forge-lint: disable-next-line(block-timestamp)

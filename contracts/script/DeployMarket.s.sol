@@ -9,7 +9,8 @@ pragma solidity ^0.8.28;
 //     --rpc-url https://ethereum-sepolia-rpc.publicnode.com --private-key <DEPLOYER_KEY> --broadcast
 //
 // Drop --broadcast for a dry run. The deployer becomes the owner.
-// After deploying, grant this contract ROLE_REGISTRAR on each dreamer's editions registry.
+// After deploying, grant this contract ROLE_REGISTRAR on each dreamer's editions registry,
+// and have the server bind each registry (bindRegistry) and vendor agent (bindAgent).
 
 import {Script} from "forge-std/Script.sol";
 import {NightMarket} from "../src/NightMarket.sol";

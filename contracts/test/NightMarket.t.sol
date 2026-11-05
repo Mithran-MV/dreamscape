@@ -13,7 +13,8 @@ contract NightMarketTest is Test {
     uint256 constant ROLE_CAN_TRANSFER_ADMIN = (uint256(1) << 28) << 128;
 
     MockUSDC usdc;
-    MockEditionsRegistry editions;
+    MockEditionsRegistry editions; //       the seller's namespace
+    MockEditionsRegistry vendorEditions; // the vendor's namespace (commissions)
     NightMarket market;
 
     address commons = makeAddr("commons");
@@ -37,8 +38,8 @@ contract NightMarketTest is Test {
     function setUp() public {
         usdc = new MockUSDC();
         editions = new MockEditionsRegistry();
-        market = new NightMarket(address(usdc), commons, COMMONS_BPS);
-        market.setOperator(server, true);
+        vendorEditions = new MockEditionsRegistry();
+        market = _deploy(address(usdc), COMMONS_BPS);
 
         usdc.mint(buyer, 1_000e6);
         vm.prank(buyer);
@@ -47,6 +48,17 @@ contract NightMarketTest is Test {
 
     // ---------------------------------------------------------------- helpers
 
+    /// @dev A market with the server as operator and the usual bindings in place.
+    function _deploy(address token, uint16 commonsBps) internal returns (NightMarket m) {
+        m = new NightMarket(token, commons, commonsBps);
+        m.setOperator(server, true);
+        vm.startPrank(server);
+        m.bindRegistry(address(editions), seller);
+        m.bindRegistry(address(vendorEditions), agentOwner);
+        m.bindAgent(agent, agentOwner);
+        vm.stopPrank();
+    }
+
     function _list(uint32 maxEditions) internal {
         vm.prank(server);
         market.listPiece(PIECE, seller, address(editions), "sea-roof", PRICE, maxEditions, vendor, VENDOR_BPS);
@@ -54,13 +66,13 @@ contract NightMarketTest is Test {
 
     function _buy() internal returns (uint32 editionNo, uint256 tokenId) {
         vm.prank(buyer);
-        return market.buy(PIECE);
+        return market.buy(PIECE, PRICE);
     }
 
     function _request() internal returns (uint64 deadline) {
         deadline = uint64(block.timestamp + 1 days);
         vm.prank(buyer);
-        market.requestCommission(JOB, agent, agentOwner, FEE, deadline, address(editions), "night-swim");
+        market.requestCommission(JOB, agent, agentOwner, FEE, deadline, address(vendorEditions), "night-swim");
     }
 
     function _status(bytes32 id) internal view returns (uint256) {
@@ -115,6 +127,58 @@ contract NightMarketTest is Test {
         market.setCommonsFund(stranger);
     }
 
+    // ---------------------------------------------------------------- bindings
+
+    function test_BindRegistry_ByOperator() public {
+        MockEditionsRegistry other = new MockEditionsRegistry();
+        vm.expectEmit(address(market));
+        emit NightMarket.RegistryBound(address(other), stranger);
+        vm.prank(server);
+        market.bindRegistry(address(other), stranger);
+        assertEq(market.registryOwner(address(other)), stranger);
+        assertEq(market.registryOwner(address(editions)), seller);
+    }
+
+    function test_BindAgent_ByOperator() public {
+        address agent2 = makeAddr("agent2");
+        vm.expectEmit(address(market));
+        emit NightMarket.AgentBound(agent2, stranger);
+        vm.prank(server);
+        market.bindAgent(agent2, stranger);
+        assertEq(market.agentOwner(agent2), stranger);
+        assertEq(market.agentOwner(agent), agentOwner);
+    }
+
+    function test_Bind_OnlyOperators() public {
+        // Strangers, sellers and even the owner (not an operator) cannot bind.
+        address[3] memory callers = [stranger, seller, address(this)];
+        for (uint256 i; i < callers.length; ++i) {
+            vm.startPrank(callers[i]);
+            vm.expectRevert(NightMarket.NotOperator.selector);
+            market.bindRegistry(address(editions), callers[i]);
+            vm.expectRevert(NightMarket.NotOperator.selector);
+            market.bindAgent(agent, callers[i]);
+            vm.stopPrank();
+        }
+        assertEq(market.registryOwner(address(editions)), seller);
+        assertEq(market.agentOwner(agent), agentOwner);
+
+        // A removed operator loses the right.
+        market.setOperator(server, false);
+        vm.prank(server);
+        vm.expectRevert(NightMarket.NotOperator.selector);
+        market.bindRegistry(address(editions), stranger);
+    }
+
+    function test_Bind_RejectsZeroSubject() public {
+        vm.startPrank(server);
+        vm.expectRevert(Owned.ZeroAddress.selector);
+        market.bindRegistry(address(0), seller);
+        vm.expectRevert(Owned.ZeroAddress.selector);
+        market.bindAgent(address(0), agentOwner);
+        vm.stopPrank();
+    }
+
     // ---------------------------------------------------------------- listPiece
 
     function test_ListPiece_ByOperator() public {
@@ -160,6 +224,52 @@ contract NightMarketTest is Test {
         vm.prank(server);
         vm.expectRevert(NightMarket.PieceExists.selector);
         market.listPiece(PIECE, seller, address(editions), "sea-roof", PRICE, 1, address(0), 0);
+    }
+
+    function test_ListPiece_UnboundRegistryReverts() public {
+        MockEditionsRegistry unbound = new MockEditionsRegistry();
+
+        vm.prank(seller);
+        vm.expectRevert(NightMarket.RegistryNotBound.selector);
+        market.listPiece(PIECE, seller, address(unbound), "sea-roof", PRICE, 1, address(0), 0);
+
+        vm.prank(server);
+        vm.expectRevert(NightMarket.RegistryNotBound.selector);
+        market.listPiece(PIECE, seller, address(unbound), "sea-roof", PRICE, 1, address(0), 0);
+    }
+
+    function test_ListPiece_SomeoneElsesRegistryReverts() public {
+        // A stranger listing for themselves in the seller's namespace.
+        vm.prank(stranger);
+        vm.expectRevert(NightMarket.RegistryNotBound.selector);
+        market.listPiece(PIECE, stranger, address(editions), "sea-roof", PRICE, 1, address(0), 0);
+
+        // The seller listing into the vendor's namespace, by themselves or via the operator.
+        vm.prank(seller);
+        vm.expectRevert(NightMarket.RegistryNotBound.selector);
+        market.listPiece(PIECE, seller, address(vendorEditions), "sea-roof", PRICE, 1, address(0), 0);
+
+        vm.prank(server);
+        vm.expectRevert(NightMarket.RegistryNotBound.selector);
+        market.listPiece(PIECE, seller, address(vendorEditions), "sea-roof", PRICE, 1, address(0), 0);
+    }
+
+    function test_ListPiece_UnbindStopsNewListings() public {
+        _list(2);
+
+        vm.expectEmit(address(market));
+        emit NightMarket.RegistryBound(address(editions), address(0));
+        vm.prank(server);
+        market.bindRegistry(address(editions), address(0));
+        assertEq(market.registryOwner(address(editions)), address(0));
+
+        vm.prank(server);
+        vm.expectRevert(NightMarket.RegistryNotBound.selector);
+        market.listPiece(keccak256("piece:2"), seller, address(editions), "lighthouse", PRICE, 1, address(0), 0);
+
+        // A piece listed before the unbind keeps selling.
+        (uint32 editionNo,) = _buy();
+        assertEq(editionNo, 1);
     }
 
     function test_ListPiece_Validation() public {
@@ -241,7 +351,7 @@ contract NightMarketTest is Test {
         commonsBps = uint16(bound(commonsBps, 0, 2000));
         vendorBps = uint16(bound(vendorBps, 0, 10_000 - commonsBps));
 
-        NightMarket m = new NightMarket(address(usdc), commons, commonsBps);
+        NightMarket m = _deploy(address(usdc), commonsBps);
         vm.prank(seller);
         m.listPiece(PIECE, seller, address(editions), "fuzz", price, 1, vendor, vendorBps);
 
@@ -249,7 +359,7 @@ contract NightMarketTest is Test {
         usdc.mint(payer, price);
         vm.startPrank(payer);
         usdc.approve(address(m), price);
-        m.buy(PIECE);
+        m.buy(PIECE, price);
         vm.stopPrank();
 
         uint256 c = usdc.balanceOf(commons);
@@ -303,26 +413,50 @@ contract NightMarketTest is Test {
         assertEq(editions.tokenOfLabel("sea-roof-11"), 11);
     }
 
+    function test_Buy_PriceRaisedAboveMaxReverts() public {
+        _list(2);
+        vm.prank(seller);
+        market.setPrice(PIECE, PRICE + 1);
+
+        vm.prank(buyer);
+        vm.expectRevert(NightMarket.PriceTooHigh.selector);
+        market.buy(PIECE, PRICE);
+        assertEq(market.pieces(PIECE).sold, 0);
+        assertEq(usdc.balanceOf(buyer), 1_000e6);
+
+        // Paying exactly the new price works.
+        vm.prank(buyer);
+        market.buy(PIECE, PRICE + 1);
+        assertEq(usdc.balanceOf(buyer), 1_000e6 - PRICE - 1);
+    }
+
+    function test_Buy_MaxPriceAboveIsFine() public {
+        _list(1);
+        vm.prank(buyer);
+        market.buy(PIECE, type(uint256).max);
+        assertEq(usdc.balanceOf(buyer), 1_000e6 - PRICE); // charged the price, not the cap
+    }
+
     function test_Buy_SoldOut() public {
         _list(2);
         _buy();
         _buy();
         vm.prank(buyer);
         vm.expectRevert(NightMarket.SoldOut.selector);
-        market.buy(PIECE);
+        market.buy(PIECE, PRICE);
     }
 
     function test_Buy_UnknownPieceReverts() public {
         vm.prank(buyer);
         vm.expectRevert(NightMarket.NotListed.selector);
-        market.buy(PIECE);
+        market.buy(PIECE, PRICE);
     }
 
     function test_Buy_WithoutAllowanceReverts() public {
         _list(1);
         vm.prank(stranger);
         vm.expectRevert(MockUSDC.InsufficientAllowance.selector);
-        market.buy(PIECE);
+        market.buy(PIECE, PRICE);
     }
 
     function test_Buy_TakenLabelRevertsAndKeepsCount() public {
@@ -332,7 +466,7 @@ contract NightMarketTest is Test {
 
         vm.prank(buyer);
         vm.expectRevert(abi.encodeWithSelector(MockEditionsRegistry.LabelTaken.selector, "sea-roof-1"));
-        market.buy(PIECE);
+        market.buy(PIECE, PRICE);
         assertEq(market.pieces(PIECE).sold, 0);
         assertEq(usdc.balanceOf(seller), 0);
     }
@@ -351,7 +485,7 @@ contract NightMarketTest is Test {
 
         vm.prank(buyer);
         vm.expectRevert(NightMarket.NotListed.selector);
-        market.buy(PIECE);
+        market.buy(PIECE, PRICE);
 
         // Already sold editions stay with the buyer.
         assertEq(editions.ownerOf(1), buyer);
@@ -413,7 +547,7 @@ contract NightMarketTest is Test {
 
         vm.expectEmit(address(market));
         emit NightMarket.CommissionRequested(
-            JOB, buyer, agent, agentOwner, FEE, deadline, address(editions), "night-swim"
+            JOB, buyer, agent, agentOwner, FEE, deadline, address(vendorEditions), "night-swim"
         );
         _request();
 
@@ -426,7 +560,7 @@ contract NightMarketTest is Test {
         assertEq(c.deadline, deadline);
         assertEq(c.vendorAgent, agent);
         assertEq(c.vendorOwner, agentOwner);
-        assertEq(c.editionsRegistry, address(editions));
+        assertEq(c.editionsRegistry, address(vendorEditions));
         assertEq(c.priceUsdc, FEE);
         assertEq(c.label, "night-swim");
     }
@@ -445,9 +579,9 @@ contract NightMarketTest is Test {
         assertEq(usdc.balanceOf(address(market)), 0);
 
         assertEq(tokenId, 1);
-        assertEq(editions.tokenOfLabel("night-swim"), 1);
-        assertEq(editions.ownerOf(1), buyer);
-        MockEditionsRegistry.Registration memory r = editions.registration(1);
+        assertEq(vendorEditions.tokenOfLabel("night-swim"), 1);
+        assertEq(vendorEditions.ownerOf(1), buyer);
+        MockEditionsRegistry.Registration memory r = vendorEditions.registration(1);
         assertEq(r.roleBitmap, ROLE_CAN_TRANSFER_ADMIN);
         assertEq(r.expiry, type(uint64).max);
 
@@ -467,34 +601,73 @@ contract NightMarketTest is Test {
         vm.startPrank(buyer);
 
         vm.expectRevert(NightMarket.BadDeadline.selector);
-        market.requestCommission(JOB, agent, agentOwner, FEE, uint64(block.timestamp), address(editions), "x");
+        market.requestCommission(JOB, agent, agentOwner, FEE, uint64(block.timestamp), address(vendorEditions), "x");
 
         vm.expectRevert(NightMarket.ZeroPrice.selector);
-        market.requestCommission(JOB, agent, agentOwner, 0, deadline, address(editions), "x");
+        market.requestCommission(JOB, agent, agentOwner, 0, deadline, address(vendorEditions), "x");
 
         vm.expectRevert(Owned.ZeroAddress.selector);
-        market.requestCommission(JOB, address(0), agentOwner, FEE, deadline, address(editions), "x");
+        market.requestCommission(JOB, address(0), agentOwner, FEE, deadline, address(vendorEditions), "x");
 
         vm.expectRevert(Owned.ZeroAddress.selector);
-        market.requestCommission(JOB, agent, address(0), FEE, deadline, address(editions), "x");
+        market.requestCommission(JOB, agent, address(0), FEE, deadline, address(vendorEditions), "x");
 
         vm.expectRevert(Owned.ZeroAddress.selector);
         market.requestCommission(JOB, agent, agentOwner, FEE, deadline, address(0), "x");
 
         vm.expectRevert(NightMarket.BadLabel.selector);
-        market.requestCommission(JOB, agent, agentOwner, FEE, deadline, address(editions), "a.b");
+        market.requestCommission(JOB, agent, agentOwner, FEE, deadline, address(vendorEditions), "a.b");
 
         vm.expectRevert(NightMarket.BadLabel.selector);
-        market.requestCommission(JOB, agent, agentOwner, FEE, deadline, address(editions), "");
+        market.requestCommission(JOB, agent, agentOwner, FEE, deadline, address(vendorEditions), "");
 
         vm.stopPrank();
+    }
+
+    function test_Commission_UnboundAgentReverts() public {
+        address rogue = makeAddr("rogue");
+        vm.prank(buyer);
+        vm.expectRevert(NightMarket.AgentNotBound.selector);
+        market.requestCommission(
+            JOB, rogue, agentOwner, FEE, uint64(block.timestamp + 1 days), address(vendorEditions), "x"
+        );
+    }
+
+    function test_Commission_AgentOwnerMismatchReverts() public {
+        // The agent belongs to agentOwner, so naming anyone else as vendor owner fails,
+        // even when that account owns the registry.
+        vm.prank(server);
+        market.bindRegistry(address(vendorEditions), stranger);
+
+        vm.prank(buyer);
+        vm.expectRevert(NightMarket.AgentNotBound.selector);
+        market.requestCommission(
+            JOB, agent, stranger, FEE, uint64(block.timestamp + 1 days), address(vendorEditions), "x"
+        );
+    }
+
+    function test_Commission_SomeoneElsesRegistryReverts() public {
+        uint64 deadline = uint64(block.timestamp + 1 days);
+
+        // The seller's namespace, not the vendor's.
+        vm.prank(buyer);
+        vm.expectRevert(NightMarket.RegistryNotBound.selector);
+        market.requestCommission(JOB, agent, agentOwner, FEE, deadline, address(editions), "x");
+
+        // An unbound registry.
+        MockEditionsRegistry unbound = new MockEditionsRegistry();
+        vm.prank(buyer);
+        vm.expectRevert(NightMarket.RegistryNotBound.selector);
+        market.requestCommission(JOB, agent, agentOwner, FEE, deadline, address(unbound), "x");
+
+        assertEq(usdc.balanceOf(address(market)), 0);
     }
 
     function test_Commission_DuplicateIdReverts() public {
         _request();
         vm.prank(stranger);
         vm.expectRevert(NightMarket.CommissionExists.selector);
-        market.requestCommission(JOB, agent, agentOwner, FEE, uint64(block.timestamp + 1), address(editions), "y");
+        market.requestCommission(JOB, agent, agentOwner, FEE, uint64(block.timestamp + 1), address(vendorEditions), "y");
     }
 
     function test_Commission_DeliverByNonAgentReverts() public {
@@ -554,7 +727,7 @@ contract NightMarketTest is Test {
         assertEq(usdc.balanceOf(buyer), before);
         assertEq(usdc.balanceOf(address(market)), 0);
         assertEq(usdc.balanceOf(agentOwner), 0);
-        assertEq(editions.registrationCount(), 0);
+        assertEq(vendorEditions.registrationCount(), 0);
         assertEq(_status(JOB), uint256(NightMarket.Status.Refunded));
     }
 
@@ -614,13 +787,15 @@ contract NightMarketTest is Test {
 
     function test_Reentrancy_RegistryReentersBuy() public {
         ReentrantRegistry evil = new ReentrantRegistry();
-        vm.prank(server);
+        vm.startPrank(server);
+        market.bindRegistry(address(evil), seller);
         market.listPiece(PIECE, seller, address(evil), "sea-roof", PRICE, 5, address(0), 0);
-        evil.arm(address(market), abi.encodeCall(NightMarket.buy, (PIECE)));
+        vm.stopPrank();
+        evil.arm(address(market), abi.encodeCall(NightMarket.buy, (PIECE, PRICE)));
 
         vm.prank(buyer);
         vm.expectRevert(NightMarket.Reentrancy.selector);
-        market.buy(PIECE);
+        market.buy(PIECE, PRICE);
 
         // Nothing moved and no edition was claimed.
         assertEq(market.pieces(PIECE).sold, 0);
@@ -630,30 +805,30 @@ contract NightMarketTest is Test {
 
     function test_Reentrancy_TokenReentersBuy() public {
         ReentrantUSDC evilUsdc = new ReentrantUSDC();
-        NightMarket m = new NightMarket(address(evilUsdc), commons, COMMONS_BPS);
+        NightMarket m = _deploy(address(evilUsdc), COMMONS_BPS);
         vm.prank(seller);
         m.listPiece(PIECE, seller, address(editions), "sea-roof", PRICE, 5, address(0), 0);
 
         evilUsdc.mint(buyer, PRICE * 2);
         vm.prank(buyer);
         evilUsdc.approve(address(m), type(uint256).max);
-        evilUsdc.arm(address(m), abi.encodeCall(NightMarket.buy, (PIECE)));
+        evilUsdc.arm(address(m), abi.encodeCall(NightMarket.buy, (PIECE, PRICE)));
 
         vm.prank(buyer);
         vm.expectRevert(NightMarket.Reentrancy.selector);
-        m.buy(PIECE);
+        m.buy(PIECE, PRICE);
         assertEq(m.pieces(PIECE).sold, 0);
     }
 
     function test_Reentrancy_TokenReentersRefund() public {
         ReentrantUSDC evilUsdc = new ReentrantUSDC();
-        NightMarket m = new NightMarket(address(evilUsdc), commons, COMMONS_BPS);
+        NightMarket m = _deploy(address(evilUsdc), COMMONS_BPS);
         evilUsdc.mint(buyer, FEE);
 
         vm.startPrank(buyer);
         evilUsdc.approve(address(m), FEE);
         uint64 deadline = uint64(block.timestamp + 1 days);
-        m.requestCommission(JOB, agent, agentOwner, FEE, deadline, address(editions), "night-swim");
+        m.requestCommission(JOB, agent, agentOwner, FEE, deadline, address(vendorEditions), "night-swim");
         vm.stopPrank();
 
         // The payout transfer tries to call refund again.
