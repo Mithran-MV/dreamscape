@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
 import { FeelingChips } from "@/components/ui";
 import { useClientValue } from "@/lib/use-client-value";
+import { TabBar } from "@/components/tab-bar";
 
 function Mic() {
   return (
@@ -104,7 +105,7 @@ export default function Tell() {
   const ready = Boolean(clip) || text.trim().length >= 3;
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col items-center px-6 pb-10 pt-8 text-center">
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col items-center px-6 pb-28 pt-8 text-center sm:pb-10">
       <div className="flex w-full items-center justify-between">
         <Link href="/" className="text-sm text-dim">← Gallery</Link>
       </div>
@@ -167,6 +168,7 @@ export default function Tell() {
       </button>
       {error && <p className="mt-3 text-sm text-danger">{error}</p>}
       <p className="mt-6 text-xs text-dim">Only you can see it. It&rsquo;s painted by sealed AI on 0G and stored encrypted.</p>
+      <TabBar active="today" />
     </main>
   );
 }

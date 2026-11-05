@@ -6,6 +6,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import { api, PAINTED, panelUrl, portraitUrl, videoUrl, type DreamSummary, type EpisodeSummary, type Note } from "@/lib/api";
 import { WeatherStrip } from "@/components/weather";
 import { WorldCard } from "@/components/world-card";
+import { TabBar } from "@/components/tab-bar";
 import { dayLabel, Frame } from "@/components/ui";
 
 export default function Home() {
@@ -53,7 +54,7 @@ export default function Home() {
           {user.ensName && <p className="mt-1 font-mono text-xs text-gold">{user.ensName}</p>}
         </div>
         <div className="text-right text-sm text-dim">
-          <p>{dreams.length} {dreams.length === 1 ? "dream" : "dreams"} kept</p>
+          <p className="whitespace-nowrap">{dreams.length} {dreams.length === 1 ? "dream" : "dreams"} kept</p>
           <Link href="/0g" className="text-gold">0G credit</Link>
         </div>
       </header>
@@ -102,10 +103,11 @@ export default function Home() {
 
       <Link
         href="/tell"
-        className="fixed bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-gold px-7 py-3.5 font-medium text-gold-ink shadow-[0_8px_30px_rgb(240_200_120/0.35)]"
+        className="fixed bottom-6 left-1/2 hidden -translate-x-1/2 whitespace-nowrap rounded-full bg-gold sm:block px-7 py-3.5 font-medium text-gold-ink shadow-[0_8px_30px_rgb(240_200_120/0.35)]"
       >
         Tell last night&rsquo;s dream
       </Link>
+      <TabBar active="wall" />
     </main>
   );
 }
@@ -116,7 +118,7 @@ function Comics({ episodes, nightly, onChange }: { episodes: EpisodeSummary[]; n
   const [error, setError] = useState<string | null>(null);
   const act = (action: "run" | "opt-in" | "opt-out") => api.night(action).then(onChange, (e) => setError(e.message));
   return (
-    <section className="mt-14">
+    <section id="comics" className="mt-14 scroll-mt-6">
       <h2 className="font-display text-2xl">Comics</h2>
       {hung.length > 0 ? (
         <div className="mt-4 grid grid-cols-2 gap-x-5 gap-y-6 sm:grid-cols-3">
