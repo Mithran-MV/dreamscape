@@ -53,6 +53,13 @@ Contracts:
 cd contracts && forge build && forge test
 ```
 
+## Deployed
+
+| Contract | Network | Address |
+|---|---|---|
+| `DreamscapeRegistry` (names under `dream-scape.eth`) | Ethereum Sepolia | [`0xCB61EabBFdb446a561A29814312F5ECB542d5C87`](https://sepolia.etherscan.io/address/0xCB61EabBFdb446a561A29814312F5ECB542d5C87) |
+| `NightMarket` (USDC checkout and editions) | Ethereum Sepolia | [`0x487B9CC4e6D575DC6eD7C63D957aF19CA7d95E68`](https://sepolia.etherscan.io/address/0x487B9CC4e6D575DC6eD7C63D957aF19CA7d95E68) |
+
 ## License
 
 MIT
