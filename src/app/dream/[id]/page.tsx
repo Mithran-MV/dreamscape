@@ -75,6 +75,14 @@ function DreamView() {
             <p className="mt-1 text-xs text-dim">Retrying: {dream.error.slice(0, 140)}</p>
           )}
           {!painted && dream.status !== "failed" && <NotifyButton />}
+          {dream.status === "failed" && (
+            <button
+              onClick={() => api.retry(dream.id).then(load, (e) => setError(e.message))}
+              className="mt-3 rounded-full border border-line px-3.5 py-1.5 text-xs text-mist hover:border-gold"
+            >
+              Try again
+            </button>
+          )}
 
           {dream.transcript && <blockquote className="mt-5 border-l-2 border-gold pl-4 font-display text-lg italic leading-relaxed">&ldquo;{dream.transcript}&rdquo;</blockquote>}
           {dream.inputKind === "voice" && <audio controls src={voiceUrl(dream.id)} className="mt-4 w-full" />}

@@ -47,6 +47,7 @@ export const api = {
   pushKey: () => fetch("/api/push").then((r) => json<{ publicKey: string }>(r)),
   pushSubscribe: (sub: PushSubscriptionJSON) =>
     fetch("/api/push", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(sub) }).then((r) => json<{ ok: true }>(r)),
+  retry: (id: string) => fetch(`/api/dreams/${id}/retry`, { method: "POST" }).then((r) => json<{ ok: true }>(r)),
   tell: (form: FormData) => fetch("/api/dreams", { method: "POST", body: form }).then((r) => json<{ id: string }>(r)),
 };
 
