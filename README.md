@@ -58,7 +58,8 @@ cd contracts && forge build && forge test
 | Contract | Network | Address |
 |---|---|---|
 | `DreamscapeRegistry` (names under `dream-scape.eth`) | Ethereum Sepolia | [`0xCB61EabBFdb446a561A29814312F5ECB542d5C87`](https://sepolia.etherscan.io/address/0xCB61EabBFdb446a561A29814312F5ECB542d5C87) |
-| `NightMarket` (USDC checkout and editions) | Ethereum Sepolia | [`0x487B9CC4e6D575DC6eD7C63D957aF19CA7d95E68`](https://sepolia.etherscan.io/address/0x487B9CC4e6D575DC6eD7C63D957aF19CA7d95E68) |
+| `NightMarket` (checkout in Circle's USDC, and editions) | Ethereum Sepolia | [`0xD40165F204E4E1f8014d331e1d4c2CFe1eF904bC`](https://sepolia.etherscan.io/address/0xD40165F204E4E1f8014d331e1d4c2CFe1eF904bC) |
+| USDC (Circle, testnet) | Ethereum Sepolia | [`0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238`](https://sepolia.etherscan.io/address/0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238) |
 
 ## License
 
