@@ -41,6 +41,9 @@ One AI coding assistant, used in agent mode from the terminal. No other AI tools
 | Contracts | `DreamRegistry`, `NightMarket`, tests and deploy scripts (`contracts/`) | Drafted and tested by the assistant; registry and agent bindings and the `maxPrice` guard added after the author's review |
 | Installable app and notices | Icon, manifest, service worker, Web Push (`public/sw.js`, `src/lib/server/push.ts`) | Drafted by the assistant |
 | Sign in with 0G | `/0g` page: 0G's sign-in and the 0G Pay balance | Drafted by the assistant from the 0G Pay SDK |
+| Nightly comics | Saga linking, comic script, textless panels, credit budget, scheduler (`src/lib/server/nightly.ts`) | Drafted by the assistant to the author's comic rules; tested by the assistant against a stubbed 0G router |
+| Comic lettering and episodes | `src/components/comic.tsx`, `src/app/episode/`, gallery comics section | Drafted by the assistant to the author's newspaper-strip brief |
+| Living portraits | Image to video after the comic, with the credit left (`nightly.ts`, `router.ts`) | Drafted by the assistant from 0G's video docs |
 
 ## Totals
 
