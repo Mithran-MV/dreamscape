@@ -6,13 +6,15 @@ import { addTrace, getBlob, putBlob, FEELINGS, type Feeling } from "./dreams";
 import { newId } from "./crypto";
 import { enqueue, hasOpenJob } from "./jobs";
 import { paint } from "./zerog/router";
+import { publishWorldDream } from "./arkiv/world";
+import { THEMES, type Theme } from "./arkiv/schemas";
 
 export const MIN_DREAMERS = 5;
 export const WORLD = "world";
 // The World Dream belongs to nobody, so its painting is sealed under this key name.
 export const WORLD_OWNER = "world";
 
-export type WorldCounts = { dreamers: number; themes: { theme: string; dreamers: number }[]; feeling: Feeling | null };
+export type WorldCounts = { dreamers: number; themes: { theme: string; dreamers: number; feeling: Feeling | null }[]; feeling: Feeling | null };
 
 export type WorldDream = {
   id: string;
@@ -35,13 +37,25 @@ export function worldCounts(day: number, circle = WORLD): WorldCounts {
     )
     .all(day, circle, circle) as { user_id: string; tags_json: string; feeling: string | null }[];
   const themes = new Map<string, Set<string>>();
+  const themeFeelings = new Map<string, Map<string, Set<string>>>(); // theme -> feeling -> dreamers
   const feelings = new Map<string, Set<string>>();
   for (const r of rows) {
-    for (const t of (JSON.parse(r.tags_json).themes ?? []) as string[]) themes.set(t, (themes.get(t) ?? new Set()).add(r.user_id));
+    for (const t of (JSON.parse(r.tags_json).themes ?? []) as string[]) {
+      themes.set(t, (themes.get(t) ?? new Set()).add(r.user_id));
+      if (r.feeling) {
+        const byFeeling = themeFeelings.get(t) ?? new Map<string, Set<string>>();
+        byFeeling.set(r.feeling, (byFeeling.get(r.feeling) ?? new Set()).add(r.user_id));
+        themeFeelings.set(t, byFeeling);
+      }
+    }
     if (r.feeling) feelings.set(r.feeling, (feelings.get(r.feeling) ?? new Set()).add(r.user_id));
   }
   const dreamers = new Set(rows.map((r) => r.user_id)).size;
-  const shared = [...themes].map(([theme, who]) => ({ theme, dreamers: who.size })).filter((t) => t.dreamers >= MIN_DREAMERS);
+  const mainFeeling = (theme: string) => {
+    const top = [...(themeFeelings.get(theme) ?? [])].sort((a, b) => b[1].size - a[1].size)[0]?.[0];
+    return FEELINGS.includes(top as Feeling) ? (top as Feeling) : null;
+  };
+  const shared = [...themes].map(([theme, who]) => ({ theme, dreamers: who.size, feeling: mainFeeling(theme) })).filter((t) => t.dreamers >= MIN_DREAMERS);
   shared.sort((a, b) => b.dreamers - a.dreamers || a.theme.localeCompare(b.theme));
   const top = [...feelings].map(([f, who]) => ({ f, n: who.size })).sort((a, b) => b.n - a.n)[0];
   const feeling = dreamers >= MIN_DREAMERS && top && FEELINGS.includes(top.f as Feeling) ? (top.f as Feeling) : null;
@@ -90,6 +104,24 @@ export async function paintWorld(ref: string) {
     putBlob(WORLD_OWNER, worldImageKey(wd.id), "image/png", png);
   }
   getDb().prepare("UPDATE world_dreams SET status = 'done', counts_json = ?, error = NULL WHERE id = ?").run(JSON.stringify(counts), wd.id);
+  enqueue("world.arkiv", wd.id);
+}
+
+// Job 'world.arkiv', ref = world dream id: the day's counts as a public, readonly Arkiv record.
+export async function publishWorldJob(worldId: string) {
+  const wd = getDb().prepare("SELECT * FROM world_dreams WHERE id = ?").get(worldId) as (WorldDream & { published: number | null }) | undefined;
+  if (!wd || wd.status !== "done" || wd.published) return;
+  const counts = JSON.parse(wd.counts_json) as WorldCounts;
+  const themes = counts.themes
+    .filter((t) => (THEMES as readonly string[]).includes(t.theme))
+    .map((t) => ({ theme: t.theme as Theme, feeling: t.feeling ?? counts.feeling ?? "wonder", count: t.dreamers }));
+  try {
+    await publishWorldDream({ date: new Date(wd.day * 86_400_000).toISOString().slice(0, 10), circle: wd.circle, themes });
+  } catch (error) {
+    // Already on Arkiv from an earlier attempt: that's the outcome we wanted.
+    if (!(error instanceof Error && error.message.includes("already published"))) throw error;
+  }
+  getDb().prepare("UPDATE world_dreams SET published = 1 WHERE id = ?").run(wd.id);
 }
 
 export function startWorld(day: number, circle = WORLD) {

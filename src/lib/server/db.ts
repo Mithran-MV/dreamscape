@@ -110,6 +110,10 @@ CREATE TABLE IF NOT EXISTS sales (
   created_at INTEGER NOT NULL,
   PRIMARY KEY (tx, edition_no)
 );
+CREATE TABLE IF NOT EXISTS kv (
+  key TEXT PRIMARY KEY,                 -- small app facts, such as the last night the stalls opened
+  value TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS push_subs (
   endpoint TEXT PRIMARY KEY,            -- the push service URL for one phone or browser
   user_id TEXT NOT NULL REFERENCES users(id),
@@ -131,6 +135,7 @@ export function getDb(): DatabaseSync {
   addColumn(db, "users", "last_night", "INTEGER"); // utcDay of the last nightly run
   addColumn(db, "users", "character", "TEXT"); // the dreamer's cartoon, kept the same in every comic
   addColumn(db, "users", "circle", "TEXT");
+  addColumn(db, "world_dreams", "published", "INTEGER"); // 1 once the counts are on Arkiv
   addColumn(db, "users", "ens_json", "TEXT");
   addColumn(db, "users", "privy_id", "TEXT");
   addColumn(db, "users", "dripped_at", "INTEGER"); // when the server sent this wallet its test ETH and USDC // the Privy user behind this account, if they signed in that way
