@@ -50,6 +50,7 @@ export const market = {
     if (q.sort) p.set("sort", q.sort);
     return fetch(`/api/market?${p}`).then((r) => json<{ listings: ListingCard[] }>(r));
   },
+  picks: () => fetch("/api/market?picks=1").then((r) => json<{ listings: ListingCard[] }>(r)),
   piece: (id: string) => fetch(`/api/market/${id}`).then((r) => (r.status === 404 ? null : json<PieceView>(r))),
   sell: (body: { kind: "episode" | "dream"; ref: string; priceUsdc: number; editions: number }) =>
     fetch("/api/market", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).then((r) => json<{ id: Hex }>(r)),

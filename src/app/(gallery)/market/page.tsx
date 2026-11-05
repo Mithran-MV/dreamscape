@@ -19,6 +19,7 @@ export default function Market() {
   const [max, setMax] = useState("");
   const [sort, setSort] = useState("newest");
   const [listings, setListings] = useState<ListingCard[] | null>(null);
+  const [picks, setPicks] = useState<ListingCard[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -31,6 +32,10 @@ export default function Market() {
     };
   }, [themes, category, max, sort]);
 
+  useEffect(() => {
+    market.picks().then((r) => setPicks(r.listings), () => setPicks([]));
+  }, []);
+
   const toggle = (t: string) => setThemes((all) => (all.includes(t) ? all.filter((x) => x !== t) : [...all, t]));
 
   return (
@@ -40,6 +45,22 @@ export default function Market() {
       <p className="mt-2 max-w-xl text-mist">
         Comics and portraits from other people&rsquo;s dreams, sold as numbered editions. Each edition is an ENS name you own, and it opens the full piece.
       </p>
+
+      {picks.length > 0 && (
+        <section className="mt-8">
+          <h2 className="font-display text-xl">Tonight&rsquo;s picks</h2>
+          <p className="text-sm text-dim">These stalls close by themselves at dawn.</p>
+          <div className="mt-3 flex gap-4 overflow-x-auto pb-2">
+            {picks.map((l) => (
+              <Link key={l.pieceId} href={`/market/${l.pieceId}`} className="w-36 shrink-0">
+                <Frame src={l.preview ?? previewUrl(l.pieceId)} alt={l.title} />
+                <p className="mt-2 truncate text-sm">{l.title}</p>
+                <p className="text-xs text-gold">{usdc(l.priceUsdc)}</p>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       <div className="mt-6 flex flex-wrap items-center gap-2">
         {KINDS.map((k) => (
