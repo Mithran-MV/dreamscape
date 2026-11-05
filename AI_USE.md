@@ -33,6 +33,14 @@ One AI coding assistant, used in agent mode from the terminal. No other AI tools
 | Add spec and project docs | `SPEC.md`, this file, README, LICENSE, `/arkiv/friction.md`, `.env.example` | Drafted by the assistant, edited by the author |
 | Add worker and check script | `worker/index.ts`, `scripts/check.ts` | Drafted by the assistant |
 | Ignore-file and lockfile housekeeping | `.gitignore`, `.gitattributes`, a README note on the generated first commits | Assistant, at the author's request |
+| Server core | Env, SQLite store, per-dreamer encryption, job queue (`src/lib/server/*`) | Drafted by the assistant |
+| 0G clients | Router client (sealed mode, traces) and encrypted 0G Storage upload (`src/lib/server/zerog/*`) | Drafted by the assistant from 0G's docs |
+| Dream pipeline and worker | Transcribe, tag, paint, store, anchor; retries (`pipeline.ts`, `worker/index.ts`) | Drafted by the assistant |
+| Sign-in and API routes | Name and passphrase sign-in, dreams and media routes (`src/app/api/*`) | Drafted by the assistant; the passphrase, cookie and media-type fixes came from a security review the author asked for |
+| Gallery, tell and day view | `src/app/page.tsx`, `tell/`, `dream/[id]/`, `src/components/ui.tsx` | Drafted by the assistant to the author's design |
+| Contracts | `DreamRegistry`, `NightMarket`, tests and deploy scripts (`contracts/`) | Drafted and tested by the assistant; registry and agent bindings and the `maxPrice` guard added after the author's review |
+| Installable app and notices | Icon, manifest, service worker, Web Push (`public/sw.js`, `src/lib/server/push.ts`) | Drafted by the assistant |
+| Sign in with 0G | `/0g` page: 0G's sign-in and the 0G Pay balance | Drafted by the assistant from the 0G Pay SDK |
 
 ## Totals
 
