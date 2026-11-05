@@ -2,13 +2,15 @@
 // Home: sign in, then the gallery wall of framed dream portraits.
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { api, PAINTED, panelUrl, portraitUrl, videoUrl, type DreamSummary, type EpisodeSummary } from "@/lib/api";
+import { api, PAINTED, panelUrl, portraitUrl, videoUrl, type DreamSummary, type EpisodeSummary, type Note } from "@/lib/api";
+import { WeatherStrip } from "@/components/weather";
 import { dayLabel, Frame } from "@/components/ui";
 
 export default function Home() {
   const [user, setUser] = useState<{ handle: string } | null | undefined>(undefined);
   const [dreams, setDreams] = useState<DreamSummary[]>([]);
   const [episodes, setEpisodes] = useState<EpisodeSummary[]>([]);
+  const [notes, setNotes] = useState<Note[]>([]);
   const [nightly, setNightly] = useState<boolean | null>(null);
 
   const load = useCallback(
@@ -18,6 +20,7 @@ export default function Home() {
         if (!user) return;
         const [d, e, n] = await Promise.all([api.dreams(), api.episodes(), api.nightly()]);
         setDreams(d.dreams);
+        setNotes(d.notes);
         setEpisodes(e.episodes);
         setNightly(n.optedIn);
       }),
@@ -51,6 +54,15 @@ export default function Home() {
           <Link href="/0g" className="text-gold">0G credit</Link>
         </div>
       </header>
+
+      {dreams.length > 0 && (
+        <div className="-mt-4 mb-8">
+          <WeatherStrip dreams={dreams.filter((d) => PAINTED.has(d.status))} />
+          {notes.map((n) => (
+            <p key={n.kind} className="mt-3 font-display text-lg italic text-paper">{n.text}</p>
+          ))}
+        </div>
+      )}
 
       {episodes
         .filter((e) => e.status === "draft")

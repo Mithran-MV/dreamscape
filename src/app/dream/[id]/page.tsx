@@ -86,6 +86,9 @@ function DreamView() {
 
           {dream.video === "rendering" && <p className="mt-2 text-xs text-dim">The portrait is learning to move. This takes a few minutes.</p>}
           {dream.saga && <p className="mt-2 text-sm text-mist">Part of <span className="font-display italic text-paper">{dream.saga}</span></p>}
+          {dream.notes.map((n) => (
+            <p key={n.kind} className="mt-2 font-display italic text-paper">{n.text}</p>
+          ))}
 
           {dream.transcript && <blockquote className="mt-5 border-l-2 border-gold pl-4 font-display text-lg italic leading-relaxed">&ldquo;{dream.transcript}&rdquo;</blockquote>}
           {dream.inputKind === "voice" && <audio controls src={voiceUrl(dream.id)} className="mt-4 w-full" />}

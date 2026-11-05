@@ -23,7 +23,7 @@ export async function GET(_request: Request, ctx: RouteContext<"/api/dreams/[id]
     suggestedFeeling: dream.suggested_feeling,
     saga: dream.saga,
     video: dream.video_state,
-    notes: notesFor(noteLog(user.id), dream.id),
+    notes: notesFor(noteLog(user.id), dream.id).slice(0, 3),
     proof: {
       traces: tracesFor(dream.id),
       storage: [
