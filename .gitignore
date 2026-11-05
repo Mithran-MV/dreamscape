@@ -45,7 +45,8 @@ next-env.d.ts
 # foundry
 /contracts/out/
 /contracts/cache/
-/contracts/broadcast/*/dry-run/
+/contracts/broadcast/**/dry-run/
+/contracts/broadcast/**/*.lock
 
 # local database and cache
 /data/
