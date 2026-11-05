@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "worker": "node --env-file-if-exists=.env.local --import tsx --watch worker/index.ts",
-    "check": "node --env-file-if-exists=.env.local --import tsx scripts/check.ts"
+    "check": "node --env-file-if-exists=.env.local --import tsx scripts/check.ts",
+    "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
     "@0gfoundation/0g-compute-ts-sdk": "0.9.0",
