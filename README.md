@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Dreamscape
 
-## Getting Started
+Your brain deletes your dreams. Dreamscape keeps them.
 
-First, run the development server:
+Tell your phone a dream when you wake up, and it becomes a painting on your gallery wall. Overnight, your recent dreams become a short comic in your own words. Every piece is a name you own, you can sell numbered editions, and you can let family visit your gallery for a while.
+
+Built at ETHGlobal Mumbai, November 5–7, 2026. Scaffolded with `create-next-app` and `forge init`.
+
+## How it's built
+
+- **0G Private Computer** for the AI. Transcription, tagging and the portrait run on sealed models, and every piece keeps its request ID.
+- **0G Storage** for the encrypted files, and **0G Chain** (Galileo) for the day record.
+- **ENSv2** on Sepolia, under `dream-scape.eth`, for gallery names, day records, editions and family passes.
+- **Arkiv** (Rabdi testnet) for the public market, vendor agents and time-limited visits.
+
+`SPEC.md` has the details. How AI tools were used to build this is in `AI_USE.md`.
+
+## Run it
+
+Needs Node 22 or later, pnpm and Foundry.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+```bash
+cp .env.example .env.local
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Fill in `.env.local`, then:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+pnpm dev
+```
 
-## Learn More
+```bash
+pnpm worker
+```
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+pnpm check
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+`pnpm check` confirms the ENS deployment, the Arkiv network and the 0G router are reachable.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Contracts:
 
-## Deploy on Vercel
+```bash
+cd contracts && forge build
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## License
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT
