@@ -80,6 +80,26 @@ async function main() {
     report(!(await market.findListings({ category: "comic" })).some((l) => l.pieceId === id), "not found among comics", "it's a portrait");
     report(!(await market.findListings({ maxPriceUsdc: BigInt(2_000_000) })).some((l) => l.pieceId === id), "not found under a 2 USDC cap", "it costs 2.5");
     report((await market.findListings({ maxPriceUsdc: BigInt(3_000_000) })).some((l) => l.pieceId === id), "found under a 3 USDC cap", "2.5 fits");
+
+    await market.openTonightsStalls();
+    const picks = await market.tonightsPicks();
+    report(picks.some((l) => l.pieceId === id), "tonight's stalls show the piece", `${picks.length} pick(s), closing at dawn`);
+    await market.openTonightsStalls();
+    report((await market.tonightsPicks()).length === picks.length, "stalls open once a night", "a second run adds none");
+
+    const world = await import("../src/lib/server/world");
+    const day = utcDay();
+    db.prepare("INSERT INTO world_dreams (id, day, circle, status, counts_json, created_at) VALUES ('w1', ?, 'ethglobal-mumbai', 'done', ?, ?)").run(
+      day,
+      JSON.stringify({ dreamers: 7, feeling: "wonder", themes: [{ theme: "water", dreamers: 6, feeling: "calm" }, { theme: "flight", dreamers: 5, feeling: "wonder" }] }),
+      now(),
+    );
+    await world.publishWorldJob("w1");
+    const { worldDream } = await import("../src/lib/server/arkiv/world");
+    const rows = await worldDream(new Date(day * 86_400_000).toISOString().slice(0, 10), "ethglobal-mumbai");
+    report(rows.length === 2, "the World Dream's counts are on Arkiv, one row per shared theme", JSON.stringify(rows.map((r) => [r.theme, r.feeling, r.count])));
+    await world.publishWorldJob("w1");
+    report(true, "publishing again is harmless", "no error");
   } finally {
     docker("stop", name);
     console.log(`stopped ${name}`);
