@@ -46,6 +46,12 @@ export type EpisodeDetail = EpisodeSummary & {
   traces: Trace[];
 };
 
+export type WorldSummary = { id: string; day: number; sentence: string; dreamers: number; feeling: string | null };
+export type WorldState = {
+  world: WorldSummary | null;
+  circle: { code: string; name: string; latest: WorldSummary | null; today: number; needed: number } | null;
+};
+
 async function json<T>(res: Response): Promise<T> {
   const body = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error((body as { error?: string }).error ?? `Request failed (${res.status})`);
@@ -69,11 +75,15 @@ export const api = {
   nightly: () => fetch("/api/nightly").then((r) => json<{ optedIn: boolean; spentTodayUsd: number }>(r)),
   night: (action: "run" | "opt-in" | "opt-out") =>
     fetch("/api/nightly", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action }) }).then((r) => json<{ ok: true }>(r)),
+  world: () => fetch("/api/world").then((r) => json<WorldState>(r)),
+  worldAction: (action: "join" | "leave" | "paint", code?: string) =>
+    fetch("/api/world", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, code }) }).then((r) => json<{ ok: true }>(r)),
   tell: (form: FormData) => fetch("/api/dreams", { method: "POST", body: form }).then((r) => json<{ id: string }>(r)),
 };
 
 export const portraitUrl = (id: string) => `/api/dreams/${id}/media/portrait`;
 export const panelUrl = (id: string, n: number) => `/api/episodes/${id}/panel/${n}`;
+export const worldImageUrl = (id: string) => `/api/world/${id}/image`;
 export const videoUrl = (id: string) => `/api/dreams/${id}/media/video`;
 export const voiceUrl = (id: string) => `/api/dreams/${id}/media/voice`;
 export const PAINTED = new Set(["painted", "storing", "done"]);
