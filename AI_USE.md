@@ -51,6 +51,7 @@ One AI coding assistant, used in agent mode from the terminal. No other AI tools
 | Painted sky and tab bar | `painted-sky.tsx`, `tab-bar.tsx`, the restyled tell screen | Drafted by the assistant from the author's own earlier mockup, written fresh |
 | Arkiv write-ups | `arkiv/why-arkiv.md`, `how-you-use-arkiv.md`, `reach.md` | Drafted by the assistant, to be edited by the author |
 | Family passes and visits | ENS passes, Arkiv knocks and visits, the door check, the visitor view and passes panel, and a fork plus local-node test (`ens/passes.ts`, `visits.ts`, `g/[handle]`, `passes-panel.tsx`) | Drafted by the assistant from the author's visits design |
+| Vendor agent commissions | The agent's ENS namespace, escrow in USDC, the Arkiv request and claim, delivery, the agents pages and a fork test (`ens/agents.ts`, `commissions.ts`, `vendor.ts`, `market/agents/`) | Drafted by the assistant from the author's vendor-agent design; tested on a Sepolia fork with a local Arkiv node |
 | Morning Notes, Dream Weather, World Dream | `notes.ts`, `world.ts`, `weather.tsx`, `world-card.tsx` | Drafted by the assistant to the author's design, including the five-dreamer privacy floor |
 
 ## Totals
