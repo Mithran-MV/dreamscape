@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { DM_Mono, Fraunces, Instrument_Sans } from "next/font/google";
+import { ServiceWorker } from "@/components/service-worker";
 import "./globals.css";
 
 const fraunces = Fraunces({ variable: "--font-fraunces", subsets: ["latin"], style: ["normal", "italic"] });
@@ -23,7 +24,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${fraunces.variable} ${instrument.variable} ${dmMono.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+        <ServiceWorker />
+      </body>
     </html>
   );
 }
