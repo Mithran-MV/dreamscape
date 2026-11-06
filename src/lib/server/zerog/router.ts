@@ -130,14 +130,22 @@ export async function chatJson<T>(system: string, user: string, maxTokens = 3000
 }
 
 // Sealed painting. z-image-turbo takes text only and needs b64_json.
+// The painter: z-image in a verified enclave. When 0G has no healthy z-image provider, the comic panels'
+// painter steps in so the dream still hangs on the wall. It runs on standard trust and only ever gets
+// the scene, never the dream's words, and its trace says so in "How it was made".
 export async function paint(prompt: string, size = "1024x1024") {
   const model = "z-image-turbo";
-  const { data, trace } = await call<{ data: { b64_json: string }[] }>("/images/generations", model, {
-    method: "POST",
-    headers: headers("private", true),
-    body: JSON.stringify({ model, prompt, size, n: 1, response_format: "b64_json", verify_tee: true }),
-  });
-  return { png: Buffer.from(data.data[0].b64_json, "base64"), trace };
+  try {
+    const { data, trace } = await call<{ data: { b64_json: string }[] }>("/images/generations", model, {
+      method: "POST",
+      headers: headers("private", true),
+      body: JSON.stringify({ model, prompt, size, n: 1, response_format: "b64_json", verify_tee: true }),
+    });
+    return { png: Buffer.from(data.data[0].b64_json, "base64"), trace };
+  } catch (error) {
+    if (!(error instanceof ZeroGError) || (error.status !== 502 && error.status !== 503)) throw error;
+    return drawPanel(prompt);
+  }
 }
 
 // Comic panels (not sealed: they only ever get a scene description, never the raw dream).
