@@ -5,20 +5,16 @@
 import { PrivyProvider } from "@privy-io/react-auth";
 import { createContext, useContext } from "react";
 import { sepolia } from "viem/chains";
-import { useClientValue } from "@/lib/use-client-value";
 
 export type SignInKind = "0g" | "wallet";
 const Kind = createContext<SignInKind>("0g");
 export const useSignInKind = () => useContext(Kind);
 
-export function GallerySignIn({ zeroGAppId, walletAppId, children }: { zeroGAppId: string; walletAppId?: string; children: React.ReactNode }) {
-  // The server renders 0G's sign-in; away from localhost the page switches to the wallet one once it loads.
-  const kind = useClientValue<SignInKind>(() => (walletAppId && location.hostname !== "localhost" ? "wallet" : "0g"), "0g");
-  const appId = kind === "wallet" && walletAppId ? walletAppId : zeroGAppId;
+// layout.tsx picks the app from the host, so each page starts Privy once, with the right one.
+export function GallerySignIn({ kind, appId, children }: { kind: SignInKind; appId: string; children: React.ReactNode }) {
   return (
     <Kind.Provider value={kind}>
       <PrivyProvider
-        key={appId}
         appId={appId}
         config={{
           appearance: { theme: "dark", accentColor: "#f0c878", landingHeader: kind === "wallet" ? "Sign in with your wallet" : "Sign in with 0G" },
