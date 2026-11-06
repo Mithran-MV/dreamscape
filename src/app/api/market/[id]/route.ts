@@ -26,6 +26,8 @@ export async function GET(_request: Request, ctx: RouteContext<"/api/market/[id]
     open: Boolean(chain?.active) && (chain?.sold ?? 0) < piece.editions,
     holds: user?.id === piece.user_id || (await holdsEdition(piece, wallet)),
     names: sales.map((s) => editionName(s.label, seller.handle)),
+    // NightMarket mints each name at the sale; this is the one the next buyer would get.
+    nextName: (chain?.sold ?? 0) < piece.editions ? editionName(`${piece.label_prefix}-${(chain?.sold ?? 0) + 1}`, seller.handle) : null,
     proof: {
       market: `https://sepolia.etherscan.io/address/${marketAddress()}`,
       listedTx: piece.market_tx?.startsWith("0x") ? `https://sepolia.etherscan.io/tx/${piece.market_tx}` : null,

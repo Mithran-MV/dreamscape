@@ -78,6 +78,12 @@ function PieceView() {
           <p className="mt-1 text-sm text-mist">
             {piece.status === "listing" ? "Being listed on NightMarket…" : left > 0 ? `${left} of ${piece.editions} left` : "Sold out"}
           </p>
+          {piece.nextName && (
+            <p className="mt-3 text-sm text-mist">
+              {piece.mine ? "The next buyer gets" : "You get"} <span className="font-mono text-xs text-gold">{piece.nextName}</span>
+              <span className="block text-xs text-dim">It&rsquo;s minted on ENS the moment the edition is bought.</span>
+            </p>
+          )}
 
           {piece.mine ? (
             <p className="mt-6 rounded-xl border border-edge bg-card/70 p-4 text-sm text-mist">Your piece. {piece.sold} sold so far; 95% of each sale comes to you.</p>

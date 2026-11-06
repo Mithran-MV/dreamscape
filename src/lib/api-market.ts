@@ -28,6 +28,7 @@ export type PieceView = {
   open: boolean;
   holds: boolean;
   names: string[];
+  nextName: string | null;
   buy: { to: `0x${string}`; data: Hex }[] | null;
   proof: { market: string; listedTx: string | null; arkiv: string | null };
 };
