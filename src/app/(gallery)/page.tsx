@@ -12,6 +12,7 @@ import { CalendarWall } from "@/components/calendar-wall";
 import { KnockBanner } from "@/components/passes-panel";
 import { MorningsAndMemories } from "@/components/memories";
 import { chipColor, dayLabel, FEELINGS } from "@/components/ui";
+import { useClientValue } from "@/lib/use-client-value";
 
 export default function Home() {
   const [user, setUser] = useState<SessionUser | null | undefined>(undefined);
@@ -19,6 +20,8 @@ export default function Home() {
   const [dreams, setDreams] = useState<DreamSummary[]>([]);
   const [episodes, setEpisodes] = useState<EpisodeSummary[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
+  const [aiNote, setAiNote] = useState<AiNote | null>(null);
+  const [sagaTonight, setSagaTonight] = useState<string | null>(null);
 
   // The nightly comic switch lives on the Settings page now, so the wall reads only what it shows.
   const load = useCallback(
@@ -29,6 +32,8 @@ export default function Home() {
         const [d, e] = await Promise.all([api.dreams(), api.episodes()]);
         setDreams(d.dreams);
         setNotes(d.notes);
+        setAiNote(d.aiNote);
+        setSagaTonight(d.sagaTonight);
         setEpisodes(e.episodes);
       }),
     [],
@@ -65,7 +70,7 @@ export default function Home() {
       <header className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
         <div className="min-w-0">
           <h1 className="font-display text-h1 md:text-display">Your wall</h1>
-          {recall && <p className="mt-3 text-lead text-mist">{recall.text}</p>}
+          <RecallLine dreams={dreams} />
           {!user.ensName && user.naming && (
             <p className="mt-3 flex items-center gap-2 text-ui text-mist">
               <span className="breathe h-2 w-2 shrink-0 rounded-full bg-gold" aria-hidden />
@@ -92,14 +97,97 @@ export default function Home() {
 
       <MorningsAndMemories />
 
-      {dreams.length === 0 ? <FirstRun user={user} /> : <Wall dreams={dreams} notes={notes.filter((n) => n !== recall)} />}
+      {dreams.length === 0 ? (
+        <FirstRun user={user} />
+      ) : (
+        <Wall dreams={dreams} notes={notes.filter((n) => n !== recall)} aiNote={aiNote} sagaTonight={sagaTonight} onSaga={setSagaTonight} />
+      )}
 
       <HungComics episodes={episodes} />
     </AppShell>
   );
 }
 
-function Wall({ dreams, notes }: { dreams: DreamSummary[]; notes: Note[] }) {
+type AiNote = { text: string; theme: string | null; model: string; today: boolean };
+const DAY = 86_400_000;
+
+// "Dreams remembered this week: 5, up from 2." Only ever said kindly: a quieter week is "so far".
+function RecallLine({ dreams }: { dreams: DreamSummary[] }) {
+  const today = useClientValue(() => Math.floor(Date.now() / DAY), 0);
+  if (!today) return null;
+  const monday = today - ((today + 3) % 7);
+  const kept = dreams.filter((d) => d.status !== "failed");
+  const now = kept.filter((d) => d.day >= monday).length;
+  const before = kept.filter((d) => d.day >= monday - 7 && d.day < monday).length;
+  if (!now) return null;
+  const tail = before && now > before ? `, up from ${before}.` : before && now === before ? ", the same as last week." : before ? " so far." : ".";
+  return (
+    <p className="mt-3 text-lead text-mist">
+      Dreams remembered this week: <span className="font-semibold text-paper">{now}</span>
+      {tail}
+    </p>
+  );
+}
+
+// The theme a counted note is about ("Water, three nights running."), so it can become tonight's saga.
+const NOTE_THEME: Record<string, string> = { water: "water", flying: "flight", falling: "falling", chase: "chase", home: "home", animal: "animals", crowd: "people", school: "school", city: "city", nature: "nature", fantasy: "fantasy", "night-time": "night" };
+const themeOfNote = (n?: Note) => (n?.kind === "streak" ? (NOTE_THEME[n.text.split(",")[0].toLowerCase()] ?? null) : null);
+
+function MorningNote({ notes, aiNote, sagaTonight, onSaga }: { notes: Note[]; aiNote: AiNote | null; sagaTonight: string | null; onSaga: (t: string) => void }) {
+  const [busy, setBusy] = useState(false);
+  const headline = notes[0];
+  const theme = themeOfNote(headline) ?? aiNote?.theme ?? null;
+  const asked = theme && sagaTonight === theme;
+  return (
+    <section className="panel p-6 md:p-7" aria-labelledby="morning-note">
+      <h2 id="morning-note" className="text-ui font-semibold text-gold">
+        Morning Note
+      </h2>
+      {headline ? (
+        <p className="mt-2 font-display text-h2 font-semibold text-paper">{headline.text}</p>
+      ) : (
+        !aiNote && <p className="mt-3 text-mist">Notes start once your dreams repeat: a theme three nights running, or a place you keep going back to.</p>
+      )}
+      {notes[1] && <p className="mt-2 font-display text-lead italic text-paper">{notes[1].text}</p>}
+      {aiNote && (
+        <>
+          <p className="mt-3 font-display text-lead italic text-mist">{aiNote.text}</p>
+          <p className="mt-1.5 text-meta text-dim">Written by 0G&rsquo;s sealed AI from your dream themes, never your words.</p>
+        </>
+      )}
+      {theme && (
+        <button
+          type="button"
+          disabled={busy || Boolean(asked)}
+          onClick={() => {
+            setBusy(true);
+            api
+              .sagaTonight(theme)
+              .then((r) => onSaga(r.sagaTonight))
+              .finally(() => setBusy(false));
+          }}
+          className="btn btn-line mt-5"
+        >
+          {asked ? "Tonight's comic continues it" : "Make this a saga tonight"}
+        </button>
+      )}
+    </section>
+  );
+}
+
+function Wall({
+  dreams,
+  notes,
+  aiNote,
+  sagaTonight,
+  onSaga,
+}: {
+  dreams: DreamSummary[];
+  notes: Note[];
+  aiNote: AiNote | null;
+  sagaTonight: string | null;
+  onSaga: (t: string) => void;
+}) {
   const [feeling, setFeeling] = useState<string | null>(null);
   const shown = feeling ? dreams.filter((d) => d.feeling === feeling).length : dreams.length;
   const label = FEELINGS.find((f) => f.key === feeling)?.label.toLowerCase();
@@ -107,27 +195,13 @@ function Wall({ dreams, notes }: { dreams: DreamSummary[]; notes: Note[] }) {
   return (
     <>
       <div className="mt-10 grid gap-5 lg:grid-cols-2">
-        <section className="panel p-6 md:p-7" aria-labelledby="morning-note">
-          <h2 id="morning-note" className="font-display text-title">
-            Morning Note
-          </h2>
-          {notes.length > 0 ? (
-            <div className="mt-3 space-y-2">
-              {notes.map((n) => (
-                <p key={n.kind} className="font-display text-lead font-medium italic text-paper md:text-title">
-                  {n.text}
-                </p>
-              ))}
-            </div>
-          ) : (
-            <p className="mt-3 text-mist">Notes start once your dreams repeat: a theme three nights running, or a place you keep going back to.</p>
-          )}
-        </section>
+        <MorningNote notes={notes} aiNote={aiNote} sagaTonight={sagaTonight} onSaga={onSaga} />
 
         <section className="panel p-6 md:p-7" aria-labelledby="dream-weather">
           <h2 id="dream-weather" className="font-display text-title">
             Dream Weather
           </h2>
+          <p className="mt-1 text-ui text-mist">As you said it felt</p>
           <div className="mt-4">
             <WeatherStrip dreams={dreams.filter((d) => PAINTED.has(d.status))} />
           </div>

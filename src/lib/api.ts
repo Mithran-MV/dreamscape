@@ -96,7 +96,12 @@ export const api = {
     fetch("/api/mornings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ hide }) }).then((r) => json<Mornings>(r)),
   keepMorning: (kind: "feeling" | "nothing", feeling?: string) =>
     fetch("/api/mornings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind, feeling }) }).then((r) => json<Mornings>(r)),
-  dreams: () => fetch("/api/dreams").then((r) => json<{ dreams: DreamSummary[]; notes: Note[] }>(r)),
+  dreams: () =>
+    fetch("/api/dreams").then((r) =>
+      json<{ dreams: DreamSummary[]; notes: Note[]; aiNote: { text: string; theme: string | null; model: string; today: boolean } | null; sagaTonight: string | null }>(r),
+    ),
+  sagaTonight: (theme: string) =>
+    fetch("/api/mornings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ saga: theme }) }).then((r) => json<{ sagaTonight: string }>(r)),
   dream: (id: string) => fetch(`/api/dreams/${id}`).then((r) => json<DreamDetail>(r)),
   pushKey: () => fetch("/api/push").then((r) => json<{ publicKey: string }>(r)),
   pushSubscribe: (sub: PushSubscriptionJSON) =>
