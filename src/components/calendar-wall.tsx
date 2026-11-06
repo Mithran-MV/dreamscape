@@ -1,6 +1,7 @@
 "use client";
 // The gallery wall as a calendar: one month per block, newest first, Monday to Sunday.
-// Each day shows its newest dream that painted; a click opens it. Days without a dream stay dim, days ahead stay blank.
+// Each day shows its newest dream that painted, or up to four when there were several; a click opens the
+// newest. Days without a dream stay dim, days ahead stay blank.
 import Link from "next/link";
 import { PAINTED, portraitUrl, type DreamSummary } from "@/lib/api";
 import { useClientValue } from "@/lib/use-client-value";
@@ -95,6 +96,7 @@ function DayTile({ day, n, today, dreams, feeling }: { day: number; n: number; t
   }
 
   const painted = PAINTED.has(newest.status);
+  const mosaic = dreams.filter((d) => PAINTED.has(d.status)).slice(0, 4);
   const dimmed = feeling !== null && newest.feeling !== feeling;
   const color = feelingColor(newest.feeling);
   const parts = [newest.title ?? (newest.status === "failed" ? "didn’t paint" : "painting"), feelingLabel(newest.feeling)?.toLowerCase(), newest.moving && "moving", dreams.length > 1 && `${dreams.length} dreams that day`];
@@ -110,7 +112,15 @@ function DayTile({ day, n, today, dreams, feeling }: { day: number; n: number; t
         style={{ "--glow": color, boxShadow: newest.feeling ? `0 0 22px -6px ${color}, 0 8px 22px rgb(0 0 0 / .5)` : undefined } as React.CSSProperties}
       >
         <div className="mat relative aspect-square w-full">
-          {painted ? (
+          {mosaic.length > 1 ? (
+            // A morning with several dreams shows up to four of them, newest first.
+            <span className="grid h-full w-full grid-cols-2 grid-rows-2 gap-px bg-[#0b0918]">
+              {mosaic.map((d) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img key={d.id} src={portraitUrl(d.id)} alt="" loading="lazy" className={`h-full w-full object-cover ${mosaic.length === 3 && d === mosaic[0] ? "row-span-2" : ""} ${mosaic.length === 2 ? "row-span-2" : ""}`} />
+              ))}
+            </span>
+          ) : painted ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={portraitUrl(newest.id)} alt="" loading="lazy" className="h-full w-full object-cover" />
           ) : newest.status === "failed" ? (
