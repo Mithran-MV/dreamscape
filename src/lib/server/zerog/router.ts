@@ -98,25 +98,22 @@ export async function transcribe(audio: Uint8Array, mime: string) {
   return { text: (data.text ?? "").trim(), trace };
 }
 
-// Sealed chat that must answer with a JSON object. 0GM reads first; when 0G has no healthy 0GM
-// provider, GLM-5.3, another sealed model, reads instead, so the words still only reach a sealed
-// enclave, and the trace names whichever model did.
 // 0G can't serve this model right now: its provider is down or busy, or it has none left (404 model_not_found).
 const unavailable = (error: unknown) =>
   error instanceof ZeroGError && (error.status === 502 || error.status === 503 || (error.status === 404 && error.body.includes("model_not_found")));
 
-const SEALED_READERS = [
-  // Minimal reasoning: these are short JSON tasks, and at "low" 0gm spent over 5,000 tokens thinking
-  // before a comic script, which ran past the cap. The cap still leaves room if it does reason.
-  { model: "0gm-1.0-35b-a3b", options: { reasoning_effort: "minimal" } },
-  { model: "glm-5.3", options: {} },
-];
+// Sealed chat that must answer with a JSON object. The read models are tried in order (env.zgReadModels),
+// all of them on private trust, so the words only ever reach a sealed enclave; the trace names whichever
+// model did the reading.
+// Minimal reasoning for 0GM: these are short JSON tasks, and at "low" it spent over 5,000 tokens thinking
+// before a comic script, which ran past the cap. The cap still leaves room if it does reason.
+const READ_OPTIONS: Record<string, Record<string, unknown>> = { "0gm-1.0-35b-a3b": { reasoning_effort: "minimal" } };
 
 export async function chatJson<T>(system: string, user: string, maxTokens = 3000) {
   let failure: unknown;
-  for (const { model, options } of SEALED_READERS) {
+  for (const model of env.zgReadModels()) {
     try {
-      return await readJson<T>(model, options, system, user, maxTokens);
+      return await readJson<T>(model, READ_OPTIONS[model] ?? {}, system, user, maxTokens);
     } catch (error) {
       if (!unavailable(error)) throw error;
       failure = error;
@@ -152,39 +149,44 @@ async function readJson<T>(model: string, options: Record<string, unknown>, syst
   }
 }
 
-// The painter: z-image in a verified enclave. When 0G has no healthy z-image provider, the comic panels'
-// painter steps in so the dream still hangs on the wall. It runs on standard trust and only ever gets
-// the scene, never the dream's words, and its trace says so in "How it was made".
-export async function paint(prompt: string, size = "1024x1024") {
-  const model = "z-image-turbo";
-  try {
-    const { data, trace } = await call<{ data: { b64_json: string }[] }>("/images/generations", model, {
-      method: "POST",
-      headers: headers("private", true),
-      body: JSON.stringify({ model, prompt, size, n: 1, response_format: "b64_json", verify_tee: true }),
-    });
-    return { png: Buffer.from(data.data[0].b64_json, "base64"), trace };
-  } catch (error) {
-    if (!unavailable(error)) throw error;
-    return drawPanel(prompt);
+// Images: tried in order of the job's list (env.zgPaintModels, env.zgPanelModels) until one can serve.
+// z-image runs in a verified enclave; the others run on standard trust and only ever get a scene
+// description, never the dream's words. The trace names the model, so "How it was made" says which.
+async function drawWith(models: string[], prompt: string, references: string[] = [], seed?: number) {
+  let failure: unknown;
+  for (const model of models) {
+    try {
+      return await draw(model, prompt, references, seed);
+    } catch (error) {
+      if (!unavailable(error)) throw error;
+      failure = error;
+    }
   }
+  throw failure;
 }
 
-// Comic panels (not sealed: they only ever get a scene description, never the raw dream).
-export async function drawPanel(prompt: string, references: string[] = [], seed?: number) {
-  const model = "tencent/hy-image-3.5-preview";
+async function draw(model: string, prompt: string, references: string[], seed?: number) {
+  const sealed = model === "z-image-turbo"; // takes text only and needs b64_json
   const body: Record<string, unknown> = { model, prompt, size: "1024x1024", n: 1 };
-  if (references.length) body.image = references;
+  if (sealed) Object.assign(body, { response_format: "b64_json", verify_tee: true });
+  // Only HunYuan Image takes reference images, which keep the comic's hero looking the same.
+  if (references.length && model.startsWith("tencent/hy-image")) body.image = references;
   if (seed != null) body.seed = seed;
   const { data, trace } = await call<{ data: { b64_json?: string; url?: string }[] }>("/images/generations", model, {
     method: "POST",
-    headers: headers("standard", true),
+    headers: headers(sealed ? "private" : "standard", true),
     body: JSON.stringify(body),
   });
   const item = data.data[0];
   const png = item.b64_json ? Buffer.from(item.b64_json, "base64") : Buffer.from(await (await fetch(item.url!)).arrayBuffer());
   return { png, trace };
 }
+
+// The dream's portrait, posters and reveals.
+export const paint = (prompt: string) => drawWith(env.zgPaintModels(), prompt);
+
+// Comic panels: they only ever get a scene description, never the raw dream.
+export const drawPanel = (prompt: string, references: string[] = [], seed?: number) => drawWith(env.zgPanelModels(), prompt, references, seed);
 
 // Living portraits: image to video, submitted, polled, then downloaded. Seedance runs on a verified
 // relay whose vendor sees the input, so it only ever gets the painted portrait and a motion line.
