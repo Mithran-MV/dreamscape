@@ -36,7 +36,15 @@ export type DreamDetail = {
     traces: Trace[];
     storage: { what: string; root: string; link: string }[];
     registry: { id: number; tx: string; link: string } | null;
-    ens: { name: string; link: string; tx: string; txLink: string } | null;
+    ens: {
+      name: string;
+      gallery: string;
+      galleryLink: string;
+      tx: string;
+      txLink: string;
+      records: { root: string | null; saga: string | null; date: string | null; scope: string | null } | null;
+      current: boolean;
+    } | null;
   };
 };
 

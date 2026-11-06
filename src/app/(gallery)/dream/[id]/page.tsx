@@ -153,12 +153,27 @@ function Proof({ dream }: { dream: DreamDetail }) {
         </a>
       )}
       {ens && (
-        <p className="mt-2 text-sm text-mist">
-          Named on ENS as{" "}
-          <a href={ens.link} target="_blank" rel="noreferrer" className="font-mono text-xs text-gold">{ens.name}</a>
-          , written by a scribe that may set only the day&rsquo;s four records.{" "}
-          <a href={ens.txLink} target="_blank" rel="noreferrer" className="text-gold">Transaction ↗</a>
-        </p>
+        <div className="mt-4 border-t border-edge pt-4 text-sm">
+          <p className="text-mist">
+            On ENS as <span className="font-mono text-xs text-paper">{ens.name}</span>, a name with no registry entry: your gallery&rsquo;s resolver
+            answers for it. A scribe that may set only these four records wrote them.
+          </p>
+          {ens.records && (
+            <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 font-mono text-[11px]">
+              {Object.entries(ens.records).map(([k, v]) => (
+                <div key={k} className="contents">
+                  <dt className="text-dim">dreamscape.{k}</dt>
+                  <dd className="truncate text-paper">{v ?? "none"}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+          {!ens.current && <p className="mt-1 text-xs text-dim">A later dream that day took the day&rsquo;s name over.</p>}
+          <p className="mt-2">
+            <a href={ens.galleryLink} target="_blank" rel="noreferrer" className="text-gold">{ens.gallery} on ENS ↗</a>
+            <a href={ens.txLink} target="_blank" rel="noreferrer" className="ml-4 text-gold">The scribe&rsquo;s transaction ↗</a>
+          </p>
+        </div>
       )}
     </section>
   );

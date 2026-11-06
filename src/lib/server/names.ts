@@ -3,8 +3,8 @@
 import { getDb } from "./db";
 import { getDream, updateDream } from "./dreams";
 import { enqueue } from "./jobs";
-import { ensClients, dayName } from "./ens/client";
-import { writeDayRecord } from "./ens/days";
+import { ensClients, ensReader, dayName, galleryName } from "./ens/client";
+import { readDayRecord, writeDayRecord } from "./ens/days";
 import { onboardDreamer } from "./ens/onboard";
 
 const DAY_MS = 86_400_000;
@@ -37,8 +37,21 @@ export async function dayRecordJob(dreamId: string) {
   updateDream(dreamId, { ens_tx: step.hash });
 }
 
-export function dayRecordProof(handle: string, day: number, tx: string | null) {
+// The day's name has no registry entry (the gallery's resolver answers for it by wildcard), so the ENS
+// app can't open it. The proof reads its records live through the Universal Resolver instead, and
+// links the gallery name, which the ENS app can open.
+export async function dayRecordProof(handle: string, day: number, tx: string | null, root: string | null) {
   if (!tx) return null;
   const name = dayName(handle, isoDate(day));
-  return { name, link: ensLink(name), tx, txLink: sepoliaTx(tx) };
+  const records = await readDayRecord(ensReader(), handle, isoDate(day)).catch(() => null);
+  return {
+    name,
+    gallery: galleryName(handle),
+    galleryLink: ensLink(galleryName(handle)),
+    tx,
+    txLink: sepoliaTx(tx),
+    records: records && { root: records.root, saga: records.saga, date: records.date, scope: records.scope },
+    // One record per day: a later dream that day takes the name over.
+    current: Boolean(records?.root && root && records.root.toLowerCase() === root.toLowerCase()),
+  };
 }

@@ -36,7 +36,7 @@ export async function GET(_request: Request, ctx: RouteContext<"/api/dreams/[id]
         .filter(([, root]) => root)
         .map(([what, root]) => ({ what, root, link: storageExplorer(root as string) })),
       registry: dream.registry_tx ? { id: dream.registry_id, tx: dream.registry_tx, link: txLink(dream.registry_tx) } : null,
-      ens: dayRecordProof(user.handle, dream.day, dream.ens_tx),
+      ens: await dayRecordProof(user.handle, dream.day, dream.ens_tx, dream.record_root),
     },
   });
 }
