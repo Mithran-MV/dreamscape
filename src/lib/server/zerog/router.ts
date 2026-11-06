@@ -98,11 +98,30 @@ export async function transcribe(audio: Uint8Array, mime: string) {
   return { text: (data.text ?? "").trim(), trace };
 }
 
-// Sealed chat that must answer with a JSON object.
-// Minimal reasoning: these are short JSON tasks, and at "low" 0gm spent over 5,000 tokens thinking
-// before a comic script, which ran past the cap. The cap still leaves room if it does reason.
+// Sealed chat that must answer with a JSON object. 0GM reads first; when 0G has no healthy 0GM
+// provider, GLM-5.3, another sealed model, reads instead, so the words still only reach a sealed
+// enclave, and the trace names whichever model did.
+const SEALED_READERS = [
+  // Minimal reasoning: these are short JSON tasks, and at "low" 0gm spent over 5,000 tokens thinking
+  // before a comic script, which ran past the cap. The cap still leaves room if it does reason.
+  { model: "0gm-1.0-35b-a3b", options: { reasoning_effort: "minimal" } },
+  { model: "glm-5.3", options: {} },
+];
+
 export async function chatJson<T>(system: string, user: string, maxTokens = 3000) {
-  const model = "0gm-1.0-35b-a3b";
+  let failure: unknown;
+  for (const { model, options } of SEALED_READERS) {
+    try {
+      return await readJson<T>(model, options, system, user, maxTokens);
+    } catch (error) {
+      if (!(error instanceof ZeroGError) || (error.status !== 502 && error.status !== 503)) throw error;
+      failure = error;
+    }
+  }
+  throw failure;
+}
+
+async function readJson<T>(model: string, options: Record<string, unknown>, system: string, user: string, maxTokens: number) {
   const { data, trace } = await call<{ choices: { message: { content: string }; finish_reason?: string }[] }>("/chat/completions", model, {
     method: "POST",
     headers: headers("private", true),
@@ -113,7 +132,7 @@ export async function chatJson<T>(system: string, user: string, maxTokens = 3000
         { role: "user", content: user },
       ],
       response_format: { type: "json_object" },
-      reasoning_effort: "minimal",
+      ...options,
       max_tokens: maxTokens,
       temperature: 0.7,
       verify_tee: true,
@@ -125,11 +144,10 @@ export async function chatJson<T>(system: string, user: string, maxTokens = 3000
   try {
     return { value: JSON.parse(json) as T, trace };
   } catch {
-    throw new ZeroGError(502, `0gm returned no usable JSON (finish: ${data.choices?.[0]?.finish_reason ?? "unknown"})`, trace);
+    throw new ZeroGError(502, `${model} returned no usable JSON (finish: ${data.choices?.[0]?.finish_reason ?? "unknown"})`, trace);
   }
 }
 
-// Sealed painting. z-image-turbo takes text only and needs b64_json.
 // The painter: z-image in a verified enclave. When 0G has no healthy z-image provider, the comic panels'
 // painter steps in so the dream still hangs on the wall. It runs on standard trust and only ever gets
 // the scene, never the dream's words, and its trace says so in "How it was made".
