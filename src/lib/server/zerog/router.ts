@@ -101,6 +101,10 @@ export async function transcribe(audio: Uint8Array, mime: string) {
 // Sealed chat that must answer with a JSON object. 0GM reads first; when 0G has no healthy 0GM
 // provider, GLM-5.3, another sealed model, reads instead, so the words still only reach a sealed
 // enclave, and the trace names whichever model did.
+// 0G can't serve this model right now: its provider is down or busy, or it has none left (404 model_not_found).
+const unavailable = (error: unknown) =>
+  error instanceof ZeroGError && (error.status === 502 || error.status === 503 || (error.status === 404 && error.body.includes("model_not_found")));
+
 const SEALED_READERS = [
   // Minimal reasoning: these are short JSON tasks, and at "low" 0gm spent over 5,000 tokens thinking
   // before a comic script, which ran past the cap. The cap still leaves room if it does reason.
@@ -114,7 +118,7 @@ export async function chatJson<T>(system: string, user: string, maxTokens = 3000
     try {
       return await readJson<T>(model, options, system, user, maxTokens);
     } catch (error) {
-      if (!(error instanceof ZeroGError) || (error.status !== 502 && error.status !== 503)) throw error;
+      if (!unavailable(error)) throw error;
       failure = error;
     }
   }
@@ -161,7 +165,7 @@ export async function paint(prompt: string, size = "1024x1024") {
     });
     return { png: Buffer.from(data.data[0].b64_json, "base64"), trace };
   } catch (error) {
-    if (!(error instanceof ZeroGError) || (error.status !== 502 && error.status !== 503)) throw error;
+    if (!unavailable(error)) throw error;
     return drawPanel(prompt);
   }
 }
