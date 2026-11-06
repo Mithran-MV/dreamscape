@@ -1,10 +1,12 @@
 // Mornings and Memories. Every morning the dreamer lights a star: by telling a dream, tapping a feeling,
 // or saying nothing came. The count of mornings kept only grows, and at 7, 21, 30 and 100 it brings a
 // reveal made from their own dreams. "On this morning" brings an older dream back, as photo memories do.
+// Every night the run paints tonight's sky from the week's stars; five stars complete its constellation.
 import { getDb, now, utcDay } from "./db";
 import { addTrace, FEELINGS, getBlob, putBlob, type Feeling } from "./dreams";
 import { newId } from "./crypto";
 import { enqueue, hasOpenJob } from "./jobs";
+import { notify } from "./push";
 import { paint } from "./zerog/router";
 
 export type MorningKind = "dream" | "feeling" | "nothing";
@@ -21,6 +23,10 @@ export const REVEALS = [
   { kind: "portrait", at: 100, title: "Your dream self-portrait" },
 ] as const;
 type RevealKind = (typeof REVEALS)[number]["kind"];
+const CONSTELLATION = 5; // stars a week needs
+
+const mondayOf = (day: number) => day - ((day + 3) % 7); // 1 Jan 1970 was a Thursday
+const weekKind = (monday: number) => `week:${monday}`;
 
 export function keepMorning(userId: string, kind: MorningKind, feeling: string | null) {
   const f = feeling && (FEELINGS as readonly string[]).includes(feeling) ? feeling : null;
@@ -45,15 +51,27 @@ function keptDays(userId: string): Map<number, Star> {
   return days;
 }
 
-// This week, Monday to Sunday (UTC days), and the lifetime count.
+// This week, Monday to Sunday (UTC days), the lifetime count, and this week's constellation.
 export function morningState(userId: string) {
   const days = keptDays(userId);
   const today = utcDay();
-  const monday = today - ((today + 3) % 7); // 1 Jan 1970 was a Thursday
+  const monday = mondayOf(today);
   const week: Star[] = Array.from({ length: 7 }, (_, i) => days.get(monday + i) ?? { day: monday + i, kind: null, feeling: null });
   const kept = days.size;
   const next = REVEALS.find((r) => r.at > kept) ?? null;
-  return { today, keptToday: days.has(today), week, kept, next: next && { title: next.title, at: next.at, left: next.at - kept } };
+  const poster = getDb().prepare("SELECT status FROM reveals WHERE user_id = ? AND kind = ?").get(userId, weekKind(monday)) as { status: string } | undefined;
+  const constellation = poster?.status === "ready" ? "painted" : week.filter((s) => s.kind).length >= CONSTELLATION ? "tonight" : "forming";
+  const hidden = (getDb().prepare("SELECT hide_stars FROM users WHERE id = ?").get(userId) as { hide_stars: number | null } | undefined)?.hide_stars === 1;
+  return { today, keptToday: days.has(today), week, kept, constellation, hidden, next: next && { title: next.title, at: next.at, left: next.at - kept } };
+}
+
+export function setStarsHidden(userId: string, hidden: boolean) {
+  getDb().prepare("UPDATE users SET hide_stars = ? WHERE id = ?").run(hidden ? 1 : 0, userId);
+}
+
+// The browser's offset from UTC in minutes (Date.getTimezoneOffset), so the morning notice comes at the dreamer's own morning.
+export function setTimezone(userId: string, offset: number) {
+  if (Number.isInteger(offset) && Math.abs(offset) <= 840) getDb().prepare("UPDATE users SET tz_offset = ? WHERE id = ?").run(offset, userId);
 }
 
 type DreamRow = { id: string; day: number; title: string | null; transcript: string | null; note: string | null; feeling: string | null; tags_json: string | null };
@@ -126,23 +144,31 @@ const list = (xs: string[]) => (xs.length > 1 ? `${xs.slice(0, -1).join(", ")} a
 
 type RevealRow = { id: string; kind: RevealKind; status: string; title: string; body: string | null; slides_json: string | null; created_at: number };
 
+const weekLabel = (monday: number) => `Week of ${new Date(monday * DAY_MS).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" })}`;
+
 function revealMemory(r: RevealRow): Memory | null {
   if (r.status !== "ready" || !r.slides_json) return null;
   const slides = JSON.parse(r.slides_json) as Slide[];
-  const at = REVEALS.find((x) => x.kind === r.kind)?.at;
-  return { id: r.id, kind: r.kind, title: r.title, subtitle: `${at} mornings kept`, cover: slides.find((s) => s.image)?.image ?? null, feeling: slides.find((s) => s.feeling)?.feeling ?? null, slides };
+  const week = r.kind.startsWith("week:");
+  const sky = r.kind.startsWith("sky:");
+  const subtitle = sky ? "Last night" : week ? weekLabel(Number(r.kind.slice(5))) : `${REVEALS.find((x) => x.kind === r.kind)?.at} mornings kept`;
+  return { id: r.id, kind: sky ? "sky" : week ? "week" : r.kind, title: r.title, subtitle, cover: slides.find((s) => s.image)?.image ?? null, feeling: slides.find((s) => s.feeling)?.feeling ?? null, slides };
 }
 
 export function memoriesFor(userId: string): Memory[] {
   const dreams = paintedDreams(userId);
   const out: Memory[] = [];
   const reveals = getDb().prepare("SELECT * FROM reveals WHERE user_id = ? ORDER BY created_at DESC").all(userId) as RevealRow[];
+  const sky = reveals.find((r) => r.kind.startsWith("sky:") && r.status === "ready");
   for (const r of reveals) {
+    if (r.kind.startsWith("sky:")) continue;
     const m = revealMemory(r);
     if (m) out.push(m);
   }
   const morning = onThisMorning(dreams, utcDay());
   if (morning) out.unshift(morning);
+  const last = sky && revealMemory(sky);
+  if (last) out.unshift(last);
   return out;
 }
 
@@ -175,7 +201,7 @@ export async function makeReveal(ref: string) {
   const row = db.prepare("SELECT * FROM reveals WHERE user_id = ? AND kind = ?").get(userId, kind) as RevealRow | undefined;
   if (!row || row.status === "ready") return;
   const dreams = paintedDreams(userId);
-  const at = REVEALS.find((r) => r.kind === kind)!.at;
+  const at = REVEALS.find((r) => r.kind === kind)?.at;
   const kicker = `${at} mornings kept`;
   const themes = top(dreams.flatMap((d) => tagsOf(d).themes ?? []), 3).map(([t]) => t);
   const feelings = top(dreams.map((d) => d.feeling).filter(Boolean) as string[], 1).map(([f]) => f);
@@ -213,4 +239,92 @@ export async function makeReveal(ref: string) {
 
   if (slides.length < 2) slides = [{ kicker, title: row.title, text: body }];
   db.prepare("UPDATE reveals SET status = 'ready', body = ?, slides_json = ? WHERE id = ?").run(body, JSON.stringify(slides), row.id);
+}
+
+// What each theme draws in the stars.
+const MOTIF: Record<string, string> = {
+  water: "a breaking wave", flight: "a bird in flight", falling: "a falling feather", chase: "a running figure", home: "a small house with a lit window",
+  animals: "a sleeping fox", people: "two figures holding hands", school: "an old school bell", city: "a city skyline", nature: "a tall tree",
+  fantasy: "a winged castle", night: "a crescent moon",
+};
+const SKY: Record<Feeling, string> = { wonder: "luminous blue", joy: "warm gold", calm: "soft teal", confused: "violet", scared: "deep coral", sad: "dusky indigo" };
+const titleCase = (w: string) => w.charAt(0).toUpperCase() + w.slice(1);
+
+// Job 'night.poster', ref = user id: tonight's poster, one of the night run's three pieces. While the week
+// has fewer than five stars it's tonight's sky with the stars lit so far; the night the fifth is lit it's
+// the finished constellation, joined into the shape of what the week dreamed of, and it stays on the wall.
+export async function paintTonight(userId: string) {
+  const db = getDb();
+  const today = utcDay();
+  const monday = mondayOf(today);
+  const days = keptDays(userId);
+  const stars = Array.from({ length: 7 }, (_, i) => days.get(monday + i)).filter(Boolean) as Star[];
+  const complete = stars.length >= CONSTELLATION && !db.prepare("SELECT 1 FROM reveals WHERE user_id = ? AND kind = ? AND status = 'ready'").get(userId, weekKind(monday));
+  const kind = complete ? weekKind(monday) : `sky:${today}`;
+  let row = db.prepare("SELECT * FROM reveals WHERE user_id = ? AND kind = ?").get(userId, kind) as RevealRow | undefined;
+  if (row?.status === "ready") return;
+  if (!row) {
+    db.prepare("INSERT INTO reveals (id, user_id, kind, status, title, created_at) VALUES (?, ?, ?, 'making', ?, ?)").run(newId("reveal"), userId, kind, complete ? "This week's constellation" : "Tonight's sky", now());
+    row = db.prepare("SELECT * FROM reveals WHERE user_id = ? AND kind = ?").get(userId, kind) as RevealRow;
+  }
+
+  const dreams = paintedDreams(userId).filter((d) => d.day >= monday && d.day < monday + 7);
+  const theme = top(dreams.flatMap((d) => tagsOf(d).themes ?? []), 1)[0]?.[0];
+  const feeling = (top(stars.map((s) => s.feeling).filter(Boolean) as string[], 1)[0]?.[0] ?? "wonder") as Feeling;
+  const sky = `The sky is washed in ${SKY[feeling]}. ${STYLE}`;
+  const { png, trace } = await paint(
+    complete
+      ? `A dreamlike painterly night sky over a quiet sleeping landscape, where ${stars.length} bright golden stars are joined by faint lines into a constellation shaped like ${MOTIF[theme ?? "night"] ?? MOTIF.night}. ${sky}`
+      : `A dreamlike painterly night sky over a quiet sleeping landscape${theme ? ` touched by ${theme}` : ""}, with ${Math.max(1, stars.length)} bright golden ${stars.length === 1 ? "star" : "stars"} beginning to gather into a constellation, and faint unlit stars waiting beside them. ${sky}`,
+  );
+  addTrace(row.id, complete ? "constellation" : "sky", trace);
+  putBlob(userId, imageKey(row.id), "image/png", png);
+
+  const dreamt = stars.filter((s) => s.kind === "dream").length;
+  const quiet = stars.length - dreamt;
+  const parts = [dreamt && `${dreamt} ${dreamt === 1 ? "dream" : "dreams"}`, quiet && `${quiet} quiet ${quiet === 1 ? "night" : "nights"}`].filter(Boolean);
+  const counted = `${stars.length} ${stars.length === 1 ? "star" : "stars"} this week${parts.length ? `: ${parts.join(" and ")}` : ""}.`;
+  const night = new Date(today * DAY_MS).toLocaleDateString("en-GB", { weekday: "long", timeZone: "UTC" });
+  const title = complete ? (theme ? `The Week of ${titleCase(theme)}` : `A Week of ${titleCase(feeling)}`) : "Tonight's sky";
+  const text = complete
+    ? `${counted} Painted with your leftover 0G credit.`
+    : [counted, stars.length < CONSTELLATION && `${CONSTELLATION - stars.length} more and they become your constellation.`, "Painted with your leftover 0G credit."].filter(Boolean).join(" ");
+  const slides: Slide[] = [
+    { kicker: complete ? weekLabel(monday) : `${night} night`, title: complete ? "Your constellation" : "Tonight's sky", feeling },
+    { image: revealImageUrl(row.id), title, text, feeling },
+  ];
+  db.prepare("UPDATE reveals SET status = 'ready', title = ?, body = ?, slides_json = ? WHERE id = ?").run(title, text, JSON.stringify(slides), row.id);
+}
+
+// The local minute of the day this dreamer usually keeps their morning, from the last three weeks; 7:30 until there's a habit.
+function usualMinute(userId: string, offset: number) {
+  const since = now() - 21 * DAY_MS;
+  const times = (
+    getDb()
+      .prepare("SELECT created_at AS t FROM mornings WHERE user_id = ? AND created_at >= ? UNION ALL SELECT created_at AS t FROM dreams WHERE user_id = ? AND created_at >= ?")
+      .all(userId, since, userId, since) as { t: number }[]
+  ).map(({ t }) => Math.floor((((t - offset * 60_000) % DAY_MS) + DAY_MS) % DAY_MS / 60_000));
+  if (times.length < 3) return 7 * 60 + 30;
+  times.sort((a, b) => a - b);
+  return times[Math.floor(times.length / 2)];
+}
+
+// Called by the worker every minute: one notice a morning, at the dreamer's usual time, until today's star is lit.
+export async function scheduleMornings(at = Date.now()) {
+  const db = getDb();
+  const users = db.prepare("SELECT DISTINCT u.id, u.tz_offset FROM users u JOIN push_subs p ON p.user_id = u.id WHERE u.tz_offset IS NOT NULL").all() as { id: string; tz_offset: number }[];
+  for (const u of users) {
+    const local = at - u.tz_offset * 60_000;
+    const minute = Math.floor((local % DAY_MS) / 60_000);
+    const when = usualMinute(u.id, u.tz_offset);
+    if (minute < when || minute > when + 30) continue;
+    const day = Math.floor(local / DAY_MS);
+    // Claimed before sending, so a slow send never doubles up.
+    if (!db.prepare("INSERT OR IGNORE INTO kv (key, value) VALUES (?, ?)").run(`morning-push:${u.id}:${day}`, String(at)).changes) continue;
+    const state = morningState(u.id);
+    if (state.keptToday) continue;
+    const star = state.week.filter((s) => s.kind).length + 1;
+    const comic = db.prepare("SELECT id FROM episodes WHERE user_id = ? AND status = 'draft' ORDER BY created_at DESC LIMIT 1").get(u.id) as { id: string } | undefined;
+    await notify(u.id, { title: `Star ${star} is waiting`, body: comic ? "Your comic is ready. One tap lights your star." : "One tap lights it, with or without a dream.", url: "/", tag: `morning-${day}` });
+  }
 }
