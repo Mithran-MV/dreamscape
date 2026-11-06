@@ -11,6 +11,7 @@ import { WeatherStrip } from "@/components/weather";
 import { CalendarWall } from "@/components/calendar-wall";
 import { KnockBanner } from "@/components/passes-panel";
 import { MorningsAndMemories } from "@/components/memories";
+import { Collected } from "@/components/collected";
 import { chipColor, dayLabel, FEELINGS } from "@/components/ui";
 import { useClientValue } from "@/lib/use-client-value";
 import { useSignInKind } from "./providers";
@@ -105,6 +106,8 @@ export default function Home() {
       )}
 
       <HungComics episodes={episodes} />
+
+      <Collected />
     </AppShell>
   );
 }
