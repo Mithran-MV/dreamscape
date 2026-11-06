@@ -59,7 +59,7 @@ function Visit() {
     return (
       <Door title={`${handle}'s gallery is private`}>
         <p className="mt-2 text-mist">Sign in to visit with the pass they gave you.</p>
-        <Link href="/" className="mt-5 inline-block rounded-full bg-gold px-5 py-2.5 font-medium text-gold-ink">Sign in</Link>
+        <Link href={`/?next=${encodeURIComponent(`/g/${handle}`)}`} className="mt-5 inline-block rounded-full bg-gold px-5 py-2.5 font-medium text-gold-ink">Sign in</Link>
       </Door>
     );
   }
