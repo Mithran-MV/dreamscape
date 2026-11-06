@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { usePrivy } from "@privy-io/react-auth";
+import { useLogin, usePrivy } from "@privy-io/react-auth";
 import { api, PAINTED, panelUrl, type DreamSummary, type EpisodeSummary, type Note } from "@/lib/api";
 import { Landing } from "@/components/landing/landing";
 import { AppShell, type SessionUser } from "@/components/app-shell";
@@ -328,12 +328,14 @@ function HungComics({ episodes }: { episodes: EpisodeSummary[] }) {
 // live site (providers.tsx), then, for a new dreamer, the name their gallery gets on ENS. The landing itself
 // shows the wordmark and headline.
 function SignIn({ onDone }: { onDone: () => void }) {
-  const { ready, authenticated, login, getAccessToken } = usePrivy();
+  const { ready, authenticated, getAccessToken } = usePrivy();
   const kind = useSignInKind();
   const [needsName, setNeedsName] = useState(false);
   const [handle, setHandle] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Privy's own dialog only says it couldn't sign in; its error code says why.
+  const { login } = useLogin({ onError: (code) => code !== "exited_auth_flow" && setError(`The sign-in didn't finish (${code}). Try again.`) });
 
   const exchange = useCallback(
     (name?: string) =>
@@ -385,7 +387,7 @@ function SignIn({ onDone }: { onDone: () => void }) {
 
   return (
     <div className="flex flex-col gap-3">
-      <button disabled={!ready || (authenticated && !error)} onClick={login} className="press rounded-xl bg-gold px-4 py-3 font-semibold text-gold-ink disabled:opacity-60">
+      <button disabled={!ready || (authenticated && !error)} onClick={() => login()} className="press rounded-xl bg-gold px-4 py-3 font-semibold text-gold-ink disabled:opacity-60">
         {authenticated && !error ? "Opening your gallery…" : kind === "wallet" ? "Sign in with your wallet" : "Sign in with 0G"}
       </button>
       <p className="text-left text-xs text-dim">
