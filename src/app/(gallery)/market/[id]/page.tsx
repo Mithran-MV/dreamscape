@@ -78,7 +78,7 @@ function PieceView() {
         <div className="lg:sticky lg:top-28 lg:self-start">
           {piece.holds && piece.kind === "episode" && script ? (
             <ComicPage script={script} feeling={null} panelSrc={(n) => fullPanelUrl(piece.id, n)} />
-          ) : piece.holds && piece.kind === "dream" ? (
+          ) : piece.holds && piece.kind !== "episode" ? (
             <Frame src={fullUrl(piece.id)} alt={piece.title} />
           ) : piece.kind === "episode" ? (
             <div className="paper-card p-3">
@@ -92,7 +92,7 @@ function PieceView() {
         </div>
 
         <section className="min-w-0">
-          <p className="text-ui font-semibold text-mist">{piece.kind === "episode" ? "Comic" : "Portrait"}</p>
+          <p className="text-ui font-semibold text-mist">{piece.kind === "episode" ? "Comic" : piece.kind === "poster" ? "Poster" : "Portrait"}</p>
           <h1 className="mt-1 font-display text-h1 lg:text-display">{piece.title}</h1>
           {piece.sellerEns && <p className="mt-3 truncate font-mono text-ui text-gold">{piece.sellerEns}</p>}
 

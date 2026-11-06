@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { market, pieceIdFor, usdc, type PieceView } from "@/lib/api-market";
 import { plainError } from "@/components/messages";
 
-export function SellPanel({ kind, refId, suggested }: { kind: "episode" | "dream"; refId: string; suggested: number }) {
+export function SellPanel({ kind, refId, suggested }: { kind: "episode" | "dream" | "poster"; refId: string; suggested: number }) {
   const id = pieceIdFor(kind, refId);
   const [piece, setPiece] = useState<PieceView | null | undefined>(undefined);
   const [open, setOpen] = useState(false);

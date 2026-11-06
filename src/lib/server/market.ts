@@ -8,6 +8,7 @@ import { getDb, now } from "./db";
 import { env } from "./env";
 import { getBlob, getDream, putBlob, THEMES, type Dream } from "./dreams";
 import { enqueue, hasOpenJob } from "./jobs";
+import { hungPoster } from "./memories";
 import { getEpisode, panelKey } from "./nightly";
 import { registryAbi } from "./ens/contracts";
 import { listPiece as listOnArkiv, listingForPiece, nightOf, openStalls, searchMarket, tonightsStalls, type ListingRow, type MarketSearch } from "./arkiv/market";
@@ -28,7 +29,8 @@ export const usdcAbi = parseAbi(["function approve(address spender, uint256 amou
 const MARKET_OWNER = "market";
 export const previewKey = (pieceId: string) => `piece/${pieceId}/preview`;
 
-export type PieceKind = "episode" | "dream";
+// "poster" is a hung nightly poster: tonight's sky or a finished constellation.
+export type PieceKind = "episode" | "dream" | "poster";
 export type Piece = {
   id: Hex;
   user_id: string;
@@ -83,9 +85,9 @@ function labelPrefixFor(userId: string, title: string) {
 
 // A small, soft JPEG that anyone may see. The full piece stays sealed.
 async function makePreview(kind: PieceKind, userId: string, ref: string) {
-  if (kind === "dream") {
-    const portrait = getBlob(userId, `dream/${ref}/portrait`);
-    if (!portrait) throw new Error("This dream has no portrait yet.");
+  if (kind === "dream" || kind === "poster") {
+    const portrait = getBlob(userId, kind === "dream" ? `dream/${ref}/portrait` : `reveal/${ref}/image`);
+    if (!portrait) throw new Error("This piece has no painting yet.");
     return sharp(portrait.bytes).resize(320, 320, { fit: "cover" }).jpeg({ quality: 55 }).toBuffer();
   }
   const tiles = await Promise.all(
@@ -115,6 +117,10 @@ export async function startListing(userId: string, input: ListInput): Promise<{ 
     if (!ep || ep.user_id !== userId) return { error: "Not found." };
     if (ep.status !== "published") return { error: "Hang the comic in your gallery before selling it." };
     title = ep.title;
+  } else if (input.kind === "poster") {
+    const poster = hungPoster(userId, input.ref);
+    if (!poster) return { error: "Hang the poster on your wall before selling it." };
+    title = poster.title;
   } else {
     const dream = getDream(input.ref);
     if (!dream || dream.user_id !== userId) return { error: "Not found." };
@@ -162,6 +168,15 @@ export async function listJob(pieceId: string) {
 }
 
 function themesOf(piece: Piece): Theme[] {
+  if (piece.kind === "poster") {
+    // A poster carries the themes of the week it was painted in.
+    const kind = (getDb().prepare("SELECT kind FROM reveals WHERE id = ?").get(piece.ref) as { kind: string } | undefined)?.kind ?? "";
+    const day = Number(kind.split(":")[1]);
+    const monday = day - ((day + 3) % 7);
+    const rows = getDb().prepare("SELECT tags_json FROM dreams WHERE user_id = ? AND day >= ? AND day < ? AND tags_json IS NOT NULL").all(piece.user_id, monday, monday + 7) as { tags_json: string }[];
+    const all = new Set(rows.flatMap((r) => (JSON.parse(r.tags_json).themes ?? []) as string[]));
+    return [...all].filter((t): t is Theme => (THEMES as readonly string[]).includes(t));
+  }
   const dreamId = piece.kind === "dream" ? piece.ref : (JSON.parse(getEpisode(piece.ref)?.dream_ids ?? "[]") as string[])[0];
   const dream = dreamId ? (getDream(dreamId) as Dream | undefined) : undefined;
   const themes = (JSON.parse(dream?.tags_json ?? "{}").themes ?? []) as string[];
@@ -189,7 +204,12 @@ export async function arkivJob(pieceId: string) {
         editionsTotal: piece.editions,
         themes: themesOf(piece),
         sealed: piece.kind === "dream",
-        model: piece.kind === "episode" ? "tencent/hy-image-3.5-preview" : "z-image-turbo",
+        model:
+          piece.kind === "episode"
+            ? "tencent/hy-image-3.5-preview"
+            : piece.kind === "poster"
+              ? ((getDb().prepare("SELECT model FROM traces WHERE dream_id = ? ORDER BY id DESC LIMIT 1").get(piece.ref) as { model: string } | undefined)?.model ?? "z-image-turbo")
+              : "z-image-turbo",
         previewRef: `/api/market/${piece.id}/preview`,
       })
     ).key;

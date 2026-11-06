@@ -11,7 +11,10 @@ export async function fullFile(pieceId: string, part: "portrait" | number) {
   if (!piece || !user) return null;
   const { wallet } = getDb().prepare("SELECT wallet FROM users WHERE id = ?").get(user.id) as { wallet: string | null };
   if (user.id !== piece.user_id && !(await holdsEdition(piece, wallet))) return null;
-  if (part === "portrait") return piece.kind === "dream" ? getBlob(piece.user_id, `dream/${piece.ref}/portrait`) : undefined;
+  if (part === "portrait") {
+    if (piece.kind === "dream") return getBlob(piece.user_id, `dream/${piece.ref}/portrait`);
+    return piece.kind === "poster" ? getBlob(piece.user_id, `reveal/${piece.ref}/image`) : undefined;
+  }
   return piece.kind === "episode" ? getBlob(piece.user_id, panelKey(piece.ref, part)) : undefined;
 }
 

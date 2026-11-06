@@ -17,7 +17,7 @@ export type ListingCard = {
 
 export type PieceView = {
   id: Hex;
-  kind: "episode" | "dream";
+  kind: "episode" | "dream" | "poster";
   title: string;
   status: "listing" | "listed";
   sellerEns: string | null;
@@ -40,7 +40,7 @@ async function json<T>(res: Response): Promise<T> {
 }
 
 // Same id the server and NightMarket use, so the sell panel can look its piece up.
-export const pieceIdFor = (kind: "episode" | "dream", ref: string) => keccak256(toHex(`dreamscape:${kind}:${ref}`));
+export const pieceIdFor = (kind: "episode" | "dream" | "poster", ref: string) => keccak256(toHex(`dreamscape:${kind}:${ref}`));
 
 export const market = {
   search: (q: { themes?: string[]; category?: string; max?: number; sort?: string }) => {
@@ -53,7 +53,7 @@ export const market = {
   },
   picks: () => fetch("/api/market?picks=1").then((r) => json<{ listings: ListingCard[] }>(r)),
   piece: (id: string) => fetch(`/api/market/${id}`).then((r) => (r.status === 404 ? null : json<PieceView>(r))),
-  sell: (body: { kind: "episode" | "dream"; ref: string; priceUsdc: number; editions: number }) =>
+  sell: (body: { kind: "episode" | "dream" | "poster"; ref: string; priceUsdc: number; editions: number }) =>
     fetch("/api/market", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).then((r) => json<{ id: Hex }>(r)),
   bought: (id: string, tx: string) =>
     fetch(`/api/market/${id}/bought`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tx }) }).then((r) =>

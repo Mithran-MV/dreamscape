@@ -35,7 +35,7 @@ export async function POST(request: Request) {
   const user = await currentUser();
   if (!user) return Response.json({ error: "Sign in first." }, { status: 401 });
   const body = (await request.json().catch(() => ({}))) as { kind?: string; ref?: string; priceUsdc?: number; editions?: number };
-  if ((body.kind !== "episode" && body.kind !== "dream") || typeof body.ref !== "string") return Response.json({ error: "Pick a piece to sell." }, { status: 400 });
+  if ((body.kind !== "episode" && body.kind !== "dream" && body.kind !== "poster") || typeof body.ref !== "string") return Response.json({ error: "Pick a piece to sell." }, { status: 400 });
   const result = await startListing(user.id, { kind: body.kind as PieceKind, ref: body.ref, priceUsdc: Number(body.priceUsdc), editions: Number(body.editions) });
   if ("error" in result) return Response.json(result, { status: 409 });
   return Response.json(result, { status: 201 });
