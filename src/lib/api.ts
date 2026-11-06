@@ -82,6 +82,11 @@ export type Mornings = {
   memories: Memory[];
 };
 
+export type NightlyDrafts = {
+  posters: { id: string; kind: "sky" | "week"; title: string; text: string | null; image: string; createdAt: number }[];
+  portraits: { dreamId: string; title: string | null; video: string; image: string }[];
+};
+
 export const api = {
   session: () => fetch("/api/session").then((r) => json<{ user: { handle: string; wallet: string | null; ensName: string | null; naming: boolean } | null }>(r)),
   signOut: () => fetch("/api/session", { method: "DELETE" }).then((r) => json<{ ok: true }>(r)),
@@ -91,6 +96,9 @@ export const api = {
     ),
   signIn: (handle: string, passphrase: string) =>
     fetch("/api/session", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ handle, passphrase }) }).then((r) => json<{ handle: string }>(r)),
+  nightlyDrafts: () => fetch("/api/drafts").then((r) => json<NightlyDrafts>(r)),
+  decideDraft: (piece: "poster" | "portrait", id: string, action: "hang" | "let-go") =>
+    fetch("/api/drafts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ piece, id, action }) }).then((r) => json<NightlyDrafts>(r)),
   mornings: () => fetch(`/api/mornings?tz=${new Date().getTimezoneOffset()}`).then((r) => json<Mornings>(r)),
   hideStars: (hide: boolean) =>
     fetch("/api/mornings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ hide }) }).then((r) => json<Mornings>(r)),

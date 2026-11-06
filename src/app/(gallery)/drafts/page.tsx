@@ -1,9 +1,11 @@
 "use client";
-// Drafts: tonight's comics wait here until the dreamer hangs them or lets them go,
-// with what today has cost so far against the nightly budget.
+// Drafts: last night's three pieces wait here until the dreamer hangs them or lets them go: the comic,
+// the poster of the week's sky, and the moving portrait. Hung, the comic and the poster can go to the
+// Night Market. Beside them, what today has cost so far against the nightly budget.
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { api, panelUrl, type EpisodeDetail, type EpisodeSummary } from "@/lib/api";
+import { api, panelUrl, type EpisodeDetail, type EpisodeSummary, type NightlyDrafts } from "@/lib/api";
+import { SellPanel } from "@/components/sell-panel";
 import { AppShell } from "@/components/app-shell";
 import { ComicPage } from "@/components/comic";
 import { dayLabel } from "@/components/ui";
@@ -19,12 +21,15 @@ export default function DraftsPage() {
   const [spent, setSpent] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [asking, setAsking] = useState(false);
+  const [night, setNight] = useState<NightlyDrafts | null>(null);
+  const [hung, setHung] = useState<{ id: string; title: string; image: string }[]>([]);
 
   const load = useCallback(
     () =>
-      Promise.all([api.episodes(), api.nightly()]).then(async ([e, n]) => {
+      Promise.all([api.episodes(), api.nightly(), api.nightlyDrafts()]).then(async ([e, n, d]) => {
         setEpisodes(e.episodes);
         setSpent(n.spentTodayUsd);
+        setNight(d);
         // Each draft's script and traces come from its own page.
         const drafts = e.episodes.filter((x) => x.status === "draft");
         const full = await Promise.all(drafts.map((d) => api.episode(d.id).catch(() => null)));
@@ -59,7 +64,10 @@ export default function DraftsPage() {
       <header className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)] lg:items-end">
         <div>
           <h1 className="font-display text-h1 md:text-display">Drafts</h1>
-          <p className="mt-4 max-w-[52ch] text-lead text-mist">Each night your newest dream can become a four-panel comic. It waits here, seen only by you, until you hang it or discard it.</p>
+          <p className="mt-4 max-w-[56ch] text-lead text-mist">
+            Every night, three hours before your 0G credit resets, what&rsquo;s left of it makes three pieces: a poster of your week&rsquo;s sky, a comic of your newest dream and a moving portrait. They wait
+            here, seen only by you, until you hang them or let them go.
+          </p>
         </div>
         {spent !== null && <CreditBar spent={spent} />}
       </header>
@@ -81,7 +89,7 @@ export default function DraftsPage() {
 
       {!episodes ? (
         <div className="painting mt-12 aspect-[16/9] rounded-[1.25rem]" aria-hidden />
-      ) : drafts.length === 0 ? (
+      ) : drafts.length === 0 && !night?.posters.length && !night?.portraits.length && !hung.length ? (
         !working && (
           <section className="panel mt-12 px-6 py-14 text-center">
             <h2 className="font-display text-h2">Nothing waiting</h2>
@@ -95,6 +103,15 @@ export default function DraftsPage() {
         <div className="mt-12 space-y-16">
           {drafts.map((d) => (
             <Draft key={d.id} summary={d} detail={details[d.id]} onDecided={load} />
+          ))}
+          {night?.posters.map((p) => (
+            <Poster key={p.id} poster={p} onHung={() => setHung((h) => [...h, { id: p.id, title: p.title, image: p.image }])} onDecided={setNight} />
+          ))}
+          {hung.map((p) => (
+            <HungPoster key={p.id} poster={p} />
+          ))}
+          {night?.portraits.map((p) => (
+            <Portrait key={p.dreamId} portrait={p} onDecided={setNight} />
           ))}
         </div>
       )}
@@ -187,6 +204,102 @@ function Draft({ summary, detail, onDecided }: { summary: EpisodeSummary; detail
         </div>
         <p className="mt-3 text-ui text-dim">Hanging it adds it to your wall. Nothing gets shared or sold unless you choose to.</p>
         {error && <p className="mt-3 text-ui text-danger">{plainError(error)}</p>}
+      </div>
+    </article>
+  );
+}
+
+function Decide({ onHang, onLetGo, hang = "Hang it", note }: { onHang: () => Promise<unknown>; onLetGo: () => Promise<unknown>; hang?: string; note: string }) {
+  const [deciding, setDeciding] = useState<"hang" | "let-go" | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const run = (which: "hang" | "let-go", act: () => Promise<unknown>) => {
+    setDeciding(which);
+    setError(null);
+    act()
+      .catch((e: Error) => setError(e.message))
+      .finally(() => setDeciding(null));
+  };
+  return (
+    <>
+      <div className="mt-7 flex flex-wrap gap-3">
+        <button onClick={() => run("hang", onHang)} disabled={deciding !== null} className="btn btn-gold btn-lg">
+          {deciding === "hang" ? "Hanging it…" : hang}
+        </button>
+        <button onClick={() => run("let-go", onLetGo)} disabled={deciding !== null} className="btn btn-line btn-lg">
+          {deciding === "let-go" ? "Letting it go…" : "Let it go"}
+        </button>
+      </div>
+      <p className="mt-3 text-ui text-dim">{note}</p>
+      {error && <p className="mt-3 text-ui text-danger">{plainError(error)}</p>}
+    </>
+  );
+}
+
+function Poster({ poster, onHung, onDecided }: { poster: NightlyDrafts["posters"][number]; onHung: () => void; onDecided: (d: NightlyDrafts) => void }) {
+  return (
+    <article className="appear grid gap-8 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:gap-14">
+      <div className="frame">
+        <div className="mat aspect-square w-full">
+          {/* eslint-disable-next-line @next/next/no-img-element -- private, decrypted per request */}
+          <img src={poster.image} alt={poster.title} className="h-full w-full object-cover" />
+        </div>
+      </div>
+      <div className="lg:sticky lg:top-28 lg:self-start">
+        <p className="text-ui font-semibold text-gold">{poster.kind === "week" ? "This week's constellation" : "Last night's poster"}</p>
+        <h2 className="mt-2 font-display text-h1">{poster.title}</h2>
+        {poster.text && <p className="mt-3 text-lead text-mist">{poster.text}</p>}
+        <Decide
+          onHang={() =>
+            api.decideDraft("poster", poster.id, "hang").then((d) => {
+              onHung();
+              onDecided(d);
+            })
+          }
+          onLetGo={() => api.decideDraft("poster", poster.id, "let-go").then(onDecided)}
+          note="Hanging it puts it in your Memories, and you can sell it on the Night Market."
+        />
+      </div>
+    </article>
+  );
+}
+
+// A poster just hung: it can go straight to the Night Market.
+function HungPoster({ poster }: { poster: { id: string; title: string; image: string } }) {
+  return (
+    <article className="appear grid gap-8 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:gap-14">
+      <div className="frame">
+        <div className="mat aspect-square w-full">
+          {/* eslint-disable-next-line @next/next/no-img-element -- private, decrypted per request */}
+          <img src={poster.image} alt={poster.title} className="h-full w-full object-cover" />
+        </div>
+      </div>
+      <div className="lg:sticky lg:top-28 lg:self-start">
+        <p className="text-ui font-semibold text-gold">On your wall</p>
+        <h2 className="mt-2 font-display text-h1">{poster.title}</h2>
+        <p className="mt-3 text-lead text-mist">It&rsquo;s in your Memories now. Sell numbered editions if you like.</p>
+        <SellPanel kind="poster" refId={poster.id} suggested={2} />
+      </div>
+    </article>
+  );
+}
+
+function Portrait({ portrait, onDecided }: { portrait: NightlyDrafts["portraits"][number]; onDecided: (d: NightlyDrafts) => void }) {
+  return (
+    <article className="appear grid gap-8 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:gap-14">
+      <div className="frame">
+        <div className="mat aspect-square w-full">
+          <video src={portrait.video} poster={portrait.image} autoPlay muted loop playsInline className="h-full w-full object-cover" />
+        </div>
+      </div>
+      <div className="lg:sticky lg:top-28 lg:self-start">
+        <p className="text-ui font-semibold text-gold">Last night&rsquo;s moving portrait</p>
+        <h2 className="mt-2 font-display text-h1">{portrait.title ?? "Your dream"}</h2>
+        <Decide
+          hang="Keep it moving"
+          onHang={() => api.decideDraft("portrait", portrait.dreamId, "hang").then(onDecided)}
+          onLetGo={() => api.decideDraft("portrait", portrait.dreamId, "let-go").then(onDecided)}
+          note="Kept, the painting moves on your wall and on its day page."
+        />
       </div>
     </article>
   );
