@@ -59,40 +59,55 @@ export function keyRefused(userId: string, status: number, body: string) {
 
 const short = (text: string) => text.replace(/\s+/g, " ").slice(0, 200);
 
-// "Connect your 0G account": the 0G sign-in token in, a key on their account out.
-export async function connectWithZeroG(userId: string, privyToken: string): Promise<ZeroGAccount | { error: string }> {
-  const base = env.zgRouter();
-  const signIn = await fetch(`${base}/auth/privy`, {
+export type ZeroGSession = { token: string | null; cookie: string; wallet: `0x${string}` | null; privyId: string };
+
+// "Sign in with 0G": 0G's router checks the token from 0G's own sign-in, as it does for pc.0g.ai, and
+// answers with the account's wallet. The token's subject is the dreamer's 0G identity.
+export async function zeroGSignIn(privyToken: string): Promise<ZeroGSession | { error: string }> {
+  const res = await fetch(`${env.zgRouter()}/auth/privy`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ token: privyToken }),
     signal: AbortSignal.timeout(30_000),
   });
-  const signInText = await signIn.text();
-  if (!signIn.ok) return { error: `0G didn't accept the sign-in (${signIn.status}: ${short(signInText)})` };
-  const session = JSON.parse(signInText) as { token?: string; wallet_address?: string };
-  const cookie = signIn.headers
+  const text = await res.text();
+  if (!res.ok) return { error: `0G didn't accept the sign-in (${res.status}: ${short(text)})` };
+  const body = JSON.parse(text) as { token?: string; wallet_address?: string };
+  // 0G has just verified this token, so its payload can be read as it stands.
+  const sub = (JSON.parse(Buffer.from(privyToken.split(".")[1] ?? "", "base64url").toString("utf8") || "{}") as { sub?: string }).sub;
+  if (!sub) return { error: "0G's sign-in token had no account in it. Sign in again." };
+  const wallet = body.wallet_address && /^0x[0-9a-fA-F]{40}$/.test(body.wallet_address) ? (body.wallet_address as `0x${string}`) : null;
+  const cookie = res.headers
     .getSetCookie()
     .map((c) => c.split(";")[0])
     .join("; ");
+  return { token: body.token ?? null, cookie, wallet, privyId: `0g:${sub}` };
+}
 
-  // The same call pc.0g.ai's Keys page makes, signed in as the dreamer.
-  const created = await fetch(`${base}/api-keys`, {
+// With that session, the same call pc.0g.ai's Keys page makes: a "Dreamscape" key on the dreamer's own account.
+export async function connectSession(userId: string, session: ZeroGSession): Promise<ZeroGAccount | { error: string }> {
+  const res = await fetch(`${env.zgRouter()}/api-keys`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       ...(session.token ? { Authorization: `Bearer ${session.token}` } : {}),
-      ...(cookie ? { Cookie: cookie } : {}),
+      ...(session.cookie ? { Cookie: session.cookie } : {}),
     },
     body: JSON.stringify({ name: "Dreamscape", reset_period: "daily", expiration: "no_expiration" }),
     signal: AbortSignal.timeout(30_000),
   });
-  const createdText = await created.text();
-  if (!created.ok) return { error: `Signed in to 0G, but 0G wouldn't create a key (${created.status}: ${short(createdText)}). Paste a key from pc.0g.ai instead.` };
-  const key = JSON.parse(createdText) as { key?: string; key_preview?: string };
+  const text = await res.text();
+  if (!res.ok) return { error: `Signed in to 0G, but 0G wouldn't create a key (${res.status}: ${short(text)}). Paste a key from pc.0g.ai instead.` };
+  const key = JSON.parse(text) as { key?: string; key_preview?: string };
   if (!key.key?.startsWith("sk-")) return { error: "0G created a key but didn't hand it back. Paste a key from pc.0g.ai instead." };
-  save(userId, key.key, key.key_preview ?? `${key.key.slice(0, 7)}…`, session.wallet_address ?? null);
+  save(userId, key.key, key.key_preview ?? `${key.key.slice(0, 7)}…`, session.wallet);
   return zeroGAccount(userId);
+}
+
+// "Connect your 0G account" for a dreamer who is already signed in.
+export async function connectWithZeroG(userId: string, privyToken: string): Promise<ZeroGAccount | { error: string }> {
+  const session = await zeroGSignIn(privyToken);
+  return "error" in session ? session : connectSession(userId, session);
 }
 
 // A key pasted from pc.0g.ai. One tiny sealed call checks that 0G takes it before it's kept.
