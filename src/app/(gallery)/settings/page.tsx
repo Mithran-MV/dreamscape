@@ -40,6 +40,15 @@ function SettingsView() {
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [stars, setStars] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    api.mornings().then((m) => setStars(!m.hidden), () => undefined);
+  }, []);
+  const toggleStars = (show: boolean) => {
+    setStars(show);
+    api.hideStars(!show).then((m) => setStars(!m.hidden), (e: Error) => setError(e.message));
+  };
 
   const loadNightly = useCallback(() => api.nightly().then((n) => setNightly(n.optedIn), (e: Error) => setError(e.message)), []);
   const loadWorld = useCallback(() => api.world().then(setWorld, () => undefined), []);
@@ -75,10 +84,13 @@ function SettingsView() {
             Your dreams
           </h2>
           <div className="panel mt-5 divide-y divide-edge">
-            <Row title="Make a comic every night" body="Your newest dream becomes a four-panel comic overnight. It waits in Drafts until you hang it.">
+            <Row title="Make tonight's art" body="Three hours before your 0G credit resets, what's left of it makes tonight's poster of your week's sky, a comic of your newest dream and a moving portrait. The comic waits in Drafts until you hang it.">
               {nightly === null ? <span className="text-ui text-dim">Loading…</span> : <Switch checked={pending ?? nightly} onChange={toggleNightly} label={(pending ?? nightly) ? "On" : "Off"} />}
             </Row>
-            <Row title="Notifications" body="A tap on your phone when a painting is on the wall. It says nothing about the dream itself.">
+            <Row title="Show my stars" body="This week's stars and your mornings kept, at the top of your wall. Your count keeps growing either way.">
+              {stars === null ? <span className="text-ui text-dim">Loading…</span> : <Switch checked={stars} onChange={toggleStars} label={stars ? "On" : "Off"} />}
+            </Row>
+            <Row title="Notifications" body="One notice each morning at the time you usually wake, until today's star is lit. It says nothing about your dreams.">
               <NotifyButton explain />
             </Row>
             <Row

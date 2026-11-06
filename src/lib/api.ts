@@ -76,6 +76,8 @@ export type Mornings = {
   keptToday: boolean;
   week: Star[];
   kept: number;
+  constellation: "forming" | "tonight" | "painted";
+  hidden: boolean;
   next: { title: string; at: number; left: number } | null;
   memories: Memory[];
 };
@@ -89,7 +91,9 @@ export const api = {
     ),
   signIn: (handle: string, passphrase: string) =>
     fetch("/api/session", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ handle, passphrase }) }).then((r) => json<{ handle: string }>(r)),
-  mornings: () => fetch("/api/mornings").then((r) => json<Mornings>(r)),
+  mornings: () => fetch(`/api/mornings?tz=${new Date().getTimezoneOffset()}`).then((r) => json<Mornings>(r)),
+  hideStars: (hide: boolean) =>
+    fetch("/api/mornings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ hide }) }).then((r) => json<Mornings>(r)),
   keepMorning: (kind: "feeling" | "nothing", feeling?: string) =>
     fetch("/api/mornings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind, feeling }) }).then((r) => json<Mornings>(r)),
   dreams: () => fetch("/api/dreams").then((r) => json<{ dreams: DreamSummary[]; notes: Note[] }>(r)),

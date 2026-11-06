@@ -27,7 +27,7 @@ export function MorningsAndMemories() {
   if (!state) return null;
   return (
     <>
-      <WeekStars state={state} justLit={lit} onKeep={keep} />
+      {!state.hidden && <WeekStars state={state} justLit={lit} onKeep={keep} />}
       <MemoriesRow state={state} onOpen={setOpen} />
       {open && <StoryViewer memory={open} onClose={() => setOpen(null)} />}
     </>
@@ -76,7 +76,7 @@ function StarMark({ star, today, justLit }: { star: Star; today: number; justLit
 function WeekStars({ state, justLit, onKeep }: { state: Mornings; justLit: boolean; onKeep: (kind: "feeling" | "nothing", feeling?: string) => void }) {
   const [feelings, setFeelings] = useState(false);
   const lit = state.week.filter((s) => s.kind !== null).length;
-  const complete = lit >= 5;
+  const complete = state.constellation !== "forming";
   return (
     <section className="panel mt-8 p-6 md:p-7" aria-labelledby="mornings">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
@@ -101,6 +101,13 @@ function WeekStars({ state, justLit, onKeep }: { state: Mornings; justLit: boole
                 <span className="text-gold">{state.next.title}</span> in {state.next.left} more.
               </>
             )}
+          </p>
+          <p className="mt-1 text-ui text-mist">
+            {state.constellation === "painted"
+              ? "This week's constellation is painted. Find it in your Memories."
+              : state.constellation === "tonight"
+                ? "Tonight your leftover 0G credit paints this week's constellation."
+                : `${5 - lit} more ${5 - lit === 1 ? "star completes" : "stars complete"} this week's constellation.`}
           </p>
         </div>
 
