@@ -72,9 +72,10 @@ export function spentTodayUsd(userId: string) {
   const row = getDb()
     .prepare(
       `SELECT COALESCE(SUM(cost_usd), 0) AS usd FROM traces WHERE created_at >= ?
-       AND (dream_id IN (SELECT id FROM dreams WHERE user_id = ?) OR dream_id IN (SELECT id FROM episodes WHERE user_id = ?))`,
+       AND (dream_id IN (SELECT id FROM dreams WHERE user_id = ?) OR dream_id IN (SELECT id FROM episodes WHERE user_id = ?)
+            OR dream_id IN (SELECT id FROM reveals WHERE user_id = ?))`,
     )
-    .get(utcDay() * DAY_MS, userId, userId) as { usd: number };
+    .get(utcDay() * DAY_MS, userId, userId, userId) as { usd: number };
   return row.usd;
 }
 
@@ -130,9 +131,12 @@ function imageMime(bytes: Buffer) {
 
 const SHOWN: Record<string, true> = { painted: true, storing: true, done: true };
 
-// Job 'night.run', ref = user id: the comic first, then a living portrait with whatever credit is left.
-// The portrait is its own job: if video is unavailable it retries alone, and never repeats the comic.
+// Job 'night.run', ref = user id, three hours before the credit resets. Tonight's three pieces: the
+// poster of this week's sky (every night, dream or not), the comic of the newest dream, and a moving
+// portrait with whatever credit is left. The poster and the portrait are their own jobs, so each
+// retries alone and none of them ever repeats another.
 export async function runNight(userId: string) {
+  if (!hasOpenJob(userId, ["night.poster"])) enqueue("night.poster", userId);
   await makeComic(userId);
   if (!hasOpenJob(userId, ["dream.animate"])) enqueue("dream.animate", userId);
 }
@@ -279,7 +283,11 @@ export async function pollLivingPortrait(dreamId: string) {
 // Job 'episode.notify'. Like every notice, it says nothing about the dream.
 export async function notifyEpisode(episodeId: string) {
   const ep = getEpisode(episodeId);
-  if (ep) await notify(ep.user_id, { title: "Last night's comic is waiting", body: "Approve it or let it go.", url: `/episode/${ep.id}`, tag: ep.id });
+  if (!ep) return;
+  // A dreamer whose time zone we know hears about it in the morning notice, not at three in the morning.
+  const known = getDb().prepare("SELECT tz_offset FROM users WHERE id = ?").get(ep.user_id) as { tz_offset: number | null } | undefined;
+  if (known?.tz_offset != null) return;
+  await notify(ep.user_id, { title: "Last night's comic is waiting", body: "Approve it or let it go.", url: `/episode/${ep.id}`, tag: ep.id });
 }
 
 // Why tonight's comic can't be made yet, in words for the dreamer, or null if it can.

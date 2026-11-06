@@ -59,7 +59,8 @@ export function signInWithPrivy(privyId: string, wallet: string | null, handle?:
   }
   if (db.prepare("SELECT 1 FROM users WHERE handle = ?").get(clean)) return { error: "That name is taken. Pick another." };
   const id = newId("user");
-  db.prepare("INSERT INTO users (id, handle, wallet, privy_id, created_at) VALUES (?, ?, ?, ?, ?)").run(id, clean, wallet, privyId, now());
+  // Tonight's art is on from the start: it's made from the dreamer's own credit, which would otherwise expire.
+  db.prepare("INSERT INTO users (id, handle, wallet, privy_id, nightly, created_at) VALUES (?, ?, ?, ?, 1, ?)").run(id, clean, wallet, privyId, now());
   if (wallet) {
     enqueue("ens.onboard", id);
     enqueue("wallet.drip", id);
