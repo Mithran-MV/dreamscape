@@ -4,6 +4,7 @@
 // dreamer's own key, is what the worker uses for their dreams, comics and moving portraits, so it
 // keeps working at night while they're offline. A key pasted from pc.0g.ai works the same way.
 import { AsyncLocalStorage } from "node:async_hooks";
+import { createRemoteJWKSet, jwtVerify } from "jose";
 import { dreamerKey, open, seal } from "../crypto";
 import { getDb, now } from "../db";
 import { env } from "../env";
@@ -61,9 +62,21 @@ const short = (text: string) => text.replace(/\s+/g, " ").slice(0, 200);
 
 export type ZeroGSession = { token: string | null; cookie: string; wallet: `0x${string}` | null; privyId: string };
 
-// "Sign in with 0G": 0G's router checks the token from 0G's own sign-in, as it does for pc.0g.ai, and
-// answers with the account's wallet. The token's subject is the dreamer's 0G identity.
+// 0G's Privy app signs its sign-in tokens with these keys.
+let keys: ReturnType<typeof createRemoteJWKSet> | undefined;
+const zeroGKeys = () => (keys ??= createRemoteJWKSet(new URL(`https://auth.privy.io/api/v1/apps/${env.zgPrivyAppId()}/jwks.json`)));
+
+// "Sign in with 0G": the token from 0G's own sign-in is checked here against 0G's Privy app, and its
+// subject is the dreamer's 0G identity. 0G's router then trades it for a session, as it does for
+// pc.0g.ai, and answers with the account's wallet.
 export async function zeroGSignIn(privyToken: string): Promise<ZeroGSession | { error: string }> {
+  let sub: string | undefined;
+  try {
+    ({ sub } = (await jwtVerify(privyToken, zeroGKeys(), { issuer: "privy.io", audience: env.zgPrivyAppId() })).payload);
+  } catch {
+    return { error: "That 0G sign-in didn't check out. Sign in with 0G again." };
+  }
+  if (!sub) return { error: "0G's sign-in token had no account in it. Sign in again." };
   const res = await fetch(`${env.zgRouter()}/auth/privy`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -73,9 +86,6 @@ export async function zeroGSignIn(privyToken: string): Promise<ZeroGSession | { 
   const text = await res.text();
   if (!res.ok) return { error: `0G didn't accept the sign-in (${res.status}: ${short(text)})` };
   const body = JSON.parse(text) as { token?: string; wallet_address?: string };
-  // 0G has just verified this token, so its payload can be read as it stands.
-  const sub = (JSON.parse(Buffer.from(privyToken.split(".")[1] ?? "", "base64url").toString("utf8") || "{}") as { sub?: string }).sub;
-  if (!sub) return { error: "0G's sign-in token had no account in it. Sign in again." };
   const wallet = body.wallet_address && /^0x[0-9a-fA-F]{40}$/.test(body.wallet_address) ? (body.wallet_address as `0x${string}`) : null;
   const cookie = res.headers
     .getSetCookie()

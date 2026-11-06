@@ -14,6 +14,7 @@ export function required(name: string): string {
 export const env = {
   zgApiKey: () => required("ZG_API_KEY"),
   zgRouter: () => read("ZG_ROUTER_URL") ?? "https://router-api.0g.ai/v1",
+  zgPrivyAppId: () => required("NEXT_PUBLIC_ZG_PRIVY_APP_ID"), // 0G's own Privy app, behind "Sign in with 0G"
   serverKey: () => required("SERVER_PRIVATE_KEY") as `0x${string}`,
   scribeKey: () => required("SCRIBE_PRIVATE_KEY") as `0x${string}`,
   masterKey: () => required("MASTER_KEY"),
