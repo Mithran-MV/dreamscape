@@ -24,7 +24,8 @@ function keyBytes(base64url: string) {
   return Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
 }
 
-export function NotifyButton() {
+// explain: say why when this browser can't take notifications, instead of showing nothing (the Settings page).
+export function NotifyButton({ explain = false }: { explain?: boolean }) {
   const [state, setState] = useState<State>("hidden");
   const [error, setError] = useState<string | null>(null);
 
@@ -49,15 +50,17 @@ export function NotifyButton() {
     }
   }
 
-  if (state === "hidden") return null;
-  if (state === "on") return <p className="mt-3 text-xs text-dim">We&rsquo;ll tap your phone when it&rsquo;s on the wall.</p>;
-  if (state === "blocked") return <p className="mt-3 text-xs text-dim">Notifications are blocked for Dreamscape in this browser&rsquo;s settings.</p>;
+  if (state === "hidden") {
+    return explain ? <p className="text-ui text-dim">This browser can&rsquo;t receive notifications from Dreamscape. On an iPhone, add Dreamscape to your Home Screen first.</p> : null;
+  }
+  if (state === "on") return <p className="mt-4 text-ui text-dim">We&rsquo;ll tap your phone when it&rsquo;s on the wall.</p>;
+  if (state === "blocked") return <p className="mt-4 text-ui text-dim">This browser blocks notifications from Dreamscape. You can allow them in its settings.</p>;
   return (
-    <div className="mt-3">
-      <button onClick={turnOn} disabled={state === "busy"} className="rounded-full border border-line px-3.5 py-1.5 text-xs text-mist hover:border-gold disabled:opacity-60">
+    <div className="mt-4">
+      <button onClick={turnOn} disabled={state === "busy"} className="btn btn-line btn-sm">
         {state === "busy" ? "Asking…" : "Tell me when it’s painted"}
       </button>
-      {error && <p className="mt-1 text-xs text-danger">{error}</p>}
+      {error && <p className="mt-2 text-meta text-danger">{error}</p>}
     </div>
   );
 }

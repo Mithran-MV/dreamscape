@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { market, pieceIdFor, usdc, type PieceView } from "@/lib/api-market";
+import { plainError } from "@/components/messages";
 
 export function SellPanel({ kind, refId, suggested }: { kind: "episode" | "dream"; refId: string; suggested: number }) {
   const id = pieceIdFor(kind, refId);
@@ -21,49 +22,56 @@ export function SellPanel({ kind, refId, suggested }: { kind: "episode" | "dream
   if (piece === undefined) return null;
   if (piece) {
     return (
-      <Link href={`/market/${id}`} className="mt-6 block rounded-xl border border-edge bg-card/70 p-4 text-sm hover:border-gold">
-        <span className="text-paper">On the Night Market at {usdc(piece.priceUsdc)}</span>
-        <span className="mt-0.5 block text-dim">{piece.status === "listing" ? "Being listed…" : `${piece.sold} of ${piece.editions} sold`}</span>
+      <Link href={`/market/${id}`} className="press mt-6 flex items-center justify-between gap-4 rounded-[1.25rem] border border-edge bg-card/80 px-5 py-4 transition-colors hover:border-gold">
+        <span className="min-w-0">
+          <span className="block font-semibold text-paper">On the Night Market at {usdc(piece.priceUsdc)}</span>
+          <span className="mt-0.5 block text-ui text-mist">{piece.status === "listing" ? "Going up on the market…" : `${piece.sold} of ${piece.editions} sold`}</span>
+        </span>
+        <span className="shrink-0 text-ui font-semibold text-gold">See it</span>
       </Link>
     );
   }
   if (!open) {
     return (
-      <button onClick={() => setOpen(true)} className="mt-6 rounded-full border border-line px-4 py-2 text-sm text-mist hover:border-gold">
+      <button onClick={() => setOpen(true)} className="btn btn-line mt-6">
         Sell numbered editions
       </button>
     );
   }
   return (
     <form
-      className="mt-6 rounded-xl border border-edge bg-card/70 p-4"
+      className="panel appear mt-6 p-5"
       onSubmit={(e) => {
         e.preventDefault();
         setBusy(true);
         setError(null);
         market
           .sell({ kind, ref: refId, priceUsdc: Number(price), editions: Number(editions) })
-          .then(load, (err: Error) => setError(err.message))
+          .then(load, (err: Error) => setError(plainError(err.message)))
           .finally(() => setBusy(false));
       }}
     >
-      <p className="font-display text-lg">Sell numbered editions</p>
-      <p className="mt-1 text-sm text-dim">Each buyer gets an ENS name for their edition and the full piece. You get 95% of every sale.</p>
+      <p className="font-display text-title font-semibold">Sell numbered editions</p>
+      <p className="mt-1 text-ui text-mist">Each buyer gets an ENS name for their edition and the full piece. You get 95% of every sale.</p>
       <div className="mt-4 flex flex-wrap gap-4">
-        <label className="text-sm text-mist">
+        <label className="text-ui font-semibold text-mist">
           Price in USDC
-          <input value={price} onChange={(e) => setPrice(e.target.value.replace(/[^0-9.]/g, ""))} inputMode="decimal" className="mt-1 block w-28 rounded-lg border border-line bg-card px-3 py-2 text-paper focus:border-gold focus:outline-none" />
+          <input value={price} onChange={(e) => setPrice(e.target.value.replace(/[^0-9.]/g, ""))} inputMode="decimal" className="field mt-1.5 block w-32" />
         </label>
-        <label className="text-sm text-mist">
+        <label className="text-ui font-semibold text-mist">
           Editions
-          <input value={editions} onChange={(e) => setEditions(e.target.value.replace(/[^0-9]/g, ""))} inputMode="numeric" className="mt-1 block w-20 rounded-lg border border-line bg-card px-3 py-2 text-paper focus:border-gold focus:outline-none" />
+          <input value={editions} onChange={(e) => setEditions(e.target.value.replace(/[^0-9]/g, ""))} inputMode="numeric" className="field mt-1.5 block w-24" />
         </label>
       </div>
-      <div className="mt-4 flex items-center gap-3">
-        <button disabled={busy} className="rounded-full bg-gold px-5 py-2 font-medium text-gold-ink disabled:opacity-60">{busy ? "Listing…" : "List it"}</button>
-        <button type="button" onClick={() => setOpen(false)} className="text-sm text-dim">Not now</button>
+      <div className="mt-5 flex items-center gap-2">
+        <button disabled={busy} className="btn btn-gold">
+          {busy ? "Listing…" : "List it"}
+        </button>
+        <button type="button" onClick={() => setOpen(false)} className="btn btn-quiet">
+          Not now
+        </button>
       </div>
-      {error && <p className="mt-2 text-sm text-danger">{error}</p>}
+      {error && <p className="mt-3 text-ui text-danger">{error}</p>}
     </form>
   );
 }
