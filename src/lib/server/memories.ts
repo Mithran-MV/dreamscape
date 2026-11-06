@@ -310,6 +310,12 @@ function usualMinute(userId: string, offset: number) {
   return times[Math.floor(times.length / 2)];
 }
 
+// The same usual time for the phone app, which schedules its own morning reminder.
+export function wakeMinute(userId: string) {
+  const row = getDb().prepare("SELECT tz_offset FROM users WHERE id = ?").get(userId) as { tz_offset: number | null } | undefined;
+  return usualMinute(userId, row?.tz_offset ?? 0);
+}
+
 // Called by the worker every minute: one notice a morning, at the dreamer's usual time, until today's star is lit.
 export async function scheduleMornings(at = Date.now()) {
   const db = getDb();

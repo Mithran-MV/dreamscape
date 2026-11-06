@@ -90,6 +90,8 @@ export type Mornings = {
   constellation: "forming" | "tonight" | "painted";
   hidden: boolean;
   next: { title: string; at: number; left: number } | null;
+  // The local minute of the day this dreamer usually keeps their morning.
+  wake: number;
   memories: Memory[];
 };
 

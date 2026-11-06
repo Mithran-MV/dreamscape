@@ -1,13 +1,13 @@
 // The morning star and the memories row. GET reads them (and notes the browser's time zone, for the
 // morning notice); POST lights today's star with a feeling or "nothing this time" (telling a dream
 // lights it on its own), or hides or shows the stars.
-import { keepMorning, memoriesFor, morningState, setStarsHidden, setTimezone, startDueReveals } from "@/lib/server/memories";
+import { keepMorning, memoriesFor, morningState, setStarsHidden, setTimezone, startDueReveals, wakeMinute } from "@/lib/server/memories";
 import { currentUser } from "@/lib/server/session";
 import { setSagaTonight } from "@/lib/server/ainote";
 
 function read(userId: string) {
   startDueReveals(userId);
-  return { ...morningState(userId), memories: memoriesFor(userId) };
+  return { ...morningState(userId), wake: wakeMinute(userId), memories: memoriesFor(userId) };
 }
 
 export async function GET(request: Request) {
