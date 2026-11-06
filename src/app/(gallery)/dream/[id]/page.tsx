@@ -130,7 +130,9 @@ function Proof({ dream }: { dream: DreamDetail }) {
             <span className="w-20 text-mist capitalize">{t.step}</span>
             <span className="font-mono text-xs text-paper">{t.model}</span>
             {SEALED_STEPS.has(t.step) && (
-              <span className="rounded border border-ok/50 px-1.5 text-[11px] text-ok">{t.tee_verified === 1 ? "Sealed · Verified" : "Sealed"}</span>
+              <span className="rounded border border-ok/50 px-1.5 text-[11px] text-ok" title={t.res_key ? `Receipt key ${t.res_key}` : undefined}>
+                {t.tee_verified === 1 ? "Sealed, enclave verified" : t.e2ee === "sealed" ? "Sealed, encrypted end to end" : "Sealed"}
+              </span>
             )}
             <span className="font-mono text-[11px] text-dim">request {t.request_id ?? "n/a"}</span>
             {t.cost_usd != null && <span className="text-[11px] text-dim">${t.cost_usd.toFixed(4)}</span>}

@@ -14,7 +14,7 @@ export type DreamSummary = {
 
 export type Note = { kind: string; text: string; saga?: string };
 
-export type Trace = { step: string; model: string; request_id: string | null; provider: string | null; tee_verified: number | null; cost_usd: number | null; ms: number };
+export type Trace = { step: string; model: string; request_id: string | null; provider: string | null; tee_verified: number | null; cost_usd: number | null; ms: number; e2ee: string | null; res_key: string | null };
 
 export type DreamDetail = {
   id: string;

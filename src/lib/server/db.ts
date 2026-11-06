@@ -141,6 +141,8 @@ export function getDb(): DatabaseSync {
   addColumn(db, "users", "dripped_at", "INTEGER"); // when the server sent this wallet its test ETH and USDC // the Privy user behind this account, if they signed in that way
   db.exec("CREATE UNIQUE INDEX IF NOT EXISTS users_by_privy ON users(privy_id)"); // gallery name, resolver and registries once onboarded // one circle per dreamer, such as ethglobal-mumbai
   addColumn(db, "dreams", "saga", "TEXT");
+  addColumn(db, "traces", "e2ee", "TEXT"); // "sealed" when the request was encrypted to the enclave
+  addColumn(db, "traces", "res_key", "TEXT"); // the provider's receipt key for this response
   addColumn(db, "dreams", "video_job", "TEXT"); // the living portrait's job id on 0G
   addColumn(db, "dreams", "video_state", "TEXT"); // rendering, done or failed
   addColumn(db, "dreams", "video_at", "INTEGER");

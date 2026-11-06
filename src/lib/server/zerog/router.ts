@@ -9,6 +9,10 @@ export type Trace = {
   teeVerified: boolean | null;
   costUsd: number | null;
   ms: number;
+  // For chat the router flags no verdict; it says the request was sealed end to end and hands back a
+  // receipt key that can be checked against the provider's signature on 0G.
+  e2ee: string | null;
+  resKey: string | null;
 };
 
 export class ZeroGError extends Error {
@@ -47,6 +51,8 @@ function readTrace(model: string, ms: number, res: Response, body: unknown): Tra
     teeVerified: typeof t.tee_verified === "boolean" ? t.tee_verified : null,
     costUsd: micro != null ? Number(micro) / 1e6 : null,
     ms,
+    e2ee: res.headers.get("x-0g-e2ee"),
+    resKey: res.headers.get("zg-res-key"),
   };
 }
 
