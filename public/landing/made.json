@@ -1,0 +1,213 @@
+{
+  "note": "Made by scripts/landing-art.ts with the real Dreamscape pipeline on the 0G router.",
+  "dream": {
+    "words": "I was flying over my old school, and the roof turned into the sea.",
+    "title": "Roof Sea Transformation",
+    "feeling": "wonder",
+    "tags": {
+      "title": "Roof Sea Transformation",
+      "themes": [
+        "flight",
+        "school",
+        "water",
+        "fantasy"
+      ],
+      "people": [],
+      "places": [
+        "old school",
+        "sea",
+        "roof"
+      ],
+      "objects": [],
+      "feeling": "wonder",
+      "scene": "A vast, shimmering ocean stretches endlessly beneath a sprawling school building. The architecture dissolves seamlessly into the water, with tiles becoming waves and chimneys turning into splashes. The sky above is bright and clear, contrasting with the deep blue depths below. Sunlight reflects off the surface, creating a surreal blend of land and sea in a moment of magical transition."
+    },
+    "traces": [
+      {
+        "step": "tag",
+        "model": "0gm-1.0-35b-a3b",
+        "request_id": "74efd1bb-209a-4826-ade8-a216b078b54e",
+        "provider": "0xf4FB8d2bD856e672b5f9848b0eD235A20079B250",
+        "tee_verified": null,
+        "cost_usd": 0.000101,
+        "ms": 7697,
+        "e2ee": "sealed",
+        "res_key": "91dd07b4-b321-4d65-ab04-0230713b230c"
+      },
+      {
+        "step": "portrait",
+        "model": "z-image-turbo",
+        "request_id": "098b71d8-bcce-4ade-ac15-7698bb11a6a0",
+        "provider": "0x59E598DB6E8c63D7fEeB64a69De36510a221C762",
+        "tee_verified": 1,
+        "cost_usd": 0.0088,
+        "ms": 8934,
+        "e2ee": "none",
+        "res_key": "9a36b5d3-7555-478d-9457-7199c9510ea5"
+      }
+    ]
+  },
+  "comic": {
+    "script": {
+      "title": "Swimming School Roofs",
+      "panels": [
+        {
+          "scene": "You fly high above a familiar school building, your red cape fluttering in the wind. The yellow lantern in your hand glows brightly, illuminating the path ahead as you look down at the tiled roof below.",
+          "dialogue": [
+            {
+              "who": "Dreamer",
+              "text": "Time to see the old school!"
+            }
+          ],
+          "caption": null
+        },
+        {
+          "scene": "The school roof begins to ripple and transform. The tiles melt away into deep blue water, and the chimneys splash into waves. The entire building is now a vast ocean surface beneath your feet.",
+          "dialogue": [
+            {
+              "who": "Dreamer",
+              "text": "Wait, why is the roof... wet?"
+            }
+          ],
+          "caption": "The roof turned into the sea."
+        },
+        {
+          "scene": "You dive down toward the water, trying to land on what used to be the gymnasium. The water is surprisingly calm, but a large shark fin cuts through the surface right where the principal's office used to be.",
+          "dialogue": [
+            {
+              "who": "Dreamer",
+              "text": "No! Not math class!"
+            }
+          ],
+          "caption": null
+        },
+        {
+          "scene": "You hover safely above the water, looking down at the shark which is now wearing a graduation cap and holding a diploma. It smiles up at you, waving politely as the school bell rings underwater.",
+          "dialogue": [
+            {
+              "who": "Dreamer",
+              "text": "Is this... a swimming lesson?"
+            }
+          ],
+          "caption": "Class is in session."
+        }
+      ]
+    },
+    "feeling": "wonder",
+    "traces": [
+      {
+        "step": "saga",
+        "model": "0gm-1.0-35b-a3b",
+        "request_id": "d964624d-1057-4016-a020-5d955966f3dd",
+        "provider": "0xf4FB8d2bD856e672b5f9848b0eD235A20079B250",
+        "tee_verified": null,
+        "cost_usd": 0.00003,
+        "ms": 2559,
+        "e2ee": "sealed",
+        "res_key": "70f3bf60-48d8-4813-932c-30eddf71cd0a"
+      },
+      {
+        "step": "character",
+        "model": "0gm-1.0-35b-a3b",
+        "request_id": "f1827afa-ca88-42ba-a883-7b707266cacb",
+        "provider": "0xf4FB8d2bD856e672b5f9848b0eD235A20079B250",
+        "tee_verified": null,
+        "cost_usd": 0.000024,
+        "ms": 1812,
+        "e2ee": "sealed",
+        "res_key": "aa155380-1a46-4e18-9af3-55adc79e8899"
+      },
+      {
+        "step": "script",
+        "model": "0gm-1.0-35b-a3b",
+        "request_id": "12b10d0e-5550-4449-8eaa-a2bd2620a9fe",
+        "provider": "0xf4FB8d2bD856e672b5f9848b0eD235A20079B250",
+        "tee_verified": null,
+        "cost_usd": 0.000243,
+        "ms": 6445,
+        "e2ee": "sealed",
+        "res_key": "99040e27-3e2e-4aa5-bcb2-d225aadece6a"
+      },
+      {
+        "step": "panel 1",
+        "model": "tencent/hy-image-3.5-preview",
+        "request_id": "9c787ad8-975d-482e-9e8f-83f35d972b9e",
+        "provider": "0x000000003f486c7198d6203568a98d02b91f8044",
+        "tee_verified": null,
+        "cost_usd": 0.0252,
+        "ms": 14580,
+        "e2ee": "none",
+        "res_key": null
+      },
+      {
+        "step": "panel 2",
+        "model": "tencent/hy-image-3.5-preview",
+        "request_id": "990ad8ad-051b-47a0-80bd-c60f4958af4c",
+        "provider": "0x000000003f486c7198d6203568a98d02b91f8044",
+        "tee_verified": null,
+        "cost_usd": 0.0252,
+        "ms": 33613,
+        "e2ee": "none",
+        "res_key": null
+      },
+      {
+        "step": "panel 3",
+        "model": "tencent/hy-image-3.5-preview",
+        "request_id": "bf5ac4c7-83ac-4eb7-8563-3632b59b780b",
+        "provider": "0x000000003f486c7198d6203568a98d02b91f8044",
+        "tee_verified": null,
+        "cost_usd": 0.0252,
+        "ms": 27459,
+        "e2ee": "none",
+        "res_key": null
+      },
+      {
+        "step": "panel 4",
+        "model": "tencent/hy-image-3.5-preview",
+        "request_id": "a2c42d49-d891-49b9-8722-93baa2a69f10",
+        "provider": "0x000000003f486c7198d6203568a98d02b91f8044",
+        "tee_verified": null,
+        "cost_usd": 0.0252,
+        "ms": 22055,
+        "e2ee": "none",
+        "res_key": null
+      }
+    ]
+  },
+  "world": {
+    "counts": {
+      "dreamers": 7,
+      "themes": [
+        {
+          "theme": "flight",
+          "dreamers": 6,
+          "feeling": "wonder"
+        },
+        {
+          "theme": "school",
+          "dreamers": 6,
+          "feeling": "wonder"
+        },
+        {
+          "theme": "water",
+          "dreamers": 6,
+          "feeling": "wonder"
+        }
+      ],
+      "feeling": "wonder"
+    },
+    "traces": [
+      {
+        "step": "world",
+        "model": "z-image-turbo",
+        "request_id": "6d0a9e48-eb51-4f8c-8646-3b2ea21c6948",
+        "provider": "0x59E598DB6E8c63D7fEeB64a69De36510a221C762",
+        "tee_verified": 1,
+        "cost_usd": 0.0088,
+        "ms": 8032,
+        "e2ee": "none",
+        "res_key": "590014e6-6458-4bd5-8746-65570c8f1537"
+      }
+    ]
+  }
+}
