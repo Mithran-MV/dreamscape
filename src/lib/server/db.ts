@@ -120,6 +120,25 @@ CREATE TABLE IF NOT EXISTS push_subs (
   keys_json TEXT NOT NULL,              -- p256dh and auth, used to encrypt each notice
   created_at INTEGER NOT NULL
 );
+CREATE TABLE IF NOT EXISTS mornings (
+  user_id TEXT NOT NULL REFERENCES users(id),
+  day INTEGER NOT NULL,                 -- the UTC day the star was lit
+  kind TEXT NOT NULL,                   -- 'dream', 'feeling' or 'nothing': all of them keep the morning
+  feeling TEXT,
+  created_at INTEGER NOT NULL,
+  PRIMARY KEY (user_id, day)
+);
+CREATE TABLE IF NOT EXISTS reveals (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id),
+  kind TEXT NOT NULL,                   -- 'pattern' (7 mornings), 'cast' (21), 'book' (30), 'portrait' (100)
+  status TEXT NOT NULL,                 -- making, ready
+  title TEXT NOT NULL,
+  body TEXT,
+  slides_json TEXT,                     -- the story the dreamer taps through
+  created_at INTEGER NOT NULL,
+  UNIQUE (user_id, kind)
+);
 `;
 
 let db: DatabaseSync | undefined;
