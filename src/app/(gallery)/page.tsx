@@ -1,35 +1,34 @@
 "use client";
-// Home: sign in, then the gallery wall of framed dream portraits.
+// Home: the landing and sign-in, then the gallery wall of framed dream portraits.
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
-import { api, PAINTED, panelUrl, portraitUrl, videoUrl, type DreamSummary, type EpisodeSummary, type Note } from "@/lib/api";
+import { api, PAINTED, panelUrl, type DreamSummary, type EpisodeSummary, type Note } from "@/lib/api";
+import { Landing } from "@/components/landing/landing";
+import { AppShell, type SessionUser } from "@/components/app-shell";
 import { WeatherStrip } from "@/components/weather";
-import { WorldCard } from "@/components/world-card";
-import { TabBar } from "@/components/tab-bar";
-import { PassesPanel } from "@/components/passes-panel";
-import { dayLabel, Frame } from "@/components/ui";
+import { CalendarWall } from "@/components/calendar-wall";
+import { KnockBanner } from "@/components/passes-panel";
+import { chipColor, dayLabel, FEELINGS } from "@/components/ui";
 
 export default function Home() {
-  const [user, setUser] = useState<{ handle: string; ensName: string | null; naming: boolean } | null | undefined>(undefined);
-  const { logout } = usePrivy();
+  const [user, setUser] = useState<SessionUser | null | undefined>(undefined);
   const router = useRouter();
   const [dreams, setDreams] = useState<DreamSummary[]>([]);
   const [episodes, setEpisodes] = useState<EpisodeSummary[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
-  const [nightly, setNightly] = useState<boolean | null>(null);
 
+  // The nightly comic switch lives on the Settings page now, so the wall reads only what it shows.
   const load = useCallback(
     () =>
       api.session().then(async ({ user }) => {
         setUser(user);
         if (!user) return;
-        const [d, e, n] = await Promise.all([api.dreams(), api.episodes(), api.nightly()]);
+        const [d, e] = await Promise.all([api.dreams(), api.episodes()]);
         setDreams(d.dreams);
         setNotes(d.notes);
         setEpisodes(e.episodes);
-        setNightly(n.optedIn);
       }),
     [],
   );
@@ -55,146 +54,208 @@ export default function Home() {
   }, [dreams, episodes, user, load]);
 
   if (user === undefined) return <main className="flex-1" />;
-  if (!user) return <SignIn onDone={afterSignIn} />;
+  if (!user) return <Landing signIn={<SignIn onDone={afterSignIn} />} />;
+
+  const drafts = episodes.filter((e) => e.status === "draft");
+  const recall = notes.find((n) => n.kind === "recall");
 
   return (
-    <main className="mx-auto w-full max-w-5xl flex-1 px-5 pb-28 pt-8">
-      <header className="mb-8 flex items-end justify-between">
-        <div>
-          <p className="font-display text-lg italic text-gold">Dreamscape</p>
-          <h1 className="font-display text-3xl">{user.handle}&rsquo;s gallery</h1>
-          {user.ensName ? (
-            <p className="mt-1 font-mono text-xs text-gold">{user.ensName}</p>
-          ) : (
-            user.naming && <p className="mt-1 text-xs text-dim">Writing {user.handle}.dream-scape.eth to ENS. This takes a couple of minutes.</p>
+    <AppShell active="gallery" user={user} drafts={drafts.length}>
+      <header className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+        <div className="min-w-0">
+          <h1 className="font-display text-h1 md:text-display">Your wall</h1>
+          {recall && <p className="mt-3 text-lead text-mist">{recall.text}</p>}
+          {!user.ensName && user.naming && (
+            <p className="mt-3 flex items-center gap-2 text-ui text-mist">
+              <span className="breathe h-2 w-2 shrink-0 rounded-full bg-gold" aria-hidden />
+              Writing {user.handle}.dream-scape.eth to ENS. It takes a couple of minutes.
+            </p>
           )}
         </div>
-        <div className="text-right text-sm text-dim">
-          <p className="whitespace-nowrap">{dreams.length} {dreams.length === 1 ? "dream" : "dreams"} kept</p>
-          <Link href="/0g" className="text-gold">0G credit</Link>
-          <button
-            onClick={() => Promise.all([api.signOut(), logout().catch(() => undefined)]).then(() => window.location.reload())}
-            className="block w-full text-right text-xs text-dim hover:text-mist"
-          >
-            Sign out
-          </button>
+        <div className="flex flex-wrap gap-3">
+          {drafts.length > 0 && (
+            <Link href="/drafts" className="btn btn-gold btn-lg">
+              {drafts.length} {drafts.length === 1 ? "piece" : "pieces"} to approve
+            </Link>
+          )}
+          {/* A first-time dreamer gets the walkthrough's own button instead. */}
+          {dreams.length > 0 && (
+            <Link href="/tell" className={`btn btn-lg ${drafts.length > 0 ? "btn-line" : "btn-gold"}`}>
+              Tell last night&rsquo;s dream
+            </Link>
+          )}
         </div>
       </header>
 
-      {dreams.length > 0 && (
-        <div className="-mt-4 mb-8">
-          <WeatherStrip dreams={dreams.filter((d) => PAINTED.has(d.status))} />
-          {notes.map((n) => (
-            <p key={n.kind} className="mt-3 font-display text-lg italic text-paper">{n.text}</p>
-          ))}
-        </div>
-      )}
+      <KnockBanner />
 
-      {episodes
-        .filter((e) => e.status === "draft")
-        .slice(0, 1)
-        .map((e) => (
-          <Link key={e.id} href={`/episode/${e.id}`} className="mb-8 flex items-center justify-between gap-4 rounded-2xl border border-gold/50 bg-card/70 px-5 py-4">
-            <span>
-              <span className="block font-display text-lg">Last night&rsquo;s comic is waiting</span>
-              <span className="text-sm text-mist">{e.title ?? "A new episode"}. Hang it or let it go.</span>
-            </span>
-            <span className="shrink-0 text-sm text-gold">Open</span>
-          </Link>
-        ))}
+      {dreams.length === 0 ? <FirstRun user={user} /> : <Wall dreams={dreams} notes={notes.filter((n) => n !== recall)} />}
 
-      {dreams.length === 0 ? (
-        <section className="rounded-2xl border border-edge bg-card/70 p-8 text-center">
-          <p className="font-display text-2xl italic">The wall is empty, for now.</p>
-          <p className="mx-auto mt-2 max-w-md text-mist">Tell your first dream and it will hang here as a painting, with your own voice kept beside it.</p>
-        </section>
-      ) : (
-        <section className="grid grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
-          {dreams.map((d) => (
-            <Link key={d.id} href={`/dream/${d.id}`} className="group block">
-              <Frame src={PAINTED.has(d.status) ? portraitUrl(d.id) : null} video={d.moving ? videoUrl(d.id) : null} failed={d.status === "failed"} glow={d.feeling} alt={d.title ?? "A dream"} className="transition-transform group-hover:-translate-y-0.5" />
-              <p className="mt-2 text-xs text-gold">{dayLabel(d.day)}</p>
-              <p className="truncate font-display text-base">{d.status === "failed" ? "Couldn't paint this one" : d.title ?? "Painting…"}</p>
-            </Link>
-          ))}
-        </section>
-      )}
-
-      <Comics episodes={episodes} nightly={nightly} onChange={load} />
-      <PassesPanel />
-      <WorldCard />
-
-      <Link
-        href="/tell"
-        className="fixed bottom-6 left-1/2 hidden -translate-x-1/2 whitespace-nowrap rounded-full bg-gold sm:block px-7 py-3.5 font-medium text-gold-ink shadow-[0_8px_30px_rgb(240_200_120/0.35)]"
-      >
-        Tell last night&rsquo;s dream
-      </Link>
-      <TabBar active="wall" />
-    </main>
+      <HungComics episodes={episodes} />
+    </AppShell>
   );
 }
 
-function Comics({ episodes, nightly, onChange }: { episodes: EpisodeSummary[]; nightly: boolean | null; onChange: () => void }) {
-  const hung = episodes.filter((e) => e.status === "published");
-  const making = episodes.find((e) => e.status === "writing" || e.status === "drawing");
-  const [error, setError] = useState<string | null>(null);
-  const act = (action: "run" | "opt-in" | "opt-out") => api.night(action).then(onChange, (e) => setError(e.message));
+function Wall({ dreams, notes }: { dreams: DreamSummary[]; notes: Note[] }) {
+  const [feeling, setFeeling] = useState<string | null>(null);
+  const shown = feeling ? dreams.filter((d) => d.feeling === feeling).length : dreams.length;
+  const label = FEELINGS.find((f) => f.key === feeling)?.label.toLowerCase();
+
   return (
-    <section id="comics" className="mt-14 scroll-mt-6">
-      <h2 className="font-display text-2xl">Comics</h2>
-      {hung.length > 0 ? (
-        <div className="mt-4 grid grid-cols-2 gap-x-5 gap-y-6 sm:grid-cols-3">
-          {hung.map((e) => (
-            <Link key={e.id} href={`/episode/${e.id}`} className="group block">
-              <div className="rounded-[3px] bg-[#fbf9f4] p-2 transition-transform group-hover:-translate-y-0.5">
-                {/* eslint-disable-next-line @next/next/no-img-element -- private, decrypted per request */}
-                <img src={panelUrl(e.id, 0)} alt="" className="aspect-square w-full border-2 border-[#1d1a17] object-cover" />
-              </div>
-              <p className="mt-2 text-xs text-gold">{dayLabel(e.day)}</p>
-              <p className="truncate font-display text-base">{e.title}</p>
-            </Link>
-          ))}
-        </div>
-      ) : (
-        <p className="mt-2 max-w-md text-mist">Each night, your newest dream can become a four-panel comic in your own words. You approve it in the morning.</p>
-      )}
-      <div className="mt-5 flex flex-wrap items-center gap-3 text-sm">
-        {making ? (
-          <Link href={`/episode/${making.id}`} className="text-gold">Tonight&rsquo;s comic is being made</Link>
-        ) : (
-          <button onClick={() => act("run")} className="rounded-full border border-line px-4 py-2 text-mist hover:border-gold">
-            Make tonight&rsquo;s comic now
-          </button>
-        )}
-        {nightly !== null && (
-          <label className="flex items-center gap-2 text-mist">
-            <input type="checkbox" checked={nightly} onChange={(e) => act(e.target.checked ? "opt-in" : "opt-out")} className="accent-[var(--gold)]" />
-            Make one every night
-          </label>
-        )}
+    <>
+      <div className="mt-10 grid gap-5 lg:grid-cols-2">
+        <section className="panel p-6 md:p-7" aria-labelledby="morning-note">
+          <h2 id="morning-note" className="font-display text-title">
+            Morning Note
+          </h2>
+          {notes.length > 0 ? (
+            <div className="mt-3 space-y-2">
+              {notes.map((n) => (
+                <p key={n.kind} className="font-display text-lead font-medium italic text-paper md:text-title">
+                  {n.text}
+                </p>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-3 text-mist">Notes start once your dreams repeat: a theme three nights running, or a place you keep going back to.</p>
+          )}
+        </section>
+
+        <section className="panel p-6 md:p-7" aria-labelledby="dream-weather">
+          <h2 id="dream-weather" className="font-display text-title">
+            Dream Weather
+          </h2>
+          <div className="mt-4">
+            <WeatherStrip dreams={dreams.filter((d) => PAINTED.has(d.status))} />
+          </div>
+          <div className="mt-5 flex flex-wrap gap-2" role="group" aria-label="Show the days that felt">
+            <button type="button" className="chip" aria-pressed={feeling === null} onClick={() => setFeeling(null)}>
+              All <span className="chip-count">{dreams.length}</span>
+            </button>
+            {FEELINGS.map((f) => {
+              const n = dreams.filter((d) => d.feeling === f.key).length;
+              return (
+                <button key={f.key} type="button" className="chip" style={chipColor(f.color)} aria-pressed={feeling === f.key} onClick={() => setFeeling(feeling === f.key ? null : f.key)}>
+                  <span className="chip-dot" aria-hidden />
+                  {f.label} <span className="chip-count">{n}</span>
+                </button>
+              );
+            })}
+          </div>
+          <p className="mt-3 text-meta text-dim" aria-live="polite">
+            {feeling ? `Lighting the ${shown} ${label} ${shown === 1 ? "dream" : "dreams"} on your wall.` : "Tap a feeling to light up its days."}
+          </p>
+        </section>
       </div>
-      {error && <p className="mt-2 text-sm text-danger">{error}</p>}
+
+      <CalendarWall dreams={dreams} feeling={feeling} />
+    </>
+  );
+}
+
+// A dreamer with nothing on the wall yet sees the three steps, with the first one ready to press.
+function FirstRun({ user }: { user: SessionUser }) {
+  const name = `${user.handle}.dream-scape.eth`;
+  const nameLine = !user.wallet
+    ? "Galleries opened with a passphrase don’t get one. Sign in with email or Google to claim it."
+    : user.ensName
+      ? "It’s yours already. Each morning’s dream gets its own name under it."
+      : user.naming
+        ? "We’re writing it to ENS now. It takes a couple of minutes."
+        : "Each morning’s dream gets its own name under it.";
+
+  return (
+    <section className="panel mt-10 px-5 py-10 md:px-10 md:py-14" aria-labelledby="first-run">
+      <div className="mx-auto max-w-2xl text-center">
+        <h2 id="first-run" className="font-display text-h2 md:text-h1">
+          Your wall is ready for its first painting
+        </h2>
+        <p className="mx-auto mt-4 max-w-[46ch] text-lead text-mist">Tell a dream when you wake. A minute later it hangs here as a painting, with your own words beside it.</p>
+        <Link href="/tell" className="btn btn-gold btn-lg mt-8">
+          Tell your first dream
+        </Link>
+      </div>
+
+      <ol className="mx-auto mt-14 grid max-w-5xl gap-10 md:grid-cols-3 md:gap-8">
+        <FirstStep n={1} title="Tell your first dream" body="Hold the gold button and say what you saw. Ten seconds is plenty. You can type it instead.">
+          <Link href="/tell" aria-label="Tell your first dream" className="sphere sphere-press grid h-20 w-20 place-items-center rounded-full text-gold-ink">
+            <svg viewBox="0 0 24 24" className="h-8 w-8" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden>
+              <rect x="9" y="3" width="6" height="11" rx="3" />
+              <path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" />
+            </svg>
+          </Link>
+        </FirstStep>
+        <FirstStep n={2} title="Watch it paint" body="A checklist shows each step as it happens, from hearing your words to sealing the painting. You can close the app meanwhile.">
+          <div className="painting grid h-full w-full place-items-center">
+            <span className="font-display text-ui italic text-mist">Painting…</span>
+          </div>
+        </FirstStep>
+        <FirstStep n={3} title="Your name on ENS" body={nameLine}>
+          <span className={`max-w-[90%] rounded-md border border-gold/70 bg-gradient-to-b from-[#3a2d10] to-[#22190a] px-3 py-2 text-center font-mono text-meta text-gold shadow-[inset_0_1px_0_rgb(255_230_170/0.25)] ${user.wallet ? "" : "opacity-50"}`}>
+            <span className="block break-all">{name}</span>
+          </span>
+        </FirstStep>
+      </ol>
     </section>
   );
 }
 
+function FirstStep({ n, title, body, children }: { n: number; title: string; body: string; children: React.ReactNode }) {
+  return (
+    <li>
+      <div className="frame">
+        <div className="mat grid aspect-[4/3] w-full place-items-center">{children}</div>
+      </div>
+      <p className="mt-5 flex items-center gap-3 font-display text-title font-semibold">
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-gold/60 font-sans text-ui font-bold text-gold" aria-hidden>
+          {n}
+        </span>
+        {title}
+      </p>
+      <p className="mt-2 text-ui text-mist">{body}</p>
+    </li>
+  );
+}
+
+// Comics you chose to hang. Drafts wait on the Drafts page.
+function HungComics({ episodes }: { episodes: EpisodeSummary[] }) {
+  const hung = episodes.filter((e) => e.status === "published");
+  if (hung.length === 0) return null;
+  return (
+    <section id="comics" className="mt-20 grid scroll-mt-24 gap-x-14 gap-y-6 border-t border-edge pt-14 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
+      <div>
+        <h2 className="font-display text-h2">Hung comics</h2>
+        <p className="mt-3 text-mist">The comics you chose to hang. New ones wait in Drafts until you decide.</p>
+        <Link href="/drafts" className="mt-4 inline-block font-semibold text-gold underline decoration-gold/30 underline-offset-4 hover:decoration-gold">
+          Open Drafts
+        </Link>
+      </div>
+      <div className="grid grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-3 lg:gap-x-7 xl:grid-cols-4">
+        {hung.map((e) => (
+          <Link key={e.id} href={`/episode/${e.id}`} className="lift appear">
+            <div className="paper-card">
+              {/* eslint-disable-next-line @next/next/no-img-element -- private, decrypted per request */}
+              <img src={panelUrl(e.id, 0)} alt="" className="aspect-square w-full border-2 border-[#1d1a17] object-cover" />
+            </div>
+            <p className="mt-3 text-meta font-semibold text-gold">{dayLabel(e.day)}</p>
+            <p className="lift-title truncate font-display text-lead font-semibold">{e.title}</p>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// The sign-in form that sits in the landing's slot. The landing itself shows the wordmark and headline.
 function SignIn({ onDone }: { onDone: () => void }) {
   const [withPass, setWithPass] = useState(false);
   return (
-    <main className="flex flex-1 flex-col items-center justify-center px-6 text-center">
-      <p className="font-display text-2xl italic text-gold">Dreamscape</p>
-      <h1 className="mt-3 max-w-md font-display text-4xl leading-tight">
-        Your brain deletes your dreams. <em className="text-gold">Dreamscape keeps them.</em>
-      </h1>
-      <p className="mt-4 max-w-sm text-mist">Ten seconds when you wake. It&rsquo;s painted, sealed and kept, with your own voice beside it.</p>
-      <div className="mt-8 w-full max-w-xs">
-        {withPass ? <PassSignIn onDone={onDone} /> : <PrivySignIn onDone={onDone} />}
-        <button onClick={() => setWithPass(!withPass)} className="mt-4 text-xs text-dim">
-          {withPass ? "Sign in with email or Google instead" : "Use a name and passphrase instead"}
-        </button>
-      </div>
-    </main>
+    <div>
+      {withPass ? <PassSignIn onDone={onDone} /> : <PrivySignIn onDone={onDone} />}
+      <button onClick={() => setWithPass(!withPass)} className="mt-4 rounded text-sm text-dim transition-colors hover:text-mist">
+        {withPass ? "Sign in with email or Google instead" : "Use a name and passphrase instead"}
+      </button>
+    </div>
   );
 }
 
@@ -247,7 +308,7 @@ function PrivySignIn({ onDone }: { onDone: () => void }) {
           className="rounded-xl border border-line bg-card px-4 py-3 text-paper placeholder:text-dim focus:border-gold focus:outline-none"
         />
         <p className="text-xs text-dim">It becomes {handle.trim() ? handle.trim().toLowerCase() : "yourname"}.dream-scape.eth, a name you own.</p>
-        <button disabled={busy} className="rounded-xl bg-gold px-4 py-3 font-medium text-gold-ink disabled:opacity-60">
+        <button disabled={busy} className="press rounded-xl bg-gold px-4 py-3 font-semibold text-gold-ink disabled:opacity-60">
           {busy ? "Opening…" : "Open my gallery"}
         </button>
         {error && <p className="text-sm text-danger">{error}</p>}
@@ -257,7 +318,7 @@ function PrivySignIn({ onDone }: { onDone: () => void }) {
 
   return (
     <div className="flex flex-col gap-3">
-      <button disabled={!ready || (authenticated && !error)} onClick={login} className="rounded-xl bg-gold px-4 py-3 font-medium text-gold-ink disabled:opacity-60">
+      <button disabled={!ready || (authenticated && !error)} onClick={login} className="press rounded-xl bg-gold px-4 py-3 font-semibold text-gold-ink disabled:opacity-60">
         {authenticated && !error ? "Opening your gallery…" : "Sign in with email or Google"}
       </button>
       {error && <p className="text-sm text-danger">{error}</p>}
@@ -298,7 +359,7 @@ function PassSignIn({ onDone }: { onDone: () => void }) {
         className="rounded-xl border border-line bg-card px-4 py-3 text-paper placeholder:text-dim focus:border-gold focus:outline-none"
       />
       <p className="text-left text-xs text-dim">New name? This passphrase claims it. These galleries get no ENS name or wallet.</p>
-      <button className="rounded-xl bg-gold px-4 py-3 font-medium text-gold-ink">Open my gallery</button>
+      <button className="press rounded-xl bg-gold px-4 py-3 font-semibold text-gold-ink">Open my gallery</button>
       {error && <p className="text-sm text-danger">{error}</p>}
     </form>
   );
