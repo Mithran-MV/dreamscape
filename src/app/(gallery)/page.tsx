@@ -198,6 +198,9 @@ function Wall({
 
   return (
     <>
+      {/* The month comes first: it is the wall itself. The note and the weather read it below. */}
+      <CalendarWall dreams={dreams} feeling={feeling} />
+
       <div className="mt-10 grid gap-5 lg:grid-cols-2">
         <MorningNote notes={notes} aiNote={aiNote} sagaTonight={sagaTonight} onSaga={onSaga} />
 
@@ -229,7 +232,6 @@ function Wall({
         </section>
       </div>
 
-      <CalendarWall dreams={dreams} feeling={feeling} />
     </>
   );
 }
