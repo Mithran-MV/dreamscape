@@ -19,11 +19,14 @@ function list(name: string): string[] | undefined {
 
 export const env = {
   zgApiKey: () => required("ZG_API_KEY"),
-  // The 0G models for each job, best first. When one can't be served, the next one does the job.
-  // Reading is always sealed: whichever model is on the list, it only runs on private trust.
-  zgReadModels: () => list("ZG_READ_MODELS") ?? ["0gm-1.0-35b-a3b", "glm-5.3"],
-  zgPaintModels: () => list("ZG_PAINT_MODELS") ?? ["z-image-turbo", "tencent/hy-image-3.5-preview", "bytedance/seedream-5.0-flash", "minimax-image-01"],
-  zgPanelModels: () => list("ZG_PANEL_MODELS") ?? ["tencent/hy-image-3.5-preview", "bytedance/seedream-5.0-flash", "minimax-image-01"],
+  // Each job's default 0G model, and the backups that stand in for it, in order, when 0G can't serve it.
+  // Reading is always sealed: whichever model reads, it only runs on private trust.
+  zgRead: () => ({ main: read("ZG_READ_MODEL") ?? "0gm-1.0-35b-a3b", backups: list("ZG_READ_BACKUPS") ?? ["glm-5.3"] }),
+  zgPaint: () => ({
+    main: read("ZG_PAINT_MODEL") ?? "z-image-turbo",
+    backups: list("ZG_PAINT_BACKUPS") ?? ["tencent/hy-image-3.5-preview", "bytedance/seedream-5.0-flash", "minimax-image-01"],
+  }),
+  zgPanel: () => ({ main: read("ZG_PANEL_MODEL") ?? "tencent/hy-image-3.5-preview", backups: list("ZG_PANEL_BACKUPS") ?? ["bytedance/seedream-5.0-flash", "minimax-image-01"] }),
   zgRouter: () => read("ZG_ROUTER_URL") ?? "https://router-api.0g.ai/v1",
   zgPrivyAppId: () => required("NEXT_PUBLIC_ZG_PRIVY_APP_ID"), // 0G's own Privy app, behind "Sign in with 0G"
   serverKey: () => required("SERVER_PRIVATE_KEY") as `0x${string}`,

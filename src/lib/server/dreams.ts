@@ -69,12 +69,12 @@ export function updateDream(id: string, fields: Partial<Record<string, string | 
 
 export function addTrace(dreamId: string, step: string, t: Trace) {
   getDb()
-    .prepare("INSERT INTO traces (dream_id, step, model, request_id, provider, tee_verified, cost_usd, ms, e2ee, res_key, paid_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
-    .run(dreamId, step, t.model, t.requestId, t.provider, t.teeVerified == null ? null : t.teeVerified ? 1 : 0, t.costUsd, t.ms, t.e2ee ?? null, t.resKey ?? null, t.paidBy ?? null, now());
+    .prepare("INSERT INTO traces (dream_id, step, model, request_id, provider, tee_verified, cost_usd, ms, e2ee, res_key, paid_by, stand_in, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+    .run(dreamId, step, t.model, t.requestId, t.provider, t.teeVerified == null ? null : t.teeVerified ? 1 : 0, t.costUsd, t.ms, t.e2ee ?? null, t.resKey ?? null, t.paidBy ?? null, t.standIn ?? null, now());
 }
 
 export function tracesFor(dreamId: string) {
-  return getDb().prepare("SELECT step, model, request_id, provider, tee_verified, cost_usd, ms, e2ee, res_key, paid_by FROM traces WHERE dream_id = ? ORDER BY id").all(dreamId);
+  return getDb().prepare("SELECT step, model, request_id, provider, tee_verified, cost_usd, ms, e2ee, res_key, paid_by, stand_in FROM traces WHERE dream_id = ? ORDER BY id").all(dreamId);
 }
 
 // Sealed local cache: files are encrypted under the dreamer's key, like their copies on 0G Storage.

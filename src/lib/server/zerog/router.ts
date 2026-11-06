@@ -16,7 +16,26 @@ export type Trace = {
   resKey: string | null;
   // Whose 0G credit paid: the dreamer's own connected account, or Dreamscape's.
   paidBy: "you" | "dreamscape";
+  // The job's default model, when a backup did this step because 0G couldn't serve the default.
+  standIn?: string | null;
 };
+
+type Job = { main: string; backups: string[] };
+
+// Runs the job on its default model, then on each backup in turn while 0G can't serve the one before.
+async function withBackups<R extends { trace: Trace }>(job: Job, run: (model: string) => Promise<R>): Promise<R> {
+  let failure: unknown;
+  for (const model of [job.main, ...job.backups]) {
+    try {
+      const result = await run(model);
+      return model === job.main ? result : { ...result, trace: { ...result.trace, standIn: job.main } };
+    } catch (error) {
+      if (!unavailable(error)) throw error;
+      failure = error;
+    }
+  }
+  throw failure;
+}
 
 export class ZeroGError extends Error {
   constructor(public status: number, public body: string, public trace?: Partial<Trace>) {
@@ -102,25 +121,15 @@ export async function transcribe(audio: Uint8Array, mime: string) {
 const unavailable = (error: unknown) =>
   error instanceof ZeroGError && (error.status === 502 || error.status === 503 || (error.status === 404 && error.body.includes("model_not_found")));
 
-// Sealed chat that must answer with a JSON object. The read models are tried in order (env.zgReadModels),
-// all of them on private trust, so the words only ever reach a sealed enclave; the trace names whichever
+// Sealed chat that must answer with a JSON object: the default read model, then its backups (env.zgRead),
+// all of them on private trust, so the words only ever reach a sealed enclave. The trace names whichever
 // model did the reading.
 // Minimal reasoning for 0GM: these are short JSON tasks, and at "low" it spent over 5,000 tokens thinking
 // before a comic script, which ran past the cap. The cap still leaves room if it does reason.
 const READ_OPTIONS: Record<string, Record<string, unknown>> = { "0gm-1.0-35b-a3b": { reasoning_effort: "minimal" } };
 
-export async function chatJson<T>(system: string, user: string, maxTokens = 3000) {
-  let failure: unknown;
-  for (const model of env.zgReadModels()) {
-    try {
-      return await readJson<T>(model, READ_OPTIONS[model] ?? {}, system, user, maxTokens);
-    } catch (error) {
-      if (!unavailable(error)) throw error;
-      failure = error;
-    }
-  }
-  throw failure;
-}
+export const chatJson = <T>(system: string, user: string, maxTokens = 3000) =>
+  withBackups(env.zgRead(), (model) => readJson<T>(model, READ_OPTIONS[model] ?? {}, system, user, maxTokens));
 
 async function readJson<T>(model: string, options: Record<string, unknown>, system: string, user: string, maxTokens: number) {
   const { data, trace } = await call<{ choices: { message: { content: string }; finish_reason?: string }[] }>("/chat/completions", model, {
@@ -149,22 +158,9 @@ async function readJson<T>(model: string, options: Record<string, unknown>, syst
   }
 }
 
-// Images: tried in order of the job's list (env.zgPaintModels, env.zgPanelModels) until one can serve.
+// Images: the job's default model, then its backups (env.zgPaint, env.zgPanel), until one can serve.
 // z-image runs in a verified enclave; the others run on standard trust and only ever get a scene
 // description, never the dream's words. The trace names the model, so "How it was made" says which.
-async function drawWith(models: string[], prompt: string, references: string[] = [], seed?: number) {
-  let failure: unknown;
-  for (const model of models) {
-    try {
-      return await draw(model, prompt, references, seed);
-    } catch (error) {
-      if (!unavailable(error)) throw error;
-      failure = error;
-    }
-  }
-  throw failure;
-}
-
 async function draw(model: string, prompt: string, references: string[], seed?: number) {
   const sealed = model === "z-image-turbo"; // takes text only and needs b64_json
   const body: Record<string, unknown> = { model, prompt, size: "1024x1024", n: 1 };
@@ -183,10 +179,10 @@ async function draw(model: string, prompt: string, references: string[], seed?: 
 }
 
 // The dream's portrait, posters and reveals.
-export const paint = (prompt: string) => drawWith(env.zgPaintModels(), prompt);
+export const paint = (prompt: string) => withBackups(env.zgPaint(), (model) => draw(model, prompt, []));
 
 // Comic panels: they only ever get a scene description, never the raw dream.
-export const drawPanel = (prompt: string, references: string[] = [], seed?: number) => drawWith(env.zgPanelModels(), prompt, references, seed);
+export const drawPanel = (prompt: string, references: string[] = [], seed?: number) => withBackups(env.zgPanel(), (model) => draw(model, prompt, references, seed));
 
 // Living portraits: image to video, submitted, polled, then downloaded. Seedance runs on a verified
 // relay whose vendor sees the input, so it only ever gets the painted portrait and a motion line.
