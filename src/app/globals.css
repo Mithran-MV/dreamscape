@@ -77,6 +77,19 @@ body {
   background: transparent;
   color: var(--paper);
   font-family: var(--font-instrument), system-ui, sans-serif;
+  /* The Android app and a Home Screen app on iPhone draw the page under the status bar. */
+  padding-top: env(safe-area-inset-top);
+}
+
+/* A strip of night behind the clock, so the page never scrolls under it. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 60;
+  height: env(safe-area-inset-top);
+  background: var(--ground);
+  pointer-events: none;
 }
 
 /* ---------- The signed-in app (components/app-shell.tsx) ---------- */
