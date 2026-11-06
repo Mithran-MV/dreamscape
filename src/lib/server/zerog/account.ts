@@ -107,7 +107,8 @@ export async function connectSession(userId: string, session: ZeroGSession): Pro
       ...(session.token ? { Authorization: `Bearer ${session.token}` } : {}),
       ...(session.cookie ? { Cookie: session.cookie } : {}),
     },
-    body: JSON.stringify({ name: "Dreamscape", reset_period: "daily", expiration: "no_expiration" }),
+    // 0G only takes a daily reset with a limit to reset.
+    body: JSON.stringify({ name: "Dreamscape", credit_limit: env.zgKeyDailyLimit(), reset_period: "daily", expiration: "no_expiration" }),
     signal: AbortSignal.timeout(30_000),
   });
   const text = await res.text();
