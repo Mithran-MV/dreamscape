@@ -231,9 +231,10 @@ export function buyTxs(pieceId: Hex, priceUsdc: bigint) {
 }
 export const marketAddress = market;
 
-// Reads the buyer's receipt and keeps a note of each edition it minted for this piece.
+// Reads the buyer's receipt and keeps a note of each edition it minted for this piece. The buyer's
+// wallet already waited for it to be mined, so the server waits briefly: anyone can call this.
 export async function recordPurchase(pieceId: Hex, tx: Hex) {
-  const receipt = await reader().waitForTransactionReceipt({ hash: tx });
+  const receipt = await reader().waitForTransactionReceipt({ hash: tx, timeout: 20_000, pollingInterval: 4_000 });
   const logs = parseEventLogs({ abi: marketAbi, logs: receipt.logs, eventName: "EditionSold" }).filter(
     (l) => l.address.toLowerCase() === market().toLowerCase() && l.args.pieceId === pieceId,
   );
