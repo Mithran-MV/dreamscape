@@ -27,7 +27,20 @@ function Bubble({ text, side }: { text: string; side: "left" | "right" }) {
   );
 }
 
-export function ComicPage({ script, feeling, panelSrc, saga }: { script: ComicScript; feeling: string | null; panelSrc: (n: number) => string; saga?: string | null }) {
+// "strip" lays the four panels in one row on wider screens, as a newspaper strip.
+export function ComicPage({
+  script,
+  feeling,
+  panelSrc,
+  saga,
+  strip = false,
+}: {
+  script: ComicScript;
+  feeling: string | null;
+  panelSrc: (n: number) => string;
+  saga?: string | null;
+  strip?: boolean;
+}) {
   const spot = feelingColor(feeling);
   return (
     <figure className={`${lettering.className} rounded-[3px] bg-[#fbf9f4] p-[3%] shadow-[0_18px_50px_rgb(0_0_0/0.45)]`} style={{ color: INK }}>
@@ -41,7 +54,7 @@ export function ComicPage({ script, feeling, panelSrc, saga }: { script: ComicSc
         {saga && saga.toLowerCase() !== script.title.toLowerCase() && <span className="pb-0.5 text-[clamp(12px,2.6vw,16px)] opacity-70">{saga}</span>}
       </figcaption>
 
-      <div className="grid grid-cols-2 gap-[2.2%]">
+      <div className={`grid gap-[2.2%] ${strip ? "grid-cols-2 md:grid-cols-4" : "grid-cols-2"}`}>
         {script.panels.map((p, i) => (
           <div key={i} className="@container relative aspect-square overflow-hidden border-[3px] bg-white" style={{ borderColor: INK }}>
             {/* eslint-disable-next-line @next/next/no-img-element -- private, decrypted per request */}

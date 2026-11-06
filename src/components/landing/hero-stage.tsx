@@ -1,10 +1,11 @@
 "use client";
 // The hero: a dream told aloud becomes a painting. The gold record button listens, the spoken words
 // drift up and gather into a gilt frame, and the painting lays itself down inside it, stroke by stroke.
+// The painting is the real one Dreamscape made from these words on 0G (scripts/landing-art.ts).
 // A moth comes to the button's light, follows the words up and falls asleep on the frame.
 // Plays once on load (about seven seconds) and settles. With reduced motion it shows the last frame.
 import { Moth } from "../moth";
-import { DreamPainting } from "./dream-painting";
+import { PaintedReveal } from "./painted-reveal";
 
 // Seconds from load. The CSS in landing.css times the frame, glow and caption to match.
 const AT = { words: 0.7, wordStep: 0.1, gather: 3, paint: 3.8 };
@@ -37,13 +38,13 @@ export function HeroStage() {
       <div
         className="ls-art"
         role="img"
-        aria-label="A dream told aloud becoming a painting. The words rise from the gold record button and gather into a gilt frame, where a blue painting appears: a school whose roof is a breaking wave, with the dreamer flying above it."
+        aria-label="A dream told aloud becoming a painting. The words rise from the gold record button and gather into a gilt frame, where the painting appears stroke by stroke: an old school standing in a shimmering sea."
       >
         {/* The frame: a gold line traces it as the words arrive, then the gilt fills in. */}
         <div className="ls-frame-glow" />
         <div className="ls-frame frame">
           <div className="mat aspect-square w-full">
-            <DreamPainting animate start={AT.paint} />
+            <PaintedReveal src="/landing/dream.jpg" label="" animate start={AT.paint} />
           </div>
         </div>
         <svg className="ls-trace" viewBox="0 0 100 100">

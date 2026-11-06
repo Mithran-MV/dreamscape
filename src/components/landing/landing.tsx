@@ -75,6 +75,7 @@ export function Landing({ signIn }: { signIn: React.ReactNode }) {
         </div>
         <div className="mt-10 md:mt-12">
           <ComicStrip />
+          <p className="mt-4 text-sm text-dim">Made overnight by Dreamscape on 0G, from the dream at the top of this page. So is every picture here.</p>
         </div>
       </section>
 
