@@ -12,7 +12,12 @@ export async function GET() {
   return Response.json({ user: { handle: user.handle, wallet: row.wallet, ensName, naming } });
 }
 
+// Name + passphrase sign-in is for local testing only. On the live site the only way in is 0G's sign-in,
+// or anyone could make free accounts and spend Dreamscape's own 0G credit.
 export async function POST(request: Request) {
+  if (process.env.NODE_ENV === "production" && process.env.ALLOW_PASSPHRASE_SIGNIN !== "1") {
+    return Response.json({ error: "Sign in with 0G." }, { status: 404 });
+  }
   const { handle, passphrase } = (await request.json().catch(() => ({}))) as { handle?: string; passphrase?: string };
   const clean = cleanHandle(handle ?? "");
   const pass = String(passphrase ?? "");
