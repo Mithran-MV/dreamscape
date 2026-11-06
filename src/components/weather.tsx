@@ -7,7 +7,7 @@ const DAY_MS = 86_400_000;
 
 export function WeatherStrip({ dreams }: { dreams: { day: number; feeling: string | null }[] }) {
   const today = useClientValue(() => Math.floor(Date.now() / DAY_MS), 0);
-  if (!today) return <div className="mt-4 h-[30px]" />;
+  if (!today) return <div className="h-[38px]" />;
   const now = new Date(today * DAY_MS);
   const first = Math.floor(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1) / DAY_MS);
   const length = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0)).getUTCDate();
@@ -18,7 +18,7 @@ export function WeatherStrip({ dreams }: { dreams: { day: number; feeling: strin
   const counted = FEELINGS.map((f) => ({ ...f, n: [...byDay.entries()].filter(([day, x]) => day >= first && x === f.key).length })).filter((f) => f.n);
 
   return (
-    <div className="mt-4">
+    <div>
       <div className="flex gap-[3px]" role="img" aria-label={`Dream weather for ${month}: ${counted.map((f) => `${f.n} ${f.label.toLowerCase()}`).join(", ") || "no dreams yet"}`}>
         {Array.from({ length }, (_, i) => {
           const day = first + i;
@@ -27,13 +27,13 @@ export function WeatherStrip({ dreams }: { dreams: { day: number; feeling: strin
             <span
               key={day}
               title={felt ? `${i + 1} ${month}: ${FEELINGS.find((f) => f.key === felt)?.label ?? felt}` : `${i + 1} ${month}`}
-              className={`h-2.5 flex-1 rounded-[2px] ${day === today ? "ring-1 ring-paper/60" : ""}`}
-              style={{ background: felt ? feelingColor(felt) : day > today ? "transparent" : "var(--edge)", border: day > today ? "1px solid var(--edge)" : undefined }}
+              className={`h-3 flex-1 rounded-[3px] ${day === today ? "ring-2 ring-paper/70 ring-offset-1 ring-offset-ground" : ""}`}
+              style={{ background: felt ? feelingColor(felt) : day > today ? "transparent" : "var(--edge)", border: day > today ? "1px solid var(--line)" : undefined }}
             />
           );
         })}
       </div>
-      <p className="mt-1.5 text-xs text-dim">{month}&rsquo;s dream weather</p>
+      <p className="mt-2 text-meta text-dim">{month}&rsquo;s dream weather. Each bar is a night.</p>
     </div>
   );
 }
