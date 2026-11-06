@@ -28,7 +28,7 @@ export type Episode = {
 };
 
 const DAY_MS = 86_400_000;
-export const NIGHT_HOUR_UTC = 20; // before the 00:00 UTC credit reset, with time left for video
+export const NIGHT_HOUR_UTC = 21; // three hours before the 00:00 UTC credit reset, with time left for video
 // iAI gives $1.00 of credit a day; the night never plans past it.
 const DAILY_BUDGET_USD = 1.0;
 const PANEL_USD = 0.0252;
