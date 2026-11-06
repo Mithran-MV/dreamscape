@@ -55,6 +55,8 @@ One AI coding assistant, used in agent mode from the terminal. No other AI tools
 | Landing page | The animated hero, comic strip and scenes, all drawn in SVG (`src/components/landing/`) | Drafted by the assistant to the author's brief; every illustration drawn fresh in code |
 | Partner write-ups | `docs/0g.md`, `docs/ens.md`, the README walk-through | Drafted by the assistant from the live deployments and receipts, to be edited by the author |
 | Morning Notes, Dream Weather, World Dream | `notes.ts`, `world.ts`, `weather.tsx`, `world-card.tsx` | Drafted by the assistant to the author's design, including the five-dreamer privacy floor |
+| App redesign | The app shell and profile menu, the calendar wall, the Drafts, Passes, World Dream and Settings pages, and the reworked day, comic, tell and market pages (`app-shell.tsx`, `calendar-wall.tsx`, `src/app/(gallery)/`) | Drafted by the assistant from the author's own earlier mockup, written fresh and showing only real data |
+| Logo and moth | The arched-window mark, every icon rendered from it, and the moth on the landing page (`assets/`, `scripts/icons.ts`, `logo.tsx`, `moth.tsx`) | Drawn in SVG by the assistant to the author's brief |
 
 ## Totals
 
