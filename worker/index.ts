@@ -1,7 +1,7 @@
 // Background worker: claims one job at a time from the SQLite queue and runs it.
 import { claimNext, fail, finish, requeueStuck, retryLater, type Job } from "../src/lib/server/jobs";
 import { notifyPainted, paintDream, storeDream } from "../src/lib/server/pipeline";
-import { notifyEpisode, pollLivingPortrait, runNight, scheduleNights } from "../src/lib/server/nightly";
+import { notifyEpisode, pollLivingPortrait, runNight, scheduleNights, startLivingPortrait } from "../src/lib/server/nightly";
 import { paintWorld, publishWorldJob, scheduleWorld } from "../src/lib/server/world";
 import { dayRecordJob, onboardJob } from "../src/lib/server/names";
 import { dripJob } from "../src/lib/server/drip";
@@ -19,6 +19,7 @@ const handlers: Record<string, (ref: string) => Promise<void>> = {
   "night.run": runNight,
   "episode.notify": notifyEpisode,
   "dream.video": pollLivingPortrait,
+  "dream.animate": startLivingPortrait,
   "world.paint": paintWorld,
   "ens.onboard": onboardJob,
   "dream.ens": dayRecordJob,

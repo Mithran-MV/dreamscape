@@ -130,9 +130,10 @@ function imageMime(bytes: Buffer) {
 const SHOWN: Record<string, true> = { painted: true, storing: true, done: true };
 
 // Job 'night.run', ref = user id: the comic first, then a living portrait with whatever credit is left.
+// The portrait is its own job: if video is unavailable it retries alone, and never repeats the comic.
 export async function runNight(userId: string) {
   await makeComic(userId);
-  await startLivingPortrait(userId);
+  if (!hasOpenJob(userId, ["dream.animate"])) enqueue("dream.animate", userId);
 }
 
 // Each step is skipped if an earlier attempt finished it.
