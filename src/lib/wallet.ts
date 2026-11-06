@@ -1,5 +1,5 @@
 "use client";
-// The dreamer's own Privy wallet in the browser, for the few transactions only they may send,
+// The dreamer's 0G wallet in the browser, for the few transactions only they may send,
 // such as paying for an edition or revoking a pass. The server pays for everything else.
 import { useWallets } from "@privy-io/react-auth";
 import { useCallback } from "react";
@@ -12,7 +12,8 @@ const reader = createPublicClient({ chain: sepolia, transport: http("https://eth
 
 export function usePrivyWallet() {
   const { wallets, ready } = useWallets();
-  const wallet = wallets.find((w) => w.walletClientType === "privy");
+  // The 0G account's own wallet: embedded in 0G's sign-in, or the one the dreamer linked to it.
+  const wallet = wallets.find((w) => w.walletClientType === "privy") ?? wallets[0];
 
   // Sends each transaction in order and waits for it, so a later one never runs on a failed earlier one.
   const send = useCallback(
