@@ -33,6 +33,7 @@ export type Dream = {
   video_state: "rendering" | "done" | "failed" | null;
   video_at: number | null;
   video_mode: "verified" | "standard" | null;
+  video_decision: "hung" | "let-go" | null; // the dreamer's call on the moving portrait, in Drafts
   ens_tx: string | null;
   note: string | null;
 };
@@ -56,7 +57,7 @@ export function listDreams(userId: string, limit = 120): Dream[] {
 
 const COLUMNS = new Set([
   "status", "error", "transcript", "title", "tags_json", "scene", "suggested_feeling",
-  "voice_root", "portrait_root", "record_root", "registry_tx", "registry_id", "saga", "video_job", "video_state", "video_at", "video_mode", "ens_tx",
+  "voice_root", "portrait_root", "record_root", "registry_tx", "registry_id", "saga", "video_job", "video_state", "video_at", "video_mode", "video_decision", "ens_tx",
 ]);
 
 export function updateDream(id: string, fields: Partial<Record<string, string | number | null>>) {

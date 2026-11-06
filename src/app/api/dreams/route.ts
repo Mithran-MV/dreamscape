@@ -19,7 +19,7 @@ export async function GET() {
     feeling: d.feeling ?? d.suggested_feeling,
     stored: Boolean(d.portrait_root),
     anchored: Boolean(d.registry_tx),
-    moving: d.video_state === "done",
+    moving: d.video_state === "done" && d.video_decision !== "let-go",
   }));
   const log = noteLog(user.id);
   const notes = log.length ? notesFor(log, log[log.length - 1].id).slice(0, 2) : [];

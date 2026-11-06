@@ -169,6 +169,9 @@ export function getDb(): DatabaseSync {
   addColumn(db, "traces", "paid_by", "TEXT"); // 'you' when the dreamer's own 0G key paid, 'dreamscape' otherwise
   addColumn(db, "users", "tz_offset", "INTEGER"); // minutes behind UTC, from the browser, for the morning notice
   addColumn(db, "users", "hide_stars", "INTEGER"); // 1 when the dreamer hid the week's stars
+  addColumn(db, "reveals", "decision", "TEXT"); // nightly posters: NULL waits in Drafts, then 'hung' or 'let-go'
+  addColumn(db, "dreams", "video_decision", "TEXT"); // the moving portrait: NULL waits in Drafts, then 'hung' or 'let-go'
+
   addColumn(db, "traces", "e2ee", "TEXT"); // "sealed" when the request was encrypted to the enclave
   addColumn(db, "traces", "res_key", "TEXT"); // the provider's receipt key for this response
   addColumn(db, "dreams", "video_job", "TEXT"); // the living portrait's job id on 0G

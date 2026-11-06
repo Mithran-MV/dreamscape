@@ -142,7 +142,7 @@ function top(values: string[], n: number) {
 }
 const list = (xs: string[]) => (xs.length > 1 ? `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}` : (xs[0] ?? ""));
 
-type RevealRow = { id: string; kind: RevealKind; status: string; title: string; body: string | null; slides_json: string | null; created_at: number };
+type RevealRow = { id: string; kind: RevealKind; status: string; title: string; body: string | null; slides_json: string | null; decision: string | null; created_at: number };
 
 const weekLabel = (monday: number) => `Week of ${new Date(monday * DAY_MS).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" })}`;
 
@@ -159,9 +159,10 @@ export function memoriesFor(userId: string): Memory[] {
   const dreams = paintedDreams(userId);
   const out: Memory[] = [];
   const reveals = getDb().prepare("SELECT * FROM reveals WHERE user_id = ? ORDER BY created_at DESC").all(userId) as RevealRow[];
-  const sky = reveals.find((r) => r.kind.startsWith("sky:") && r.status === "ready");
+  // Nightly posters join the row once the dreamer hangs them in Drafts; only the latest sky shows.
+  const sky = reveals.find((r) => r.kind.startsWith("sky:") && r.status === "ready" && r.decision === "hung");
   for (const r of reveals) {
-    if (r.kind.startsWith("sky:")) continue;
+    if (r.kind.startsWith("sky:") || (r.kind.startsWith("week:") && r.decision !== "hung")) continue;
     const m = revealMemory(r);
     if (m) out.push(m);
   }
@@ -327,4 +328,37 @@ export async function scheduleMornings(at = Date.now()) {
     const comic = db.prepare("SELECT id FROM episodes WHERE user_id = ? AND status = 'draft' ORDER BY created_at DESC LIMIT 1").get(u.id) as { id: string } | undefined;
     await notify(u.id, { title: `Star ${star} is waiting`, body: comic ? "Your comic is ready. One tap lights your star." : "One tap lights it, with or without a dream.", url: "/", tag: `morning-${day}` });
   }
+}
+
+// Last night's pieces waiting for the dreamer's yes: the poster, and a moving portrait made overnight.
+// (The comic waits as a draft episode.)
+export function nightlyDrafts(userId: string) {
+  const db = getDb();
+  const posters = (
+    db
+      .prepare("SELECT id, kind, title, body, created_at FROM reveals WHERE user_id = ? AND status = 'ready' AND decision IS NULL AND (kind LIKE 'sky:%' OR kind LIKE 'week:%') ORDER BY created_at DESC LIMIT 3")
+      .all(userId) as { id: string; kind: string; title: string; body: string | null; created_at: number }[]
+  ).map((r) => ({ id: r.id, kind: r.kind.startsWith("week:") ? "week" : "sky", title: r.title, text: r.body, image: revealImageUrl(r.id), createdAt: r.created_at }));
+  const portraits = (
+    db
+      .prepare("SELECT id, title FROM dreams WHERE user_id = ? AND video_state = 'done' AND video_decision IS NULL AND video_at >= ? ORDER BY video_at DESC LIMIT 3")
+      .all(userId, now() - 3 * DAY_MS) as { id: string; title: string | null }[]
+  ).map((d) => ({ dreamId: d.id, title: d.title, video: `/api/dreams/${d.id}/media/video`, image: portrait(d.id) }));
+  return { posters, portraits };
+}
+
+export function decideDraft(userId: string, piece: "poster" | "portrait", id: string, action: "hang" | "let-go") {
+  const decision = action === "hang" ? "hung" : "let-go";
+  const sql =
+    piece === "poster"
+      ? "UPDATE reveals SET decision = ? WHERE id = ? AND user_id = ? AND status = 'ready' AND (kind LIKE 'sky:%' OR kind LIKE 'week:%')"
+      : "UPDATE dreams SET video_decision = ? WHERE id = ? AND user_id = ? AND video_state = 'done'";
+  return getDb().prepare(sql).run(decision, id, userId).changes > 0;
+}
+
+// A hung nightly poster, for the market.
+export function hungPoster(userId: string, id: string) {
+  return getDb().prepare("SELECT id, title, kind FROM reveals WHERE id = ? AND user_id = ? AND status = 'ready' AND decision = 'hung' AND (kind LIKE 'sky:%' OR kind LIKE 'week:%')").get(id, userId) as
+    | { id: string; title: string; kind: string }
+    | undefined;
 }
