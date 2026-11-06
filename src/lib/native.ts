@@ -26,7 +26,9 @@ export async function remindEachMorning(minute: number) {
         channelId: "mornings",
         title: "Before it fades",
         body: "What did you dream? One tap lights today's star.",
-        schedule: { on: { hour: Math.floor(minute / 60), minute: minute % 60 }, allowWhileIdle: true },
+        schedule: { on: { hour: Math.floor(minute / 60), minute: minute % 60 } },
+        // A few minutes either way is fine for a morning nudge, and an exact alarm needs a second permission page.
+        isExactNotification: false,
         extra: { url: "/tell" },
       },
     ],
