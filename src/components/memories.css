@@ -19,6 +19,31 @@
   pointer-events: none;
 }
 
+/* The three ways to light today's star. */
+.ms-choice {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  background: rgb(28 22 54 / 0.6);
+  text-align: left;
+  color: var(--paper);
+  transition: border-color 0.2s, background-color 0.2s, transform 0.15s;
+}
+.ms-choice:hover { border-color: var(--gold); }
+.ms-choice:active { transform: scale(0.985); }
+.ms-choice-gold { border-color: transparent; background: var(--gold); color: var(--gold-ink); }
+.ms-choice-gold:hover { border-color: transparent; background: #f5d58f; }
+.ms-choice-icon { display: grid; place-items: center; width: 2.5rem; height: 2.5rem; border-radius: 999px; background: rgb(15 12 28 / 0.55); color: var(--gold); }
+.ms-choice-gold .ms-choice-icon { background: rgb(35 26 5 / 0.12); color: var(--gold-ink); }
+.ms-choice-icon svg { width: 1.35rem; height: 1.35rem; }
+.ms-choice-title { display: block; font-weight: 650; font-size: 1.02rem; line-height: 1.25; }
+.ms-choice-hint { display: block; margin-top: 0.1rem; font-size: 0.9rem; line-height: 1.35; color: var(--mist); }
+.ms-choice-gold .ms-choice-hint { color: rgb(35 26 5 / 0.75); }
+
 .ms-row { scrollbar-width: none; scroll-snap-type: x mandatory; }
 .ms-row::-webkit-scrollbar { display: none; }
 .ms-row > li { scroll-snap-align: start; }

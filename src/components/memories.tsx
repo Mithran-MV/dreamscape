@@ -84,6 +84,7 @@ function WeekStars({ state, justLit, onKeep }: { state: Mornings; justLit: boole
           <h2 id="mornings" className="font-display text-title">
             {complete ? "This week's constellation is complete" : state.keptToday ? "Today's star is lit" : "Light today's star"}
           </h2>
+          {!state.keptToday && <p className="mt-1.5 max-w-md text-ui text-mist">Every morning you open the app, you light one star. You don&rsquo;t need a dream to do it.</p>}
           <ol className="mt-4 flex items-end gap-2 sm:gap-4" aria-label={`${lit} of 7 mornings kept this week`}>
             {state.week.map((s, i) => (
               <li key={s.day} className="flex flex-col items-center gap-1.5">
@@ -105,15 +106,28 @@ function WeekStars({ state, justLit, onKeep }: { state: Mornings; justLit: boole
 
         {state.keptToday ? (
           <p className="max-w-xs font-display text-lead italic text-paper" aria-live="polite">
-            {justLit ? "Star lit. See you tomorrow morning." : "See you tomorrow morning."}
+            {litBy(state.week.find((d) => d.day === state.today))}
+            <span className="mt-1 block text-ui not-italic text-mist">See you tomorrow morning.</span>
           </p>
         ) : (
-          <div className="flex w-full flex-col gap-3 lg:w-auto lg:min-w-[22rem]">
-            <Link href="/tell" className="btn btn-gold btn-lg justify-center">
-              I remember a dream
+          // Any of the three lights today's star.
+          <div className="flex w-full flex-col gap-2.5 lg:w-[26rem]">
+            <Link href="/tell" className="ms-choice ms-choice-gold">
+              <ChoiceIcon kind="dream" />
+              <span>
+                <span className="ms-choice-title">I remember a dream</span>
+                <span className="ms-choice-hint">Hold the gold button and tell it.</span>
+              </span>
             </Link>
-            {feelings ? (
-              <div className="flex flex-wrap gap-2" role="group" aria-label="How did the night feel?">
+            <button type="button" className="ms-choice" aria-expanded={feelings} onClick={() => setFeelings(!feelings)}>
+              <ChoiceIcon kind="feeling" />
+              <span>
+                <span className="ms-choice-title">Just a feeling</span>
+                <span className="ms-choice-hint">Tap a colour: wonder, calm, joy and so on.</span>
+              </span>
+            </button>
+            {feelings && (
+              <div className="flex flex-wrap gap-2 px-1 py-1" role="group" aria-label="How did the night feel?">
                 {FEELINGS.map((f) => (
                   <button key={f.key} type="button" className="chip" style={chipColor(f.color)} onClick={() => onKeep("feeling", f.key)}>
                     <span className="chip-dot" aria-hidden />
@@ -121,20 +135,48 @@ function WeekStars({ state, justLit, onKeep }: { state: Mornings; justLit: boole
                   </button>
                 ))}
               </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-3">
-                <button type="button" className="btn btn-line justify-center" onClick={() => setFeelings(true)}>
-                  Just a feeling
-                </button>
-                <button type="button" className="btn btn-line justify-center" onClick={() => onKeep("nothing")}>
-                  Nothing this time
-                </button>
-              </div>
             )}
+            <button type="button" className="ms-choice" onClick={() => onKeep("nothing")}>
+              <ChoiceIcon kind="nothing" />
+              <span>
+                <span className="ms-choice-title">Nothing this time</span>
+                <span className="ms-choice-hint">Still counts. You showed up.</span>
+              </span>
+            </button>
           </div>
         )}
       </div>
     </section>
+  );
+}
+
+// What lit today's star, said back to the dreamer.
+function litBy(star: Star | undefined) {
+  if (star?.kind === "dream") return "Your dream lit today's star.";
+  if (star?.kind === "feeling") return `A ${FEELINGS.find((f) => f.key === star.feeling)?.label.toLowerCase() ?? "quiet"} night lit today's star.`;
+  return "You showed up, and that counts.";
+}
+
+function ChoiceIcon({ kind }: { kind: "dream" | "feeling" | "nothing" }) {
+  return (
+    <span className="ms-choice-icon" aria-hidden>
+      {kind === "dream" ? (
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M19.5 14.6A8 8 0 0 1 9.4 4.5a8 8 0 1 0 10.1 10.1z" />
+        </svg>
+      ) : kind === "feeling" ? (
+        <svg viewBox="0 0 24 24">
+          <circle cx="8" cy="9" r="3.2" fill="var(--wonder)" />
+          <circle cx="15.5" cy="8" r="3.2" fill="var(--joy)" />
+          <circle cx="12" cy="15.5" r="3.2" fill="var(--calm)" />
+        </svg>
+      ) : (
+        <svg viewBox="0 0 24 24" fill="var(--gold)">
+          <path d="M12 3l1.7 5.6L19.5 10l-5.8 1.5L12 17l-1.7-5.5L4.5 10l5.8-1.4z" />
+          <path d="M18.5 15.5l.7 1.9 1.8.6-1.8.6-.7 1.9-.7-1.9-1.8-.6 1.8-.6z" opacity="0.7" />
+        </svg>
+      )}
+    </span>
   );
 }
 
