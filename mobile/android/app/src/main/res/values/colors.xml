@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The site's night ground, so the app opens and loads on the same colour. -->
+    <color name="night">#0F0C1C</color>
+</resources>

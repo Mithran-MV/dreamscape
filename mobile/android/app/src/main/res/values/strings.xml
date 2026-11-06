@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Dreamscape</string>
+    <string name="title_activity_main">Dreamscape</string>
+    <string name="package_name">in.hacklabs.dreamscape</string>
+    <string name="custom_url_scheme">in.hacklabs.dreamscape</string>
+</resources>
