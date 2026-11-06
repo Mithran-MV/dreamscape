@@ -23,6 +23,9 @@
   --confused: #b85ec6;
   --scared: #cb5656;
   --sad: #3662a0;
+
+  /* Motion: a strong ease-out for anything answering a press. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 @theme inline {
@@ -44,6 +47,26 @@
   --font-mono: var(--font-dm-mono);
 }
 
+/* The signed-in app's type scale. Named apart from Tailwind's own sizes, so the landing keeps its own. */
+@theme {
+  --text-meta: 0.875rem;
+  --text-meta--line-height: 1.45;
+  --text-ui: 0.9375rem;
+  --text-ui--line-height: 1.4;
+  --text-body: 1.0625rem;
+  --text-body--line-height: 1.6;
+  --text-lead: 1.1875rem;
+  --text-lead--line-height: 1.5;
+  --text-title: 1.375rem;
+  --text-title--line-height: 1.25;
+  --text-h2: 1.875rem;
+  --text-h2--line-height: 1.15;
+  --text-h1: 2.5rem;
+  --text-h1--line-height: 1.08;
+  --text-display: 3.25rem;
+  --text-display--line-height: 1.04;
+}
+
 html {
   background: var(--ground);
   color-scheme: dark;
@@ -54,6 +77,32 @@ body {
   background: transparent;
   color: var(--paper);
   font-family: var(--font-instrument), system-ui, sans-serif;
+}
+
+/* ---------- The signed-in app (components/app-shell.tsx) ---------- */
+
+@layer base {
+.app-shell {
+  font-size: var(--text-body);
+  line-height: 1.6;
+  font-weight: 450;
+}
+.app-shell :is(h1, h2, h3) {
+  font-weight: 650;
+  letter-spacing: -0.012em;
+  text-wrap: balance;
+}
+.app-shell p {
+  text-wrap: pretty;
+}
+.app-shell :focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
+.app-shell ::placeholder {
+  color: var(--dim);
+  opacity: 1;
+}
 }
 
 /* A gilt picture frame around a portrait. */
@@ -69,6 +118,297 @@ body {
   overflow: hidden;
 }
 
+/* A thinner gilt edge for the calendar's small day tiles. */
+.frame-thin {
+  padding: 3px;
+}
+
+/* ---------- Components the app shares. Layered, so a Tailwind utility on the same element wins. ---------- */
+@layer components {
+/* Buttons: one shape everywhere, and every press answers with a small give. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  padding: 0.625rem 1.25rem;
+  font-size: var(--text-ui);
+  line-height: 1.3;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    transform 140ms var(--ease-out),
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    box-shadow 200ms ease;
+}
+.btn:active:not(:disabled),
+.press:active {
+  transform: scale(0.97);
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.btn-gold {
+  background: var(--gold);
+  color: var(--gold-ink);
+  box-shadow: 0 8px 26px -10px rgb(240 200 120 / 0.65);
+}
+.btn-line {
+  border: 1px solid var(--line);
+  color: var(--paper);
+  background: rgb(28 22 54 / 0.55);
+}
+.btn-quiet {
+  color: var(--mist);
+  padding-inline: 0.75rem;
+}
+.btn-danger {
+  border: 1px solid var(--danger);
+  color: var(--danger);
+}
+.btn-lg {
+  padding: 0.95rem 1.75rem;
+  font-size: var(--text-body);
+}
+.btn-sm {
+  padding: 0.45rem 0.95rem;
+  font-size: var(--text-meta);
+}
+.press {
+  transition: transform 140ms var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .btn-gold:hover:not(:disabled) {
+    background: #f6d595;
+    box-shadow: 0 10px 34px -8px rgb(240 200 120 / 0.8);
+  }
+  .btn-line:hover:not(:disabled) {
+    border-color: var(--gold);
+  }
+  .btn-quiet:hover:not(:disabled) {
+    color: var(--paper);
+  }
+}
+
+/* Chips: Dream Weather feelings, market themes and filters. They change the moment they're tapped. */
+.chip {
+  --c: var(--gold);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 9999px;
+  padding: 0.4rem 0.9rem;
+  font-size: var(--text-ui);
+  line-height: 1.35;
+  font-weight: 550;
+  color: var(--mist);
+  background: rgb(15 12 28 / 0.35);
+  cursor: pointer;
+  user-select: none;
+  transition:
+    transform 140ms var(--ease-out),
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
+}
+.chip:active {
+  transform: scale(0.95);
+}
+.chip[aria-pressed="true"],
+.chip[aria-checked="true"] {
+  border-color: var(--c);
+  background: color-mix(in oklab, var(--c) 26%, transparent);
+  color: var(--paper);
+}
+.chip-dot {
+  width: 0.65rem;
+  height: 0.65rem;
+  flex: none;
+  border-radius: 9999px;
+  background: var(--c);
+}
+.chip-count {
+  font-variant-numeric: tabular-nums;
+  color: var(--dim);
+}
+.chip[aria-pressed="true"] .chip-count {
+  color: var(--mist);
+}
+@media (hover: hover) and (pointer: fine) {
+  .chip:hover {
+    border-color: var(--c);
+    color: var(--paper);
+  }
+}
+
+/* A field: inputs, selects and text areas share one look. */
+.field {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 0.875rem;
+  background: rgb(28 22 54 / 0.85);
+  padding: 0.75rem 1rem;
+  color: var(--paper);
+  font-size: var(--text-body);
+  transition: border-color 140ms ease, box-shadow 160ms ease;
+}
+.field:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgb(240 200 120 / 0.18);
+}
+
+/* A panel: the one card surface, for forms and proof. */
+.panel {
+  border: 1px solid var(--edge);
+  border-radius: 1.25rem;
+  background: rgb(28 22 54 / 0.72);
+}
+
+/* The app's frames (components/ui.tsx Frame) light up in their feeling's colour when you reach for them. */
+.frame-lit {
+  position: relative;
+}
+.frame-lit::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow:
+    0 0 0 1px rgb(255 238 196 / 0.4),
+    0 0 46px 2px var(--glow, rgb(240 200 120 / 0.45)),
+    0 24px 46px rgb(0 0 0 / 0.6);
+  opacity: 0;
+  transition: opacity 240ms var(--ease-out);
+}
+.lift {
+  display: block;
+  border-radius: 6px;
+  outline-offset: 6px;
+  transition: transform 260ms var(--ease-out);
+}
+.lift:focus-visible {
+  transform: translateY(-4px);
+}
+.lift:focus-visible .frame-lit::before {
+  opacity: 1;
+}
+.lift:active {
+  transform: translateY(-1px) scale(0.985);
+  transition-duration: 120ms;
+}
+.lift .lift-title {
+  transition: color 160ms ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .lift:hover {
+    transform: translateY(-4px);
+  }
+  .lift:hover .frame-lit::before {
+    opacity: 1;
+  }
+  .lift:hover .lift-title {
+    color: var(--gold);
+  }
+}
+
+/* The comic cover's paper card lifts the same way. */
+.paper-card {
+  position: relative;
+  border-radius: 3px;
+  background: #fbf9f4;
+  padding: 0.5rem;
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.5);
+}
+.paper-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: 0 0 40px 0 rgb(251 249 244 / 0.25), 0 24px 46px rgb(0 0 0 / 0.6);
+  opacity: 0;
+  transition: opacity 240ms var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .lift:hover .paper-card::before {
+    opacity: 1;
+  }
+}
+.lift:focus-visible .paper-card::before {
+  opacity: 1;
+}
+
+/* "How it was made": folded away by default. */
+.fold > summary {
+  list-style: none;
+  cursor: pointer;
+}
+.fold > summary::-webkit-details-marker {
+  display: none;
+}
+.fold .fold-chevron {
+  transition: transform 220ms var(--ease-out);
+}
+.fold[open] .fold-chevron {
+  transform: rotate(180deg);
+}
+.fold[open] > .fold-body {
+  animation: fold-in 220ms var(--ease-out);
+}
+@keyframes fold-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+/* A menu that drops from its button. */
+.menu {
+  transform-origin: top right;
+  transition: opacity 160ms var(--ease-out), transform 160ms var(--ease-out);
+  @starting-style {
+    opacity: 0;
+    transform: scale(0.96) translateY(-4px);
+  }
+}
+
+/* Cards arriving on the wall, or coming back when a filter changes. */
+.appear {
+  transition: opacity 200ms ease, transform 240ms var(--ease-out);
+  @starting-style {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+/* A step that is running: a small ring turning. */
+.spin {
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.sphere-press {
+  transition: transform 160ms var(--ease-out), box-shadow 240ms ease;
+}
+.sphere-press:active {
+  transform: scale(0.97);
+}
+
+}
+
 /* The record button: a lit gold sphere. While listening, a halo ring pulses around it. */
 .sphere {
   background: radial-gradient(circle at 37% 33%, #fff3d2 0%, #f0c878 48%, #c9954b 100%);
@@ -81,7 +421,6 @@ body {
 @keyframes listen {
   50% { box-shadow: 0 0 0 22px rgb(240 200 120 / 0.04), 0 0 0 23px rgb(240 200 120 / 0.25), 0 0 80px rgb(240 200 120 / 0.45); }
 }
-
 @keyframes breathe {
   0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgb(240 200 120 / 0.45); }
   50% { transform: scale(1.04); box-shadow: 0 0 0 18px rgb(240 200 120 / 0); }
@@ -99,5 +438,10 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .breathe, .painting, .sphere.listening { animation: none; }
+  .breathe, .painting, .sphere.listening, .spin { animation: none; }
+  .lift, .lift:hover, .lift:focus-visible, .lift:active { transform: none; }
+  .btn:active:not(:disabled), .press:active, .chip:active, .sphere-press:active { transform: none; }
+  .appear, .menu { transition: opacity 160ms ease; }
+  .appear, .menu { @starting-style { transform: none; } }
+  .fold[open] > .fold-body { animation: none; }
 }
