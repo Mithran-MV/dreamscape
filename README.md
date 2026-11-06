@@ -8,6 +8,19 @@ Built at ETHGlobal Mumbai, November 5–7, 2026. Scaffolded with `create-next-ap
 
 The first two commits are generated: the `create-next-app` template, then the dependency pins, whose size is `pnpm-lock.yaml`, written by pnpm. Everything after that is written during the event in small commits.
 
+## How a dream travels
+
+1. **Morning.** Hold the gold button and say what you dreamed, or type it. Tap how it felt.
+2. **A minute later.** 0G hears and reads it inside a sealed enclave and paints a portrait. The voice, the painting and the words are encrypted on 0G Storage, recorded on 0G Chain under your wallet, and the day gets an ENS record: `2026-11-05.you.dream-scape.eth`.
+3. **Overnight.** Your newest dream becomes a four-panel comic in your own words, and the portrait starts to move. In the morning you hang them or let them go.
+4. **Whenever you like.** Sell numbered editions in USDC. Each buyer gets an ENS name for their edition and the full piece. Or let family visit your gallery for ten minutes: the door closes by itself.
+5. **Every night.** Themes that at least five dreamers share become one painting of what everyone dreamed.
+
+What breaks without each partner:
+- [`docs/0g.md`](docs/0g.md): the sealed AI, encrypted storage and on-chain records, with receipts.
+- [`docs/ens.md`](docs/ens.md): galleries, wildcard day records, editions, passes and agent namespaces, with live names.
+- [`arkiv/how-you-use-arkiv.md`](arkiv/how-you-use-arkiv.md): listings, stalls, knocks, visits and World Dream counts that expire by themselves.
+
 ## How it's built
 
 - **0G Private Computer** for the AI. Transcription, tagging and the portrait run on sealed models, and every piece keeps its request ID.
