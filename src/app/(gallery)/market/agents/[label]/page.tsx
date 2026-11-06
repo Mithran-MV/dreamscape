@@ -238,9 +238,9 @@ function CommissionForm({ agent, onStarted }: { agent: AgentView; onStarted: (id
       {!wallet.address ? (
         <p className="mt-6 text-mist">
           <Link href="/" className="font-semibold text-gold underline decoration-gold/30 underline-offset-4">
-            Sign in with email or Google
+            Sign in with 0G
           </Link>{" "}
-          to commission a piece. You&rsquo;ll get a wallet with some test money in it.
+          to commission a piece. Your 0G wallet pays, and gets some test USDC to start.
         </p>
       ) : (
         <>

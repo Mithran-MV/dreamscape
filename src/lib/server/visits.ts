@@ -123,12 +123,12 @@ function heldPass(hostId: string, visitorId: string) {
 export function grantPassTo(hostId: string, visitorHandle: string, scope: string): { pass: { id: string; name: string } } | Failure {
   if (!isPassScope(scope)) return fail("Pick what they may see: the whole gallery, or hung comics only.", 400);
   const host = memberById(hostId);
-  if (!named(host)) return fail("Your gallery's ENS name isn't ready yet. It's made shortly after you sign in with email or Google.", 409);
+  if (!named(host)) return fail("Your gallery's ENS name isn't ready yet. It's made shortly after you sign in with 0G.", 409);
   const handle = visitorHandle.trim().toLowerCase();
   const visitor = handle ? memberByHandle(handle) : undefined;
   if (!visitor) return fail(`Nobody called ${handle || "that"} has a gallery here.`, 404);
   if (visitor.id === host.id) return fail("That's your own gallery.", 400);
-  if (!visitor.wallet) return fail(`${handle} has no wallet yet. They get one by signing in with email or Google.`, 409);
+  if (!visitor.wallet) return fail(`${handle} has no wallet yet. They get one by signing in with 0G.`, 409);
   if (heldPass(host.id, visitor.id)) return fail(`${handle} already holds a pass to your gallery.`, 409);
   const id = newId("pass");
   for (let attempt = 0; ; attempt++) {

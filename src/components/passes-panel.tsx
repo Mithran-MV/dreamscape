@@ -278,7 +278,7 @@ export function PassesPanel() {
           <div className="panel p-6">
             <h2 className="font-display text-title">Grant a pass</h2>
             <p className="mt-2 text-mist">
-              {passes.ready.wallet ? "Passes open once your gallery’s ENS name is ready. That takes a couple of minutes." : "Passes need a wallet. Sign in with email or Google to get one."}
+              {passes.ready.wallet ? "Passes open once your gallery’s ENS name is ready. That takes a couple of minutes." : "Passes need a wallet. Sign in with 0G to use yours."}
             </p>
           </div>
         )}

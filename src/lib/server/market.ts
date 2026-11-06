@@ -106,7 +106,7 @@ type ListInput = { kind: PieceKind; ref: string; priceUsdc: number; editions: nu
 // Checks everything a buyer would rely on, then queues the on-chain listing.
 export async function startListing(userId: string, input: ListInput): Promise<{ id: Hex } | { error: string }> {
   const seller = sellerOf(userId);
-  if (!seller) return { error: "Your gallery needs its ENS name first. Sign in with email or Google, then wait a minute." };
+  if (!seller) return { error: "Your gallery needs its ENS name first. Sign in with 0G, then wait a minute." };
   if (!Number.isFinite(input.priceUsdc) || input.priceUsdc < 0.5 || input.priceUsdc > 1000) return { error: "Pick a price between 0.50 and 1,000 USDC." };
   if (!Number.isInteger(input.editions) || input.editions < 1 || input.editions > 100) return { error: "Pick between 1 and 100 editions." };
   let title: string | null = null;

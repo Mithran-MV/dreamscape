@@ -225,7 +225,7 @@ type NewCommission = { agent: string; style: unknown; note: unknown };
 // Checks everything the buyer's two transactions rely on, so NightMarket never refuses them, then returns them.
 export async function createCommission(userId: string, input: NewCommission): Promise<{ id: Hex; txs: Tx[]; priceUsdc: number; name: string; deadline: number } | { error: string }> {
   const buyer = walletOf(userId);
-  if (!buyer) return { error: "Sign in with email or Google first, so you have a wallet to pay from." };
+  if (!buyer) return { error: "Sign in with 0G first, so you have a wallet to pay from." };
   const vendor = getVendor(input.agent);
   if (!vendor) return { error: "That agent isn't taking commissions." };
   if (!stallOpen(vendor)) return { error: "This agent's stall is closed right now. Try again later." };

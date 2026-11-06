@@ -128,7 +128,7 @@ function SettingsView() {
                   {user.ensName}
                 </ExternalLink>
               ) : (
-                <span className="text-ui text-dim">{user?.naming ? "Being written to ENS now" : "None yet. Galleries opened with email or Google get one."}</span>
+                <span className="text-ui text-dim">{user?.naming ? "Being written to ENS now" : "None yet. Galleries opened with 0G get one."}</span>
               )}
             </Row>
           </div>
