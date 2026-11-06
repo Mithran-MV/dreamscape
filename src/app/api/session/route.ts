@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/server/db";
+import { hasOpenJob } from "@/lib/server/jobs";
 import { cleanHandle, clearSessionCookie, currentUser, sessionSetCookie, signInOrClaim } from "@/lib/server/session";
 
 export async function GET() {
@@ -6,7 +7,9 @@ export async function GET() {
   if (!user) return Response.json({ user: null });
   const row = getDb().prepare("SELECT wallet, ens_json FROM users WHERE id = ?").get(user.id) as { wallet: string | null; ens_json: string | null };
   const ensName = row.ens_json ? (JSON.parse(row.ens_json) as { name: string }).name : null;
-  return Response.json({ user: { handle: user.handle, wallet: row.wallet, ensName } });
+  // A new dreamer's name takes a couple of minutes to write; the gallery says so meanwhile.
+  const naming = Boolean(row.wallet && !ensName && hasOpenJob(user.id, ["ens.onboard"]));
+  return Response.json({ user: { handle: user.handle, wallet: row.wallet, ensName, naming } });
 }
 
 export async function POST(request: Request) {
