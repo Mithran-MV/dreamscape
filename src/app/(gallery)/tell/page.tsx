@@ -1,12 +1,12 @@
 "use client";
 // The morning screen: hold to tell a dream, type anything you'd rather write, tap how it felt, done.
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "@/lib/api";
 import { FeelingChips } from "@/components/ui";
 import { useClientValue } from "@/lib/use-client-value";
-import { TabBar } from "@/components/tab-bar";
+import { AppShell } from "@/components/app-shell";
+import { plainError } from "@/components/messages";
 
 function Mic() {
   return (
@@ -45,6 +45,11 @@ export default function Tell() {
   const [feeling, setFeeling] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // One playable address per recording, let go of when the next one replaces it.
+  const clipUrl = useMemo(() => (clip ? URL.createObjectURL(clip) : null), [clip]);
+  useEffect(() => () => {
+    if (clipUrl) URL.revokeObjectURL(clipUrl);
+  }, [clipUrl]);
   const recorder = useRef<MediaRecorder | null>(null);
   const chunks = useRef<Blob[]>([]);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -74,7 +79,7 @@ export default function Tell() {
       setSeconds(0);
       timer.current = setInterval(() => setSeconds((s) => s + 1), 1000);
     } catch {
-      setError("The microphone isn't available here. Allow it, or type the dream below.");
+      setError("This browser won’t let us use the microphone. Allow it, or write the dream instead.");
       setMicOff(true);
     }
   }
@@ -105,70 +110,62 @@ export default function Tell() {
   const ready = Boolean(clip) || text.trim().length >= 3;
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col items-center px-6 pb-28 pt-8 text-center sm:pb-10">
-      <div className="flex w-full items-center justify-between">
-        <Link href="/" className="text-sm text-dim">← Gallery</Link>
-      </div>
+    <AppShell active="tell">
+      <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-center lg:gap-20 lg:pt-6">
+        <div className="text-center lg:text-left">
+          <p className="h-6 text-ui font-semibold text-mist">{today}</p>
+          <h1 className="mt-2 font-display text-h1 md:text-display">Before it fades, what did you dream?</h1>
 
-      <div className="mt-8 w-full text-left">
-        <p className="h-5 text-sm text-mist">{today}</p>
-        <h1 className="mt-2 font-display text-4xl leading-[1.1]">
-          Before it <em className="text-gold">fades</em>:<br />what did you dream?
-        </h1>
-      </div>
-
-      {!micOff && (
-        <div className="mt-12 flex flex-col items-center">
-          <p className={`mb-4 h-6 font-mono text-xl text-gold ${recording ? "" : "invisible"}`} aria-live="polite">
-            {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")}
-          </p>
-          <button
-            type="button"
-            aria-label={recording ? "Release to stop" : "Hold to tell your dream"}
-            onPointerDown={(e) => {
-              e.currentTarget.setPointerCapture(e.pointerId);
-              start();
-            }}
-            onPointerUp={stop}
-            onPointerCancel={stop}
-            onContextMenu={(e) => e.preventDefault()}
-            className={`sphere flex h-40 w-40 select-none items-center justify-center rounded-full text-gold-ink touch-none ${recording ? "listening" : ""}`}
-          >
-            {recording ? <Wave /> : <Mic />}
-          </button>
-          <p className="mt-5 font-medium text-paper">{recording ? "Let go when you're done" : clip ? "Hold to tell it again" : "Hold to tell it"}</p>
-          <p className="mt-1 text-sm text-dim">{recording ? "Tell it any way it comes." : clip ? "Got it. Listen back, add words, or keep it." : "Ten seconds is plenty."}</p>
-          {clip && !recording && <audio controls src={URL.createObjectURL(clip)} className="mt-4 w-full" />}
+          {!micOff && (
+            <div className="mt-10 flex flex-col items-center lg:mt-14">
+              <p className={`mb-4 h-7 font-mono text-title text-gold ${recording ? "" : "invisible"}`} aria-live="polite">
+                {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")}
+              </p>
+              <button
+                type="button"
+                aria-label={recording ? "Release to stop" : "Hold to tell your dream"}
+                onPointerDown={(e) => {
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                  start();
+                }}
+                onPointerUp={stop}
+                onPointerCancel={stop}
+                onContextMenu={(e) => e.preventDefault()}
+                className={`sphere sphere-press flex h-40 w-40 select-none items-center justify-center rounded-full text-gold-ink touch-none lg:h-48 lg:w-48 ${recording ? "listening" : ""}`}
+              >
+                {recording ? <Wave /> : <Mic />}
+              </button>
+              <p className="mt-6 text-lead font-semibold text-paper">{recording ? "Let go when you’re done" : clip ? "Hold to tell it again" : "Hold to tell it"}</p>
+              <p className="mt-1 text-ui text-mist">{recording ? "Tell it any way it comes." : clip ? "Got it. Listen back, add words, or keep it." : "Ten seconds is plenty."}</p>
+              {clip && !recording && clipUrl && <audio controls src={clipUrl} className="mt-5 w-full max-w-sm" />}
+            </div>
+          )}
         </div>
-      )}
 
-      <label className="mt-8 block w-full text-left">
-        <span className="text-sm text-mist">{clip ? "Anything to add in words?" : micOff ? "Write the dream" : "Or write it, or add to your voice note"}</span>
-        <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          rows={4}
-          placeholder="I was flying over my old school, and the roof turned into the sea…"
-          className="mt-2 w-full rounded-2xl border border-line bg-card p-4 text-paper placeholder:text-dim focus:border-gold focus:outline-none"
-        />
-      </label>
+        <div className="panel p-5 md:p-7">
+          <label className="block">
+            <span className="text-ui font-semibold text-paper">{clip ? "Anything to add in words?" : micOff ? "Write the dream" : "Or write it, or add to your voice note"}</span>
+            <textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              rows={5}
+              placeholder="I was flying over my old school, and the roof turned into the sea…"
+              className="field mt-2 resize-y rounded-2xl p-4 leading-relaxed"
+            />
+          </label>
 
-      <div className="mt-10 w-full">
-        <p className="mb-3 text-sm text-mist">How did it feel?</p>
-        <FeelingChips value={feeling} onChange={setFeeling} />
+          <div className="mt-7">
+            <p className="mb-3 text-ui font-semibold text-paper">How did it feel?</p>
+            <FeelingChips value={feeling} onChange={setFeeling} />
+          </div>
+
+          <button type="button" disabled={!ready || busy || recording} onClick={keep} className="btn btn-gold btn-lg mt-8 w-full">
+            {busy ? "Keeping it…" : "Keep this dream"}
+          </button>
+          {error && <p className="mt-3 text-ui text-danger">{plainError(error)}</p>}
+          <p className="mt-5 text-meta text-dim">Only you can see it. The painter runs sealed on 0G and keeps nothing, and we store your dream encrypted.</p>
+        </div>
       </div>
-
-      <button
-        type="button"
-        disabled={!ready || busy || recording}
-        onClick={keep}
-        className="mt-10 w-full rounded-xl bg-gold px-4 py-3.5 font-medium text-gold-ink disabled:opacity-40"
-      >
-        {busy ? "Keeping it…" : "Keep this dream"}
-      </button>
-      {error && <p className="mt-3 text-sm text-danger">{error}</p>}
-      <p className="mt-6 text-xs text-dim">Only you can see it. It&rsquo;s painted by sealed AI on 0G and stored encrypted.</p>
-      <TabBar active="today" />
-    </main>
+    </AppShell>
   );
 }
