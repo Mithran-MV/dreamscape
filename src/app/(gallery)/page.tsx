@@ -13,6 +13,7 @@ import { KnockBanner } from "@/components/passes-panel";
 import { MorningsAndMemories } from "@/components/memories";
 import { chipColor, dayLabel, FEELINGS } from "@/components/ui";
 import { useClientValue } from "@/lib/use-client-value";
+import { useSignInKind } from "./providers";
 
 export default function Home() {
   const [user, setUser] = useState<SessionUser | null | undefined>(undefined);
@@ -323,10 +324,12 @@ function HungComics({ episodes }: { episodes: EpisodeSummary[] }) {
   );
 }
 
-// The sign-in that sits in the landing's slot: 0G's own sign-in, then, for a new dreamer, the name
-// their gallery gets on ENS. The landing itself shows the wordmark and headline.
+// The sign-in that sits in the landing's slot: 0G's own sign-in on localhost, the dreamer's wallet on the
+// live site (providers.tsx), then, for a new dreamer, the name their gallery gets on ENS. The landing itself
+// shows the wordmark and headline.
 function SignIn({ onDone }: { onDone: () => void }) {
   const { ready, authenticated, login, getAccessToken } = usePrivy();
+  const kind = useSignInKind();
   const [needsName, setNeedsName] = useState(false);
   const [handle, setHandle] = useState("");
   const [busy, setBusy] = useState(false);
@@ -336,11 +339,11 @@ function SignIn({ onDone }: { onDone: () => void }) {
     (name?: string) =>
       getAccessToken()
         .then((token) => {
-          if (!token) throw new Error("Sign in with 0G again.");
-          return api.zeroGSignIn(token, name);
+          if (!token) throw new Error("Sign in again.");
+          return kind === "wallet" ? api.walletSignIn(token, name) : api.zeroGSignIn(token, name);
         })
         .then((res) => (res.needsHandle ? setNeedsName(true) : onDone())),
-    [getAccessToken, onDone],
+    [getAccessToken, onDone, kind],
   );
 
   // Once 0G has signed them in, swap that for our own session.
@@ -371,7 +374,7 @@ function SignIn({ onDone }: { onDone: () => void }) {
           autoFocus
           className="rounded-xl border border-line bg-card px-4 py-3 text-paper placeholder:text-dim focus:border-gold focus:outline-none"
         />
-        <p className="text-xs text-dim">It becomes {handle.trim() ? handle.trim().toLowerCase() : "yourname"}.dream-scape.eth, owned by your 0G wallet.</p>
+        <p className="text-xs text-dim">It becomes {handle.trim() ? handle.trim().toLowerCase() : "yourname"}.dream-scape.eth, owned by your {kind === "wallet" ? "wallet" : "0G wallet"}.</p>
         <button disabled={busy} className="press rounded-xl bg-gold px-4 py-3 font-semibold text-gold-ink disabled:opacity-60">
           {busy ? "Opening…" : "Open my gallery"}
         </button>
@@ -383,9 +386,13 @@ function SignIn({ onDone }: { onDone: () => void }) {
   return (
     <div className="flex flex-col gap-3">
       <button disabled={!ready || (authenticated && !error)} onClick={login} className="press rounded-xl bg-gold px-4 py-3 font-semibold text-gold-ink disabled:opacity-60">
-        {authenticated && !error ? "Opening your gallery…" : "Sign in with 0G"}
+        {authenticated && !error ? "Opening your gallery…" : kind === "wallet" ? "Sign in with your wallet" : "Sign in with 0G"}
       </button>
-      <p className="text-left text-xs text-dim">Your 0G account is your gallery: its wallet holds your ENS name, and its iAI credit paints your dreams.</p>
+      <p className="text-left text-xs text-dim">
+        {kind === "wallet"
+          ? "Use the wallet your 0G account signs in with: it opens your gallery and holds your ENS name."
+          : "Your 0G account is your gallery: its wallet holds your ENS name, and its iAI credit paints your dreams."}
+      </p>
       {error && <p className="text-sm text-danger">{error}</p>}
     </div>
   );
