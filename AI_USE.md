@@ -57,6 +57,10 @@ One AI coding assistant, used in agent mode from the terminal. No other AI tools
 | Morning Notes, Dream Weather, World Dream | `notes.ts`, `world.ts`, `weather.tsx`, `world-card.tsx` | Drafted by the assistant to the author's design, including the five-dreamer privacy floor |
 | App redesign | The app shell and profile menu, the calendar wall, the Drafts, Passes, World Dream and Settings pages, and the reworked day, comic, tell and market pages (`app-shell.tsx`, `calendar-wall.tsx`, `src/app/(gallery)/`) | Drafted by the assistant from the author's own earlier mockup, written fresh and showing only real data |
 | Logo and moth | The arched-window mark, every icon rendered from it, and the moth on the landing page (`assets/`, `scripts/icons.ts`, `logo.tsx`, `moth.tsx`) | Drawn in SVG by the assistant to the author's brief |
+| Stars, Memories and the AI note | Today's star, the week's constellation, the 7, 21, 30 and 100 morning reveals, nightly posters waiting in Drafts, and the sealed Morning Note line (`memories.ts`, `ainote.ts`, `memories.tsx`) | Drafted by the assistant to the author's design |
+| Backup models | A default 0G model for each job with backups in order, and a note on each step when a backup stood in (`router.ts`, `env.ts`) | Drafted by the assistant after 0G's providers went down, at the author's request |
+| Phone app | A Capacitor Android shell around the live site, with its icons, permissions and a morning reminder the phone schedules itself (`mobile/`, `src/lib/native.ts`) | Drafted by the assistant at the author's request; tested by the assistant on an Android emulator |
+| Security fixes | Passphrase sign-in off on the live site, ten dreams a day, sessions that expire and end on sign-out, an Origin check on API writes, security headers, and limits on wallet funding and purchase checks | From a security review of the live site that the author asked for; fixes drafted by the assistant |
 
 ## Totals
 
