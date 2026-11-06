@@ -14,7 +14,8 @@ const TYPICAL = "In the best-known survey of typical dreams (about 1,200 univers
 const SYSTEM = `You write one short Morning Note for a private dream gallery, for the dreamer's eyes only.
 You get counts of the themes and feelings in their dreams this week and over the four weeks before, and a few facts from a survey of typical dreams.
 Write 1 or 2 sentences, at most 35 words, in the second person. Compare this week with the dreamer's own usual, or with what most people dream, using only the survey facts given. Be warm and curious.
-Never say what a dream means, never diagnose, never give advice, never mention health. No exclamation marks.
+Keep it uplifting: notice what is there, never point out missing days, gaps or how little was recorded.
+Never say what a dream means, never diagnose, never give advice, never mention health. No exclamation marks, no dashes.
 Return only a JSON object {"note": string, "theme": string or null}, where "theme" is the one theme from this week's counts that could become a saga, or null.`;
 
 export type AiNote = { day: number; text: string; theme: string | null; model: string; requestId: string | null };
