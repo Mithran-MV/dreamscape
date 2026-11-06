@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { api } from "@/lib/api";
+import { inApp, onReminderTap, remindEachMorning, reminderOn } from "@/lib/native";
 import { Logo } from "@/components/logo";
 import { TabBar, type TabKey } from "@/components/tab-bar";
 import { FEELINGS } from "@/components/ui";
@@ -66,6 +67,15 @@ export function AppShell({
     api.episodes().then((r) => setFetchedDrafts(r.episodes.filter((e) => e.status === "draft").length), () => undefined);
   }, [user, givenDrafts]);
   const drafts = givenDrafts ?? fetchedDrafts;
+
+  // In the phone app a tapped morning reminder opens Tell, and the reminder moves with the dreamer's usual time.
+  useEffect(() => (inApp() ? onReminderTap((url) => router.push(url)) : undefined), [router]);
+  useEffect(() => {
+    if (!user || !inApp()) return;
+    reminderOn()
+      .then((on) => (on ? api.mornings().then((m) => remindEachMorning(m.wake)) : undefined))
+      .catch(() => undefined);
+  }, [user]);
 
   // Signed out, the wall becomes the landing page again; on the wall itself, a reload does that.
   const signOut = () =>
