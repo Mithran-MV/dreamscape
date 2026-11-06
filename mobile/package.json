@@ -1,0 +1,19 @@
+{
+  "name": "dreamscape-mobile",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The Dreamscape phone app: a native Android shell around the live site.",
+  "scripts": {
+    "sync": "cap sync android",
+    "apk": "cap sync android && cd android && ./gradlew assembleDebug",
+    "open": "cap open android"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.6.0",
+    "@capacitor/core": "8.6.0",
+    "@capacitor/local-notifications": "8.3.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.6.0"
+  }
+}

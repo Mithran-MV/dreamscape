@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dreamscape</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #0f0c1c; color: #efe9dc; font: 17px/1.5 system-ui, sans-serif; text-align: center; padding: 0 24px; }
+  h1 { font: 600 28px/1.2 Georgia, serif; margin: 0 0 8px; }
+  p { color: #b9b2c9; margin: 0 0 24px; }
+  button { font: inherit; font-weight: 600; color: #1d1608; background: #f0c870; border: 0; border-radius: 999px; padding: 12px 28px; }
+</style>
+<main>
+  <h1>Dreamscape is out of reach</h1>
+  <p>Your phone looks offline. Your dreams are safe on the wall; try again when you're back online.</p>
+  <button onclick="history.length > 1 ? history.back() : location.reload()">Try again</button>
+</main>
+</html>
