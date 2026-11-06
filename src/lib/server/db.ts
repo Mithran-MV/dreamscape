@@ -141,6 +141,13 @@ export function getDb(): DatabaseSync {
   addColumn(db, "users", "dripped_at", "INTEGER"); // when the server sent this wallet its test ETH and USDC // the Privy user behind this account, if they signed in that way
   db.exec("CREATE UNIQUE INDEX IF NOT EXISTS users_by_privy ON users(privy_id)"); // gallery name, resolver and registries once onboarded // one circle per dreamer, such as ethglobal-mumbai
   addColumn(db, "dreams", "saga", "TEXT");
+  // The dreamer's own 0G key (sealed under their key), so their iAI credit pays for their dreams.
+  addColumn(db, "users", "zg_key", "TEXT");
+  addColumn(db, "users", "zg_key_preview", "TEXT");
+  addColumn(db, "users", "zg_wallet", "TEXT");
+  addColumn(db, "users", "zg_connected_at", "INTEGER");
+  addColumn(db, "users", "zg_error", "TEXT");
+  addColumn(db, "traces", "paid_by", "TEXT"); // 'you' when the dreamer's own 0G key paid, 'dreamscape' otherwise
   addColumn(db, "traces", "e2ee", "TEXT"); // "sealed" when the request was encrypted to the enclave
   addColumn(db, "traces", "res_key", "TEXT"); // the provider's receipt key for this response
   addColumn(db, "dreams", "video_job", "TEXT"); // the living portrait's job id on 0G
