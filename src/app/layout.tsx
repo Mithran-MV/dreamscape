@@ -4,7 +4,8 @@ import { ServiceWorker } from "@/components/service-worker";
 import { PaintedSky } from "@/components/painted-sky";
 import "./globals.css";
 
-const fraunces = Fraunces({ variable: "--font-fraunces", subsets: ["latin"], style: ["normal", "italic"] });
+// SOFT and WONK are the wordmark's: rounder serifs and Fraunces' leaning italic letters.
+const fraunces = Fraunces({ variable: "--font-fraunces", subsets: ["latin"], style: ["normal", "italic"], axes: ["SOFT", "WONK", "opsz"] });
 const instrument = Instrument_Sans({ variable: "--font-instrument", subsets: ["latin"] });
 const dmMono = DM_Mono({ variable: "--font-dm-mono", subsets: ["latin"], weight: ["400", "500"] });
 
