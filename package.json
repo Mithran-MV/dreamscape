@@ -18,7 +18,6 @@
     "agent:setup": "node --env-file-if-exists=.env.local --import tsx scripts/agent-setup.ts"
   },
   "dependencies": {
-    "@0gfoundation/0g-compute-ts-sdk": "0.9.0",
     "@0gfoundation/0g-pay-sdk": "0.4.0",
     "@0gfoundation/0g-storage-ts-sdk": "1.2.13",
     "@arkiv-network/sdk": "1.0.1",
