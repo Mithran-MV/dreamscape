@@ -9,8 +9,9 @@ import { sepolia } from "viem/chains";
 import { agents, commissions, inProgress, type AgentView, type CommissionStatus, type CommissionView } from "@/lib/api-commissions";
 import { usdc } from "@/lib/api-market";
 import { usePrivyWallet } from "@/lib/wallet";
-import { Frame } from "@/components/ui";
-import { TabBar } from "@/components/tab-bar";
+import { AppShell } from "@/components/app-shell";
+import { BackLink, ExternalLink, Frame } from "@/components/ui";
+import { plainError } from "@/components/messages";
 
 const USDC = "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238";
 const chain = createPublicClient({ chain: sepolia, transport: http("https://ethereum-sepolia-rpc.publicnode.com") });
@@ -18,9 +19,11 @@ const NOTE_MAX = 280;
 
 export default function AgentPage() {
   return (
-    <Suspense fallback={<main className="flex-1" />}>
-      <AgentView />
-    </Suspense>
+    <AppShell active="market">
+      <Suspense fallback={null}>
+        <AgentView />
+      </Suspense>
+    </AppShell>
   );
 }
 
@@ -42,12 +45,16 @@ function AgentView() {
     loadMine();
   }, [label, loadMine]);
 
-  if (agent === undefined && !error) return <main className="flex-1" />;
+  if (agent === undefined && !error) return <div className="painting mt-12 h-96 rounded-[1.25rem]" aria-hidden />;
   if (!agent || error) {
     return (
-      <main className="p-8 text-center text-mist">
-        {error ?? "This agent isn't on the market."} <Link href="/market/agents" className="text-gold">Back to commissions</Link>
-      </main>
+      <div className="panel mx-auto mt-6 max-w-lg p-8 text-center">
+        <h1 className="font-display text-h2">{error ? "We couldn’t open this stall" : "This agent isn’t on the market"}</h1>
+        {error && <p className="mt-3 text-mist">{plainError(error)}</p>}
+        <Link href="/market/agents" className="btn btn-gold mt-6">
+          Back to commissions
+        </Link>
+      </div>
     );
   }
 
@@ -55,13 +62,13 @@ function AgentView() {
   const shown = current ?? (mine.find((c) => inProgress(c.status) && c.status !== "awaiting") ?? mine.find((c) => c.status !== "awaiting"))?.id ?? null;
   const open = (id: string) => router.replace(`/market/agents/${label}?c=${id}`, { scroll: false });
   return (
-    <main className="mx-auto w-full max-w-4xl flex-1 px-5 pb-28 pt-6">
-      <Link href="/market/agents" className="text-sm text-dim">← Commissions</Link>
-      <div className="mt-6 grid gap-8 md:grid-cols-[1.2fr_1fr]">
-        <div>
-          <h1 className="font-display text-4xl leading-tight">{titleOf(agent.label)}</h1>
-          <p className="mt-1 truncate font-mono text-xs text-gold">{agent.name}</p>
-          {agent.records.context && <p className="mt-4 text-mist">{agent.records.context}</p>}
+    <>
+      <BackLink href="/market/agents">Commissions</BackLink>
+      <div className="mt-6 grid gap-12 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] lg:gap-16">
+        <div className="min-w-0">
+          <h1 className="font-display text-h1 md:text-display">{titleOf(agent.label)}</h1>
+          <p className="mt-2 truncate font-mono text-ui text-gold">{agent.name}</p>
+          {agent.records.context && <p className="mt-5 max-w-[60ch] text-lead text-mist">{agent.records.context}</p>}
           {shown && <Status id={shown} onChange={loadMine} />}
           <CommissionForm
             agent={agent}
@@ -71,14 +78,18 @@ function AgentView() {
             }}
           />
           {mine.length > 0 && (
-            <section className="mt-10">
-              <h2 className="font-display text-xl">Your commissions</h2>
-              <ul className="mt-3 space-y-2">
+            <section className="mt-12">
+              <h2 className="font-display text-h2">Your commissions</h2>
+              <ul className="mt-4 space-y-2">
                 {mine.map((c) => (
                   <li key={c.id}>
-                    <button onClick={() => open(c.id)} className={`w-full rounded-xl border px-4 py-3 text-left text-sm ${c.id === shown ? "border-gold" : "border-edge hover:border-line"} bg-card/70`}>
-                      <span className="block truncate font-mono text-xs text-gold">{c.name}</span>
-                      <span className="mt-0.5 block text-mist">
+                    <button
+                      onClick={() => open(c.id)}
+                      aria-pressed={c.id === shown}
+                      className={`press w-full rounded-2xl border bg-card/80 px-4 py-3 text-left transition-colors ${c.id === shown ? "border-gold" : "border-edge hover:border-line"}`}
+                    >
+                      <span className="block truncate font-mono text-meta text-gold">{c.name}</span>
+                      <span className="mt-0.5 block text-ui text-mist">
                         {c.styleLabel}, {usdc(c.priceUsdc)}. {STATUS_LINE[c.status]}
                       </span>
                     </button>
@@ -90,14 +101,13 @@ function AgentView() {
         </div>
         <Records agent={agent} />
       </div>
-      <TabBar active="market" />
-    </main>
+    </>
   );
 }
 
 function Records({ agent }: { agent: AgentView }) {
   const rows: [string, React.ReactNode][] = [
-    ["addr", <span key="addr">{agent.owner.gallery ?? short(agent.owner.address)} <span className="font-mono text-xs text-dim">{short(agent.owner.address)}</span></span>],
+    ["addr", <span key="addr">{agent.owner.gallery ?? short(agent.owner.address)} <span className="font-mono text-meta text-dim">{short(agent.owner.address)}</span></span>],
     ["agent-context", agent.records.context ?? "none"],
     [
       "agent-endpoint[web]",
@@ -107,38 +117,36 @@ function Records({ agent }: { agent: AgentView }) {
         "none"
       ),
     ],
-    ["prices", <span key="prices" className="font-mono text-xs">{agent.records.prices ?? "none"}</span>],
+    ["prices", <span key="prices" className="font-mono text-meta">{agent.records.prices ?? "none"}</span>],
   ];
   return (
-    <section className="self-start rounded-2xl border border-edge bg-card/70 p-5">
-      <h2 className="font-display text-xl">On ENS</h2>
-      <p className="mt-1 text-sm text-dim">Records on the agent&rsquo;s own resolver. Its owner, a person, gets paid and holds the name.</p>
-      <dl className="mt-4 space-y-3 text-sm">
+    <section className="panel p-6 lg:sticky lg:top-28 lg:self-start">
+      <h2 className="font-display text-title">On ENS</h2>
+      <p className="mt-1 text-ui text-mist">Records on the agent&rsquo;s own resolver. Its owner, a person, gets paid and holds the name.</p>
+      <dl className="mt-5 space-y-3 text-ui">
         {rows.map(([key, value]) => (
           <div key={key}>
-            <dt className="font-mono text-[11px] text-dim">{key}</dt>
+            <dt className="font-mono text-meta text-dim">{key}</dt>
             <dd className="mt-0.5 text-paper">{value}</dd>
           </div>
         ))}
       </dl>
-      <div className="mt-5 space-y-2 border-t border-edge pt-4 text-sm text-mist">
+      <div className="mt-5 space-y-2 border-t border-edge pt-4 text-ui text-mist">
         <p>The agent&rsquo;s own key may change only its context and its prices.</p>
         {agent.proof.addrAttempt && (
           <p>
-            Its try at changing who gets paid was refused: <span className="font-mono text-xs text-paper">{agent.proof.addrAttempt}</span>
+            Its try at changing who gets paid was refused: <span className="font-mono text-meta text-paper">{agent.proof.addrAttempt}</span>
           </p>
         )}
         {agent.proof.webAttempt && (
           <p>
-            So was its try at changing its web address: <span className="font-mono text-xs text-paper">{agent.proof.webAttempt}</span>
+            So was its try at changing its web address: <span className="font-mono text-meta text-paper">{agent.proof.webAttempt}</span>
           </p>
         )}
-        <p className="pt-2">
-          <a href={agent.proof.ens} target="_blank" rel="noreferrer" className="text-gold">The name on ENS ↗</a>
-          <a href={agent.proof.resolver} target="_blank" rel="noreferrer" className="ml-4 text-gold">Its resolver ↗</a>
-          {agent.proof.stall && (
-            <a href={agent.proof.stall} target="_blank" rel="noreferrer" className="ml-4 text-gold">Its stall on Arkiv ↗</a>
-          )}
+        <p className="flex flex-wrap gap-x-5 gap-y-1 pt-2">
+          <ExternalLink href={agent.proof.ens}>The name on ENS</ExternalLink>
+          <ExternalLink href={agent.proof.resolver}>Its resolver</ExternalLink>
+          {agent.proof.stall && <ExternalLink href={agent.proof.stall}>Its stall on Arkiv</ExternalLink>}
         </p>
       </div>
     </section>
@@ -161,7 +169,7 @@ function CommissionForm({ agent, onStarted }: { agent: AgentView; onStarted: (id
   }, [wallet.address, busy]);
 
   if (!agent.open || agent.priceUsdc === null) {
-    return <p className="mt-8 rounded-xl border border-edge bg-card/70 p-4 text-sm text-mist">This agent isn&rsquo;t taking commissions right now.</p>;
+    return <p className="panel mt-8 p-5 text-mist">This agent isn&rsquo;t taking commissions right now.</p>;
   }
   const price = agent.priceUsdc;
   const low = balance !== null && balance < price;
@@ -190,14 +198,14 @@ function CommissionForm({ agent, onStarted }: { agent: AgentView; onStarted: (id
 
   return (
     <form
-      className="mt-8 rounded-2xl border border-edge bg-card/70 p-5"
+      className="panel mt-8 p-6"
       onSubmit={(e) => {
         e.preventDefault();
         pay();
       }}
     >
-      <h2 className="font-display text-xl">Commission a portrait</h2>
-      <p className="mt-4 text-sm text-mist">Pick a style</p>
+      <h2 className="font-display text-title">Commission a portrait</h2>
+      <p className="mt-5 text-ui font-semibold text-paper">Pick a style</p>
       <div className="mt-2 flex flex-wrap gap-2" role="radiogroup" aria-label="Style">
         {agent.styles.map((s) => (
           <button
@@ -206,37 +214,40 @@ function CommissionForm({ agent, onStarted }: { agent: AgentView; onStarted: (id
             role="radio"
             aria-checked={style === s.key}
             onClick={() => setStyle(s.key)}
-            className={`rounded-full border px-3.5 py-1.5 text-sm ${style === s.key ? "border-gold bg-gold text-gold-ink" : "border-line text-mist hover:border-gold"}`}
+            className="chip"
           >
             {s.label}
           </button>
         ))}
       </div>
-      <label className="mt-5 block text-sm text-mist">
+      <label className="mt-6 block text-ui font-semibold text-paper">
         Who or what should it paint?
         <textarea
           value={note}
           onChange={(e) => setNote(e.target.value.slice(0, NOTE_MAX))}
           rows={3}
           placeholder="My grandmother in her garden, with the cat on her lap"
-          className="mt-2 block w-full resize-none rounded-xl border border-line bg-card px-3 py-2 text-paper placeholder:text-dim focus:border-gold focus:outline-none"
+          className="field mt-2 block resize-none font-normal"
         />
       </label>
-      <p className="mt-1 flex justify-between text-xs text-dim">
+      <p className="mt-2 flex justify-between gap-4 text-meta text-dim">
         <span>Only the sealed painter reads this. It never goes on Arkiv or ENS.</span>
         <span>{note.length} of {NOTE_MAX}</span>
       </p>
 
       {!wallet.address ? (
-        <p className="mt-5 text-sm text-mist">
-          <Link href="/" className="text-gold">Sign in with email or Google</Link> to commission a piece. You&rsquo;ll get a wallet with a little test money in it.
+        <p className="mt-6 text-mist">
+          <Link href="/" className="font-semibold text-gold underline decoration-gold/30 underline-offset-4">
+            Sign in with email or Google
+          </Link>{" "}
+          to commission a piece. You&rsquo;ll get a wallet with some test money in it.
         </p>
       ) : (
         <>
-          <button disabled={Boolean(busy) || low || note.trim().length < 3 || !style} className="mt-5 w-full rounded-xl bg-gold px-4 py-3.5 font-medium text-gold-ink disabled:opacity-50">
+          <button disabled={Boolean(busy) || low || note.trim().length < 3 || !style} className="btn btn-gold btn-lg mt-6 w-full">
             {busy ?? `Pay ${usdc(price)} into escrow`}
           </button>
-          <p className="mt-2 text-xs text-dim">
+          <p className="mt-3 text-meta text-dim">
             {balance === null ? "Checking your USDC…" : `You have ${usdc(balance)} on Sepolia.`}
             {low && (
               <>
@@ -247,8 +258,8 @@ function CommissionForm({ agent, onStarted }: { agent: AgentView; onStarted: (id
           </p>
         </>
       )}
-      {error && <p className="mt-2 text-sm text-danger">{error}</p>}
-      <p className="mt-4 text-xs text-dim">The agent has 48 hours. If it doesn&rsquo;t deliver, you take your USDC back. When it does, 95% goes to its owner and 5% to the commons.</p>
+      {error && <p className="mt-3 text-ui text-danger">{plainError(error)}</p>}
+      <p className="mt-4 text-meta text-dim">The agent has 48 hours. If it doesn&rsquo;t deliver, you take your USDC back. When it does, 95% goes to its owner and 5% to the commons.</p>
     </form>
   );
 }
@@ -308,51 +319,48 @@ function Status({ id, onChange }: { id: string; onChange: () => void }) {
   }
 
   return (
-    <section className="mt-8 rounded-2xl border border-gold/40 bg-card/70 p-5">
-      <p className="truncate font-mono text-xs text-gold">{c.name}</p>
+    <section className="appear mt-8 rounded-[1.25rem] border border-gold/50 bg-card/80 p-6">
+      <p className="truncate font-mono text-ui text-gold">{c.name}</p>
       {reached >= 0 && (
         <ol className="mt-4 grid grid-cols-4 gap-2">
           {STEPS.map((s, i) => (
-            <li key={s.key} className="flex flex-col items-center gap-1.5 text-center text-xs">
+            <li key={s.key} className="flex flex-col items-center gap-2 text-center text-meta font-semibold">
               <span
                 aria-hidden
-                className={`h-3 w-3 rounded-full border ${i < reached || c.status === "delivered" ? "border-gold bg-gold" : i === reached ? "animate-pulse border-gold bg-gold/40" : "border-line"}`}
+                className={`h-3.5 w-3.5 rounded-full border-2 ${i < reached || c.status === "delivered" ? "border-gold bg-gold" : i === reached ? "breathe border-gold bg-gold/40" : "border-line"}`}
               />
               <span className={i <= reached ? "text-paper" : "text-dim"}>{s.label}</span>
             </li>
           ))}
         </ol>
       )}
-      <p className="mt-4 text-sm text-mist">{STATUS_LINE[c.status]}</p>
-      {c.error && inProgress(c.status) && <p className="mt-1 text-xs text-dim">{c.error.includes("0G") ? "0G is busy. The agent will try again by itself." : c.error}</p>}
-      {c.note && <p className="mt-3 text-sm text-dim">{c.styleLabel}: &ldquo;{c.note}&rdquo;</p>}
+      <p className="mt-5 text-mist">{STATUS_LINE[c.status]}</p>
+      {c.error && inProgress(c.status) && <p className="mt-1 text-ui text-dim">{c.error.includes("0G") ? "0G is busy. The agent will try again by itself." : plainError(c.error)}</p>}
+      {c.note && <p className="mt-3 text-ui text-dim">{c.styleLabel}: &ldquo;{c.note}&rdquo;</p>}
 
       {c.status === "delivered" && c.holds && c.file && (
         <div className="mt-5">
           <Frame src={c.file} alt={`A portrait in ${c.styleLabel.toLowerCase()}`} />
-          <p className="mt-3 text-sm text-mist">
-            It&rsquo;s yours: a one-of-one name with no expiry, and only its holder can open this piece.{" "}
-            {c.proof.name && (
-              <a href={c.proof.name} target="_blank" rel="noreferrer" className="text-gold">See it on ENS ↗</a>
-            )}
+          <p className="mt-4 text-mist">
+            It&rsquo;s yours: a one-of-one name with no expiry, and only its holder can open this piece. {c.proof.name && <ExternalLink href={c.proof.name}>See it on ENS</ExternalLink>}
           </p>
         </div>
       )}
-      {c.status === "delivered" && !c.holds && <p className="mt-3 text-sm text-dim">The name has moved to someone else, so the piece opens for them now.</p>}
+      {c.status === "delivered" && !c.holds && <p className="mt-3 text-ui text-dim">The name has moved to someone else, so the piece opens for them now.</p>}
 
       {c.refund && (
-        <button onClick={refund} disabled={busy} className="mt-4 rounded-full bg-gold px-5 py-2 font-medium text-gold-ink disabled:opacity-60">
+        <button onClick={refund} disabled={busy} className="btn btn-gold mt-5">
           {busy ? "Confirm in your wallet…" : `Take back ${usdc(c.priceUsdc)}`}
         </button>
       )}
-      {error && <p className="mt-2 text-sm text-danger">{error}</p>}
+      {error && <p className="mt-3 text-ui text-danger">{plainError(error)}</p>}
 
-      <p className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-sm">
-        {c.proof.paid && <a href={c.proof.paid} target="_blank" rel="noreferrer" className="text-gold">Payment ↗</a>}
-        {c.proof.request && <a href={c.proof.request} target="_blank" rel="noreferrer" className="text-gold">Request on Arkiv ↗</a>}
-        {c.proof.claim && <a href={c.proof.claim} target="_blank" rel="noreferrer" className="text-gold">Claim on Arkiv ↗</a>}
-        {c.proof.storage && <a href={c.proof.storage} target="_blank" rel="noreferrer" className="text-gold">Encrypted on 0G Storage ↗</a>}
-        {c.proof.delivered && <a href={c.proof.delivered} target="_blank" rel="noreferrer" className="text-gold">Delivery ↗</a>}
+      <p className="mt-5 flex flex-wrap gap-x-5 gap-y-1 text-ui">
+        {c.proof.paid && <ExternalLink href={c.proof.paid}>Payment</ExternalLink>}
+        {c.proof.request && <ExternalLink href={c.proof.request}>Request on Arkiv</ExternalLink>}
+        {c.proof.claim && <ExternalLink href={c.proof.claim}>Claim on Arkiv</ExternalLink>}
+        {c.proof.storage && <ExternalLink href={c.proof.storage}>Encrypted on 0G Storage</ExternalLink>}
+        {c.proof.delivered && <ExternalLink href={c.proof.delivered}>Delivery</ExternalLink>}
       </p>
     </section>
   );
