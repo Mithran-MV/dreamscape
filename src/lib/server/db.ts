@@ -146,6 +146,7 @@ export function getDb(): DatabaseSync {
   addColumn(db, "dreams", "video_job", "TEXT"); // the living portrait's job id on 0G
   addColumn(db, "dreams", "video_state", "TEXT"); // rendering, done or failed
   addColumn(db, "dreams", "video_at", "INTEGER");
+  addColumn(db, "dreams", "video_mode", "TEXT"); // verified or standard: which kind of video provider made it
   addColumn(db, "dreams", "ens_tx", "TEXT");
   addColumn(db, "dreams", "note", "TEXT"); // words typed alongside a voice note // the scribe's day-record transaction on Sepolia
   return db;

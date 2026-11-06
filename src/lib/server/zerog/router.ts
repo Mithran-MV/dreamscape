@@ -150,23 +150,36 @@ export async function drawPanel(prompt: string, references: string[] = [], seed?
 export type VideoJob = { id: string; status: string; error?: { message?: string } };
 const VIDEO_MODEL = "bytedance/seedance-2.0";
 
+export type VideoMode = "verified" | "standard";
+
+// Video is never sealed: in either mode the vendor sees the portrait. A verified relay is preferred,
+// and when none is up (0G dropped Seedance's after a maintenance) a standard provider does the job.
 export async function submitVideo(prompt: string, firstFrame: string, seconds = 5, size = "480p") {
-  const { data, trace } = await call<VideoJob>("/videos", VIDEO_MODEL, {
-    method: "POST",
-    headers: headers("verified", true),
-    body: JSON.stringify({ model: VIDEO_MODEL, prompt, input_reference: firstFrame, seconds, size, generate_audio: false }),
-  });
+  for (const mode of ["verified", "standard"] as const) {
+    try {
+      const { data, trace } = await call<VideoJob>("/videos", VIDEO_MODEL, {
+        method: "POST",
+        headers: headers(mode, true),
+        body: JSON.stringify({ model: VIDEO_MODEL, prompt, input_reference: firstFrame, seconds, size, generate_audio: false }),
+      });
+      return { job: data, trace, mode };
+    } catch (error) {
+      if (mode === "verified" && error instanceof ZeroGError && error.status === 503 && error.body.includes("no_provider_for_trust_mode")) continue;
+      throw error;
+    }
+  }
+  throw new Error("No video provider answered.");
+}
+
+// verify_tee on the poll is the proof for video when it ran on a verified relay.
+export async function pollVideo(id: string, mode: VideoMode = "verified") {
+  const query = mode === "verified" ? "?verify_tee=true" : "";
+  const { data, trace } = await call<VideoJob>(`/videos/${encodeURIComponent(id)}${query}`, VIDEO_MODEL, { headers: headers(mode, false) });
   return { job: data, trace };
 }
 
-// verify_tee on the poll is the proof for video, since response signatures don't cover it.
-export async function pollVideo(id: string) {
-  const { data, trace } = await call<VideoJob>(`/videos/${encodeURIComponent(id)}?verify_tee=true`, VIDEO_MODEL, { headers: headers("verified", false) });
-  return { job: data, trace };
-}
-
-export async function downloadVideo(id: string) {
-  const res = await fetch(`${env.zgRouter()}/videos/${encodeURIComponent(id)}/content`, { headers: headers("verified", false), signal: AbortSignal.timeout(180_000) });
+export async function downloadVideo(id: string, mode: VideoMode = "verified") {
+  const res = await fetch(`${env.zgRouter()}/videos/${encodeURIComponent(id)}/content`, { headers: headers(mode, false), signal: AbortSignal.timeout(180_000) });
   if (!res.ok) throw new ZeroGError(res.status, await res.text());
   return Buffer.from(await res.arrayBuffer());
 }

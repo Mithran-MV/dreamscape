@@ -248,9 +248,9 @@ export async function startLivingPortrait(userId: string) {
   if (!portrait) return;
   const feeling = (dream.feeling ?? dream.suggested_feeling ?? "wonder") as Feeling;
   const prompt = `Animate this painting with ${MOTION[feeling] ?? MOTION.wonder}. Keep its painted style and composition, the camera nearly still. No text.`;
-  const { job, trace } = await submitVideo(prompt, `data:${portrait.mime};base64,${portrait.bytes.toString("base64")}`);
+  const { job, trace, mode } = await submitVideo(prompt, `data:${portrait.mime};base64,${portrait.bytes.toString("base64")}`);
   addTrace(dream.id, "video", trace);
-  updateDream(dream.id, { video_job: job.id, video_state: "rendering", video_at: now() });
+  updateDream(dream.id, { video_job: job.id, video_state: "rendering", video_at: now(), video_mode: mode });
   enqueue("dream.video", dream.id, 60_000);
 }
 
@@ -258,9 +258,10 @@ export async function startLivingPortrait(userId: string) {
 export async function pollLivingPortrait(dreamId: string) {
   const dream = getDream(dreamId);
   if (!dream?.video_job || dream.video_state !== "rendering") return;
-  const { job, trace } = await pollVideo(dream.video_job);
+  const mode = dream.video_mode ?? "verified";
+  const { job, trace } = await pollVideo(dream.video_job, mode);
   if (job.status === "completed") {
-    putBlob(dream.user_id, `dream/${dream.id}/video`, "video/mp4", await downloadVideo(job.id));
+    putBlob(dream.user_id, `dream/${dream.id}/video`, "video/mp4", await downloadVideo(job.id, mode));
     addTrace(dream.id, "video done", trace);
     updateDream(dream.id, { video_state: "done" });
   } else if (job.status === "failed" || now() - (dream.video_at ?? 0) > VIDEO_WAIT_MS) {
