@@ -36,6 +36,10 @@ function save(userId: string, key: string, preview: string, wallet: string | nul
     .run(seal(dreamerKey(userId), Buffer.from(key, "utf8")).toString("base64"), preview, wallet, now(), userId);
 }
 
+export function noteConnectFailure(userId: string, reason: string) {
+  getDb().prepare("UPDATE users SET zg_error = ? WHERE id = ? AND zg_key IS NULL").run(reason.slice(0, 300), userId);
+}
+
 export function disconnectZeroG(userId: string) {
   getDb().prepare("UPDATE users SET zg_key = NULL, zg_key_preview = NULL, zg_wallet = NULL, zg_connected_at = NULL, zg_error = NULL WHERE id = ?").run(userId);
 }

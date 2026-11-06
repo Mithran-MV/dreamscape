@@ -1,4 +1,4 @@
-import { connectSession, zeroGAccount, zeroGSignIn } from "@/lib/server/zerog/account";
+import { connectSession, noteConnectFailure, zeroGAccount, zeroGSignIn } from "@/lib/server/zerog/account";
 import { sessionSetCookie, signInWithPrivy } from "@/lib/server/session";
 
 // "Sign in with 0G", the only way in. 0G checks the token and names the account's wallet, which gets the
@@ -17,7 +17,12 @@ export async function POST(request: Request) {
 
   const linked = zeroGAccount(result.id);
   const connected = linked.connected && !linked.error ? linked : await connectSession(result.id, session);
-  const res = Response.json({ ok: true, zeroG: "error" in connected ? { connected: false, error: connected.error } : connected });
+  // A connected account carries "connected"; a failure is only { error }.
+  if (!("connected" in connected)) {
+    console.warn(`[zerog] sign-in worked but no key for ${result.id}: ${connected.error}`);
+    noteConnectFailure(result.id, connected.error);
+  }
+  const res = Response.json({ ok: true, zeroG: "connected" in connected ? connected : { connected: false, error: connected.error } });
   res.headers.append("Set-Cookie", sessionSetCookie(result.id));
   return res;
 }

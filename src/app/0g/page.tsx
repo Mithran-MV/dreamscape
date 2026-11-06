@@ -186,6 +186,7 @@ function Connection(props: {
   return (
     <section className="panel mt-10 max-w-xl p-6">
       <h2 className="font-display text-title">Connect your 0G account</h2>
+      {linked.error && !error && <p className="mt-2 text-ui text-danger">Last try: {linked.error}</p>}
       <p className="mt-2 text-mist">
         Dreamscape makes a key called &ldquo;Dreamscape&rdquo; on your 0G account and keeps it sealed. Your dreams, comics and moving portraits then spend your credit, even at night.
       </p>
