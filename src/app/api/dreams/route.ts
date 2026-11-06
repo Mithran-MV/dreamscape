@@ -1,3 +1,4 @@
+import { getDb } from "@/lib/server/db";
 import { createDream, FEELINGS, listDreams, putBlob, type Feeling } from "@/lib/server/dreams";
 import { enqueue } from "@/lib/server/jobs";
 import { noteLog, notesFor } from "@/lib/server/notes";
@@ -5,6 +6,8 @@ import { aiNoteFor, sagaTonight, startAiNote } from "@/lib/server/ainote";
 import { currentUser } from "@/lib/server/session";
 
 const MAX_AUDIO = 10 * 1024 * 1024;
+// Each dream costs a reading, a painting, two storage uploads and an anchor, so a day has a ceiling.
+const DREAMS_PER_DAY = 10;
 const AUDIO_TYPES = new Set(["audio/webm", "audio/mp4", "audio/mpeg", "audio/ogg", "audio/wav", "audio/x-m4a", "audio/aac"]);
 
 export async function GET() {
@@ -32,6 +35,10 @@ export async function GET() {
 export async function POST(request: Request) {
   const user = await currentUser();
   if (!user) return Response.json({ error: "Sign in first." }, { status: 401 });
+  // Checked before the body is read, so an oversized upload never reaches memory.
+  if (Number(request.headers.get("content-length") ?? 0) > MAX_AUDIO + 64 * 1024) return Response.json({ error: "That voice note is too long." }, { status: 413 });
+  const { n } = getDb().prepare("SELECT count(*) AS n FROM dreams WHERE user_id = ? AND created_at >= ?").get(user.id, Date.now() - 86_400_000) as { n: number };
+  if (n >= DREAMS_PER_DAY) return Response.json({ error: "That's ten dreams in a day. The next one can wait for tomorrow." }, { status: 429 });
   const form = await request.formData();
   const audio = form.get("audio");
   const text = String(form.get("text") ?? "").trim().slice(0, 2000);
