@@ -2,6 +2,7 @@
 // Home: sign in, then the gallery wall of framed dream portraits.
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { api, PAINTED, panelUrl, portraitUrl, videoUrl, type DreamSummary, type EpisodeSummary, type Note } from "@/lib/api";
 import { WeatherStrip } from "@/components/weather";
@@ -11,7 +12,9 @@ import { PassesPanel } from "@/components/passes-panel";
 import { dayLabel, Frame } from "@/components/ui";
 
 export default function Home() {
-  const [user, setUser] = useState<{ handle: string; ensName: string | null } | null | undefined>(undefined);
+  const [user, setUser] = useState<{ handle: string; ensName: string | null; naming: boolean } | null | undefined>(undefined);
+  const { logout } = usePrivy();
+  const router = useRouter();
   const [dreams, setDreams] = useState<DreamSummary[]>([]);
   const [episodes, setEpisodes] = useState<EpisodeSummary[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
@@ -31,20 +34,28 @@ export default function Home() {
     [],
   );
 
+  // Someone who signed in from a gallery they were visiting goes back to it.
+  const afterSignIn = useCallback(() => {
+    const next = new URLSearchParams(window.location.search).get("next");
+    if (next && /^\/g\/[a-z0-9-]+$/.test(next)) router.push(next);
+    else load();
+  }, [router, load]);
+
   useEffect(() => {
     load();
   }, [load]);
 
   // Keep the wall live while any frame is still being painted.
   useEffect(() => {
-    const busy = dreams.some((d) => !PAINTED.has(d.status) && d.status !== "failed") || episodes.some((e) => e.status === "writing" || e.status === "drawing");
+    const busy =
+      dreams.some((d) => !PAINTED.has(d.status) && d.status !== "failed") || episodes.some((e) => e.status === "writing" || e.status === "drawing") || Boolean(user?.naming);
     if (!busy) return;
     const t = setInterval(load, 4000);
     return () => clearInterval(t);
-  }, [dreams, episodes, load]);
+  }, [dreams, episodes, user, load]);
 
   if (user === undefined) return <main className="flex-1" />;
-  if (!user) return <SignIn onDone={load} />;
+  if (!user) return <SignIn onDone={afterSignIn} />;
 
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-5 pb-28 pt-8">
@@ -52,11 +63,21 @@ export default function Home() {
         <div>
           <p className="font-display text-lg italic text-gold">Dreamscape</p>
           <h1 className="font-display text-3xl">{user.handle}&rsquo;s gallery</h1>
-          {user.ensName && <p className="mt-1 font-mono text-xs text-gold">{user.ensName}</p>}
+          {user.ensName ? (
+            <p className="mt-1 font-mono text-xs text-gold">{user.ensName}</p>
+          ) : (
+            user.naming && <p className="mt-1 text-xs text-dim">Writing {user.handle}.dream-scape.eth to ENS. This takes a couple of minutes.</p>
+          )}
         </div>
         <div className="text-right text-sm text-dim">
           <p className="whitespace-nowrap">{dreams.length} {dreams.length === 1 ? "dream" : "dreams"} kept</p>
           <Link href="/0g" className="text-gold">0G credit</Link>
+          <button
+            onClick={() => Promise.all([api.signOut(), logout().catch(() => undefined)]).then(() => window.location.reload())}
+            className="block w-full text-right text-xs text-dim hover:text-mist"
+          >
+            Sign out
+          </button>
         </div>
       </header>
 
