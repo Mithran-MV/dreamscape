@@ -3,6 +3,7 @@
 // lights it on its own), or hides or shows the stars.
 import { keepMorning, memoriesFor, morningState, setStarsHidden, setTimezone, startDueReveals } from "@/lib/server/memories";
 import { currentUser } from "@/lib/server/session";
+import { setSagaTonight } from "@/lib/server/ainote";
 
 function read(userId: string) {
   startDueReveals(userId);
@@ -20,7 +21,11 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const user = await currentUser();
   if (!user) return Response.json({ error: "Sign in first." }, { status: 401 });
-  const { kind, feeling, hide } = (await request.json().catch(() => ({}))) as { kind?: string; feeling?: string; hide?: boolean };
+  const { kind, feeling, hide, saga } = (await request.json().catch(() => ({}))) as { kind?: string; feeling?: string; hide?: boolean; saga?: string };
+  if (typeof saga === "string") {
+    if (!setSagaTonight(user.id, saga)) return Response.json({ error: "Pick one of your dream's themes." }, { status: 400 });
+    return Response.json({ sagaTonight: saga });
+  }
   if (typeof hide === "boolean") {
     setStarsHidden(user.id, hide);
     return Response.json(read(user.id));

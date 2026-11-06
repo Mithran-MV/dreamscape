@@ -6,6 +6,7 @@ import { addTrace, getBlob, getDream, putBlob, updateDream, type Dream, type Fee
 import { newId } from "./crypto";
 import { enqueue, hasOpenJob } from "./jobs";
 import { notify } from "./push";
+import { sagaTonight } from "./ainote";
 import { asDreamscape } from "./zerog/account";
 import { chatJson, downloadVideo, drawPanel, pollVideo, submitVideo } from "./zerog/router";
 
@@ -137,6 +138,7 @@ const SHOWN: Record<string, true> = { painted: true, storing: true, done: true }
 // retries alone and none of them ever repeats another.
 export async function runNight(userId: string) {
   if (!hasOpenJob(userId, ["night.poster"])) enqueue("night.poster", userId);
+  if (!hasOpenJob(userId, ["note.write"])) enqueue("note.write", userId); // tomorrow's Morning Note
   await makeComic(userId);
   if (!hasOpenJob(userId, ["dream.animate"])) enqueue("dream.animate", userId);
 }
@@ -147,8 +149,15 @@ async function makeComic(userId: string) {
   const day = utcDay();
   const dreams = (db.prepare("SELECT * FROM dreams WHERE user_id = ? AND created_at >= ? ORDER BY created_at DESC").all(userId, now() - 7 * DAY_MS) as Dream[])
     .filter((d) => SHOWN[d.status] && d.tags_json);
-  const newest = dreams[0];
-  if (!newest || newest.created_at < now() - DAY_MS) return; // nothing dreamed since last night
+  // "Make this a saga tonight" picks the newest dream with that theme, so the comic comes even on a quiet night.
+  const asked = sagaTonight(userId);
+  const themed = asked ? dreams.find((d) => ((JSON.parse(d.tags_json ?? "{}").themes ?? []) as string[]).includes(asked)) : undefined;
+  const newest = themed ?? dreams[0];
+  if (!newest || (!themed && newest.created_at < now() - DAY_MS)) return; // nothing dreamed since last night
+  if (themed && !themed.saga) {
+    themed.saga = `The ${asked!.charAt(0).toUpperCase()}${asked!.slice(1)} Saga`;
+    updateDream(themed.id, { saga: themed.saga });
+  }
 
   let ep = db.prepare("SELECT * FROM episodes WHERE user_id = ? AND day = ? AND status != 'discarded' ORDER BY created_at DESC LIMIT 1").get(userId, day) as
     | Episode

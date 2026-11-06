@@ -1,6 +1,7 @@
 import { createDream, FEELINGS, listDreams, putBlob, type Feeling } from "@/lib/server/dreams";
 import { enqueue } from "@/lib/server/jobs";
 import { noteLog, notesFor } from "@/lib/server/notes";
+import { aiNoteFor, sagaTonight, startAiNote } from "@/lib/server/ainote";
 import { currentUser } from "@/lib/server/session";
 
 const MAX_AUDIO = 10 * 1024 * 1024;
@@ -22,7 +23,9 @@ export async function GET() {
   }));
   const log = noteLog(user.id);
   const notes = log.length ? notesFor(log, log[log.length - 1].id).slice(0, 2) : [];
-  return Response.json({ dreams, notes });
+  startAiNote(user.id);
+  const ai = aiNoteFor(user.id);
+  return Response.json({ dreams, notes, aiNote: ai && { text: ai.text, theme: ai.theme, model: ai.model, today: ai.day === Math.floor(Date.now() / 86_400_000) }, sagaTonight: sagaTonight(user.id) });
 }
 
 // A voice note (field "audio"), a line of text (field "text"), or both, plus an optional feeling.
