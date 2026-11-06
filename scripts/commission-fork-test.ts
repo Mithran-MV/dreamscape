@@ -1,6 +1,6 @@
 // Proves one paid vendor-agent commission end to end on a local anvil fork of Sepolia, against the real ENS
 // contracts, the deployed NightMarket and Circle's USDC. The agent's Arkiv side runs on a local Arkiv node
-// in Docker, and 0G's router and storage are stubbed. Every key is made here; nothing reaches a live network.
+// in Docker, and 0G's router and storage are stubbed. Every key but the server's is made here; nothing reaches a live network.
 // node --env-file-if-exists=.env.local --import tsx scripts/commission-fork-test.ts [anvil fork rpc]
 // With no rpc it starts its own fork on port 8553, so it needs anvil and Docker.
 import { execFileSync, spawn } from "node:child_process";
@@ -156,9 +156,13 @@ async function main() {
       DATA_DIR: mkdtempSync(join(tmpdir(), "dreamscape-commission-")),
       ARKIV_NETWORK: "local",
       ARKIV_RPC_URL: arkivUrl,
-      SERVER_PRIVATE_KEY: generatePrivateKey(),
+      // The live server already owns market.dream-scape.eth on Sepolia, so the fork keeps its key; the fork never
+      // reaches a live network, so nothing it signs leaves this machine.
+      SERVER_PRIVATE_KEY: process.env.SERVER_PRIVATE_KEY || generatePrivateKey(),
       SCRIBE_PRIVATE_KEY: generatePrivateKey(),
       AGENT_PRIVATE_KEY: generatePrivateKey(),
+      // A fresh agent each run, since the live one already belongs to the real vendor.
+      AGENT_LABEL: `portraits${randomBytes(3).toString("hex")}`,
       MASTER_KEY: randomBytes(32).toString("hex"),
       ZG_API_KEY: "sk-stub",
       ZG_ROUTER_URL: ROUTER,
@@ -252,7 +256,7 @@ async function run(rpc: string, arkivUrl: string, storage: { down: boolean; root
   addUser("buyer", buyerHandle, buyer.address);
   addUser("friend", `friend${tag}`, friend.address);
   addUser("stranger", `stranger${tag}`, stranger.address);
-  const label = vendor.AGENT_LABEL;
+  const label = vendor.agentLabel();
   const gasNotes: string[] = [];
 
   let setup: Awaited<ReturnType<typeof vendor.setupVendor>> | undefined;
@@ -385,7 +389,8 @@ async function run(rpc: string, arkivUrl: string, storage: { down: boolean; root
   });
 
   await check("while 0G is down the agent waits, then tries again", async () => {
-    router.down = 1;
+    // Down for the default painter and every backup, as in a real outage; one busy model is covered by the backups.
+    router.down = 1 + env.zgPaint().backups.length;
     const first = await vendor.makeJob(id).then(() => null, (e: unknown) => e);
     expect(first instanceof ZeroGError && first.retryable, `a router 503 gave ${String(first)}`);
     let c = cm.getCommission(id)!;

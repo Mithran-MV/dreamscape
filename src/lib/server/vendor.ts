@@ -43,7 +43,8 @@ import {
   type VendorAgent,
 } from "./commissions";
 
-export const AGENT_LABEL = "portraits";
+// AGENT_LABEL lets a fork test set up an agent of its own beside the live one.
+export const agentLabel = () => process.env.AGENT_LABEL?.trim() || "portraits";
 export const START_PRICES: Prices = { [SERVICE]: 4 };
 export const AGENT_CONTEXT =
   "Paints a one-of-one portrait in the style you pick, from a short private note. You pay USDC into NightMarket's escrow; the portrait arrives as an ENS name you own, or you take your money back after 48 hours.";
@@ -121,7 +122,7 @@ async function openStall(vendor: VendorAgent, ctx: Arkiv) {
 // Reads only: what exists, what is missing, and what each account holds.
 export async function planVendor(ens: Ens = ensClients(), ctx: Arkiv = arkiv()) {
   const missing: string[] = [];
-  const label = AGENT_LABEL;
+  const label = agentLabel();
   const server = ens.server.account.address;
   let agent: Address | null = null;
   let owner: Owner | null = null;
@@ -163,7 +164,7 @@ export type VendorSetup = { name: string; agent: Address; owner: Owner; resolver
 
 // Safe to rerun: each step is skipped once done. The server pays for everything; the owner signs nothing.
 export async function setupVendor(ens: Ens = ensClients(), ctx: Arkiv = arkiv(), prices: Prices = START_PRICES): Promise<VendorSetup> {
-  const label = AGENT_LABEL;
+  const label = agentLabel();
   const owner = vendorOwner();
   const agent = agentAccount().address;
   const market = marketAddress();
