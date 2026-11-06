@@ -10,6 +10,7 @@ import { AppShell, type SessionUser } from "@/components/app-shell";
 import { WeatherStrip } from "@/components/weather";
 import { CalendarWall } from "@/components/calendar-wall";
 import { KnockBanner } from "@/components/passes-panel";
+import { MorningsAndMemories } from "@/components/memories";
 import { chipColor, dayLabel, FEELINGS } from "@/components/ui";
 
 export default function Home() {
@@ -88,6 +89,8 @@ export default function Home() {
       </header>
 
       <KnockBanner />
+
+      <MorningsAndMemories />
 
       {dreams.length === 0 ? <FirstRun user={user} /> : <Wall dreams={dreams} notes={notes.filter((n) => n !== recall)} />}
 

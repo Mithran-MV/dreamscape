@@ -1,0 +1,58 @@
+/* The week's stars, the Memories row and the story viewer (memories.tsx). */
+
+.ms-star { position: relative; display: grid; place-items: center; width: 2.15rem; height: 2.15rem; }
+@media (min-width: 640px) { .ms-star { width: 2.6rem; height: 2.6rem; } }
+.ms-star svg { width: 100%; height: 100%; }
+.ms-lit svg { filter: drop-shadow(0 0 8px color-mix(in srgb, var(--glow) 70%, transparent)); }
+.ms-rest svg { width: 80%; height: 80%; }
+
+/* Today's star, waiting for its tap. */
+.ms-burst {
+  position: absolute;
+  inset: -40%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(240 200 120 / 0.55) 0 18%, transparent 19%) 50% 0 / 18% 18% no-repeat,
+    radial-gradient(circle, rgb(240 200 120 / 0.55) 0 18%, transparent 19%) 100% 50% / 18% 18% no-repeat,
+    radial-gradient(circle, rgb(240 200 120 / 0.55) 0 18%, transparent 19%) 50% 100% / 18% 18% no-repeat,
+    radial-gradient(circle, rgb(240 200 120 / 0.55) 0 18%, transparent 19%) 0 50% / 18% 18% no-repeat;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ms-row { scrollbar-width: none; scroll-snap-type: x mandatory; }
+.ms-row::-webkit-scrollbar { display: none; }
+.ms-row > li { scroll-snap-align: start; }
+.ms-card { box-shadow: 0 14px 34px rgb(0 0 0 / 0.45); }
+/* A reveal is a spotlight: a gold edge and a glow in its feeling. */
+.ms-spot { box-shadow: 0 0 0 2px var(--gold), 0 0 34px -6px var(--glow), 0 14px 34px rgb(0 0 0 / 0.45); }
+.ms-next { border: 1.5px dashed color-mix(in srgb, var(--gold) 55%, transparent); background: rgb(28 22 54 / 0.6); }
+.ms-painted { background: radial-gradient(120% 90% at 30% 20%, color-mix(in srgb, var(--glow) 55%, #151026), #0f0c1c 70%); }
+
+.ms-progress { width: 100%; transform-origin: left center; animation-name: ms-fill; animation-timing-function: linear; animation-fill-mode: both; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .ms-waiting svg { animation: ms-breathe 2.4s ease-in-out infinite; }
+  .ms-pop svg { animation: ms-light 0.9s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+  .ms-pop .ms-burst { animation: ms-burst 0.9s ease-out 0.1s both; }
+  .ms-kenburns { animation: ms-drift 7s ease-out both; }
+  .ms-copy { animation: ms-rise 0.6s cubic-bezier(0.23, 1, 0.32, 1) both; }
+  .ms-card { transition: transform 0.25s cubic-bezier(0.23, 1, 0.32, 1); }
+  .ms-card:hover { transform: translateY(-3px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ms-progress { animation: none; }
+}
+
+@keyframes ms-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes ms-breathe { 50% { transform: scale(1.08); opacity: 0.7; } }
+@keyframes ms-light {
+  0% { transform: scale(0.4) rotate(-20deg); opacity: 0.2; }
+  60% { transform: scale(1.3) rotate(6deg); opacity: 1; }
+  100% { transform: none; }
+}
+@keyframes ms-burst {
+  0% { opacity: 0.9; transform: scale(0.4) rotate(0deg); }
+  100% { opacity: 0; transform: scale(1.5) rotate(40deg); }
+}
+@keyframes ms-drift { from { transform: scale(1.12) translate(1.5%, 1%); } to { transform: none; } }
+@keyframes ms-rise { from { opacity: 0; transform: translateY(14px); } }

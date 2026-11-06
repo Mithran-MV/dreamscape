@@ -68,6 +68,18 @@ async function json<T>(res: Response): Promise<T> {
   return body as T;
 }
 
+export type Star = { day: number; kind: "dream" | "feeling" | "nothing" | null; feeling: string | null };
+export type Slide = { image?: string; kicker?: string; title?: string; text?: string; quote?: boolean; feeling?: string | null };
+export type Memory = { id: string; kind: string; title: string; subtitle: string; cover: string | null; feeling: string | null; slides: Slide[] };
+export type Mornings = {
+  today: number;
+  keptToday: boolean;
+  week: Star[];
+  kept: number;
+  next: { title: string; at: number; left: number } | null;
+  memories: Memory[];
+};
+
 export const api = {
   session: () => fetch("/api/session").then((r) => json<{ user: { handle: string; wallet: string | null; ensName: string | null; naming: boolean } | null }>(r)),
   signOut: () => fetch("/api/session", { method: "DELETE" }).then((r) => json<{ ok: true }>(r)),
@@ -77,6 +89,9 @@ export const api = {
     ),
   signIn: (handle: string, passphrase: string) =>
     fetch("/api/session", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ handle, passphrase }) }).then((r) => json<{ handle: string }>(r)),
+  mornings: () => fetch("/api/mornings").then((r) => json<Mornings>(r)),
+  keepMorning: (kind: "feeling" | "nothing", feeling?: string) =>
+    fetch("/api/mornings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind, feeling }) }).then((r) => json<Mornings>(r)),
   dreams: () => fetch("/api/dreams").then((r) => json<{ dreams: DreamSummary[]; notes: Note[] }>(r)),
   dream: (id: string) => fetch(`/api/dreams/${id}`).then((r) => json<DreamDetail>(r)),
   pushKey: () => fetch("/api/push").then((r) => json<{ publicKey: string }>(r)),
