@@ -157,6 +157,7 @@ export function getDb(): DatabaseSync {
   addColumn(db, "world_dreams", "published", "INTEGER"); // 1 once the counts are on Arkiv
   addColumn(db, "users", "ens_json", "TEXT");
   addColumn(db, "users", "privy_id", "TEXT");
+  addColumn(db, "users", "session_version", "INTEGER NOT NULL DEFAULT 0"); // bumped on sign-out, ending every session
   addColumn(db, "users", "dripped_at", "INTEGER"); // when the server sent this wallet its test ETH and USDC // the Privy user behind this account, if they signed in that way
   db.exec("CREATE UNIQUE INDEX IF NOT EXISTS users_by_privy ON users(privy_id)"); // gallery name, resolver and registries once onboarded // one circle per dreamer, such as ethglobal-mumbai
   addColumn(db, "dreams", "saga", "TEXT");

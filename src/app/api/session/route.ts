@@ -1,6 +1,6 @@
 import { getDb } from "@/lib/server/db";
 import { hasOpenJob } from "@/lib/server/jobs";
-import { cleanHandle, clearSessionCookie, currentUser, sessionSetCookie, signInOrClaim } from "@/lib/server/session";
+import { cleanHandle, clearSessionCookie, currentUser, endSessions, sessionSetCookie, signInOrClaim } from "@/lib/server/session";
 
 export async function GET() {
   const user = await currentUser();
@@ -31,6 +31,7 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE() {
+  await endSessions();
   const res = Response.json({ ok: true });
   res.headers.append("Set-Cookie", clearSessionCookie());
   return res;

@@ -68,23 +68,35 @@ export function signInWithPrivy(privyId: string, wallet: string | null, handle?:
   return { id };
 }
 
+// The cookie is userId.issuedAt.version.signature. It stops working after MAX_AGE on the server too,
+// and signing out bumps the account's version, which ends its sessions on every device.
+const sessionVersion = (userId: string) =>
+  (getDb().prepare("SELECT session_version FROM users WHERE id = ?").get(userId) as { session_version: number } | undefined)?.session_version ?? 0;
+
 export function sessionSetCookie(userId: string) {
   const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
-  return `${COOKIE}=${userId}.${sign(userId)}; Path=/; Max-Age=${MAX_AGE}; HttpOnly; SameSite=Lax${secure}`;
+  const value = `${userId}.${Date.now()}.${sessionVersion(userId)}`;
+  return `${COOKIE}=${value}.${sign(value)}; Path=/; Max-Age=${MAX_AGE}; HttpOnly; SameSite=Lax${secure}`;
+}
+
+export async function endSessions() {
+  const user = await currentUser();
+  if (user) getDb().prepare("UPDATE users SET session_version = session_version + 1 WHERE id = ?").run(user.id);
 }
 
 export const clearSessionCookie = () => `${COOKIE}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax`;
 
 export async function currentUser(): Promise<{ id: string; handle: string } | null> {
   const raw = (await cookies()).get(COOKIE)?.value;
-  if (!raw) return null;
-  const dot = raw.lastIndexOf(".");
-  const userId = raw.slice(0, dot);
-  const given = Buffer.from(raw.slice(dot + 1));
-  const expected = Buffer.from(sign(userId));
+  const parts = raw?.split(".") ?? [];
+  if (parts.length !== 4) return null;
+  const [userId, issued, version, signature] = parts;
+  const given = Buffer.from(signature);
+  const expected = Buffer.from(sign(`${userId}.${issued}.${version}`));
   if (given.length !== expected.length || !timingSafeEqual(given, expected)) return null;
-  const row = getDb().prepare("SELECT handle FROM users WHERE id = ?").get(userId) as { handle: string } | undefined;
-  return row ? { id: userId, handle: row.handle } : null;
+  if (!(Date.now() - Number(issued) < MAX_AGE * 1000)) return null;
+  const row = getDb().prepare("SELECT handle, session_version FROM users WHERE id = ?").get(userId) as { handle: string; session_version: number } | undefined;
+  return row && String(row.session_version) === version ? { id: userId, handle: row.handle } : null;
 }
 
 export const cleanHandle = (s: string) => s.toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 24);
