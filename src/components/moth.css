@@ -1,0 +1,50 @@
+/* The moth (moth.tsx). At rest it sleeps with its wings open; pages add a class to choreograph it. */
+
+.moth {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.moth:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 4px;
+  border-radius: 999px;
+}
+.moth :is(.moth-wing, .moth-flap) {
+  transform-box: fill-box;
+}
+.moth-wing-l,
+.moth-wing-l .moth-flap {
+  transform-origin: 100% 55%;
+}
+.moth-wing-r,
+.moth-wing-r .moth-flap {
+  transform-origin: 0% 55%;
+}
+.moth-open {
+  opacity: 0;
+}
+
+/* Woken by a tap: eyes open and a quick flutter. !important wins over any page choreography. */
+.moth[data-awake] .moth-open { opacity: 1 !important; }
+.moth[data-awake] .moth-shut { opacity: 0 !important; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .moth[data-awake] .moth-flap { animation: moth-flutter 0.12s ease-in-out 8 alternate; }
+  /* Asleep somewhere: the wings close and open slowly, like breathing. */
+  .moth-rest .moth-wing { animation: moth-breathe 6s ease-in-out 1s infinite; }
+}
+
+@keyframes moth-flutter {
+  to { transform: scaleX(0.3); }
+}
+@keyframes moth-beat {
+  to { transform: scaleX(0.28) scaleY(0.96); }
+}
+@keyframes moth-breathe {
+  0%, 70%, 100% { transform: none; }
+  80% { transform: scaleX(0.55); }
+}
