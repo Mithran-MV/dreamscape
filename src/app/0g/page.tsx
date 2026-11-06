@@ -1,5 +1,6 @@
 "use client";
 // "Sign in with 0G": the dreamer's own 0G credit, read from 0G Pay, going down as dreams become art.
+// Connecting gives Dreamscape a key on their own 0G account, so their credit is what pays.
 import Link from "next/link";
 import { usePrivy } from "@privy-io/react-auth";
 import { StripeClient, type Balance } from "@0gfoundation/0g-pay-sdk/server";
@@ -9,12 +10,39 @@ import { BackLink } from "@/components/ui";
 
 const usd = (micros: number) => `$${(micros / 1e6).toFixed(micros < 1e6 ? 4 : 2)}`;
 
+type Account = { connected: boolean; wallet: string | null; keyPreview: string | null; since: number | null; error: string | null };
+
+async function account(init?: RequestInit): Promise<Account> {
+  const res = await fetch("/api/zerog", init && { ...init, headers: { "Content-Type": "application/json" } });
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error ?? "Couldn't reach Dreamscape.");
+  return body;
+}
+
 export default function ZeroGPage() {
   const { ready, authenticated, login, logout, getAccessToken, user } = usePrivy();
   const [pay, setPay] = useState<StripeClient | null>(null);
   const [balance, setBalance] = useState<Balance | null>(null);
   const [start, setStart] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [linked, setLinked] = useState<Account | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [linkError, setLinkError] = useState<string | null>(null);
+  const [pasted, setPasted] = useState("");
+
+  useEffect(() => {
+    account().then(setLinked, () => setLinked(null));
+  }, []);
+
+  const change = (init: RequestInit) => {
+    setBusy(true);
+    setLinkError(null);
+    return account(init)
+      .then(setLinked, (e: Error) => setLinkError(e.message))
+      .finally(() => setBusy(false));
+  };
+  const connect = () =>
+    getAccessToken().then((token) => (token ? change({ method: "POST", body: JSON.stringify({ token }) }) : setLinkError("0G didn't return a sign-in token. Sign in again.")));
 
   // Swap the 0G sign-in token for a 0G Pay session, once per sign-in.
   useEffect(() => {
@@ -62,10 +90,11 @@ export default function ZeroGPage() {
         <div>
           <h1 className="font-display text-h1 md:text-display">Your 0G credit</h1>
           <p className="mt-5 max-w-[60ch] text-lead text-mist">
-            Dreamscape&rsquo;s painter runs on 0G with a key from your account, so every dream you tell spends from this balance. Your iAI credits reset each day,
-            so keeping a dream every morning uses credit that would otherwise expire.
+            Connect your 0G account and Dreamscape&rsquo;s painter runs on a key from it, so every dream you tell, and the comic made while you sleep, spends your
+            own credit. Your iAI credits reset each day, so keeping a dream every morning uses credit that would otherwise expire.
           </p>
           <p className="mt-6 text-ui text-dim">0G allows its sign-in only on localhost:3000, 3001 and 5173, so this page runs on the laptop.</p>
+          {linked && <Connection linked={linked} busy={busy} error={linkError} signedIn={authenticated} onConnect={connect} onPaste={() => change({ method: "POST", body: JSON.stringify({ key: pasted }) })} pasted={pasted} setPasted={setPasted} onDisconnect={() => change({ method: "DELETE" })} />}
         </div>
 
         {!ready ? (
@@ -107,5 +136,86 @@ export default function ZeroGPage() {
       </div>
       {error && <p className="mt-6 text-ui text-danger">{error}</p>}
     </AppShell>
+  );
+}
+
+function Connection(props: {
+  linked: Account;
+  busy: boolean;
+  error: string | null;
+  signedIn: boolean;
+  onConnect: () => void;
+  onPaste: () => void;
+  pasted: string;
+  setPasted: (v: string) => void;
+  onDisconnect: () => void;
+}) {
+  const { linked, busy, error } = props;
+  if (linked.connected) {
+    return (
+      <section className="panel mt-10 max-w-xl p-6">
+        <p className="flex items-center gap-2 font-display text-title font-semibold">
+          <span className="h-2.5 w-2.5 rounded-full bg-ok" aria-hidden />
+          Your 0G account pays for your dreams
+        </p>
+        <p className="mt-2 text-mist">
+          Dreamscape uses the key <span className="font-mono text-paper">{linked.keyPreview}</span>
+          {linked.wallet && (
+            <>
+              {" "}
+              on <span className="font-mono text-paper">{linked.wallet.slice(0, 6)}…{linked.wallet.slice(-4)}</span>
+            </>
+          )}
+          . Revoke it any time at pc.0g.ai.
+        </p>
+        {linked.error && <p className="mt-3 text-ui text-danger">Your last dream ran on Dreamscape&rsquo;s credit: {linked.error}. Connect again to fix it.</p>}
+        <div className="mt-5 flex flex-wrap gap-3">
+          {linked.error && props.signedIn && (
+            <button onClick={props.onConnect} disabled={busy} className="btn btn-gold">
+              Connect again
+            </button>
+          )}
+          <button onClick={props.onDisconnect} disabled={busy} className="btn btn-line">
+            Stop using my 0G account
+          </button>
+        </div>
+        {error && <p className="mt-3 text-ui text-danger">{error}</p>}
+      </section>
+    );
+  }
+  return (
+    <section className="panel mt-10 max-w-xl p-6">
+      <h2 className="font-display text-title">Connect your 0G account</h2>
+      <p className="mt-2 text-mist">
+        Dreamscape makes a key called &ldquo;Dreamscape&rdquo; on your 0G account and keeps it sealed. Your dreams, comics and moving portraits then spend your credit, even at night.
+      </p>
+      <button onClick={props.onConnect} disabled={busy || !props.signedIn} className="btn btn-gold mt-5">
+        {busy ? "Connecting…" : props.signedIn ? "Connect my 0G account" : "Sign in with 0G first"}
+      </button>
+      <details className="mt-6">
+        <summary className="cursor-pointer text-ui text-mist">Or paste a key from pc.0g.ai</summary>
+        <form
+          className="mt-3 flex flex-wrap gap-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            props.onPaste();
+          }}
+        >
+          <input
+            value={props.pasted}
+            onChange={(e) => props.setPasted(e.target.value)}
+            placeholder="sk-…"
+            autoComplete="off"
+            spellCheck={false}
+            className="field min-w-0 flex-1 font-mono"
+            aria-label="Your 0G key"
+          />
+          <button type="submit" disabled={busy || !props.pasted.trim()} className="btn btn-line">
+            Use this key
+          </button>
+        </form>
+      </details>
+      {error && <p className="mt-3 text-ui text-danger">{error}</p>}
+    </section>
   );
 }
