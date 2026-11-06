@@ -9,7 +9,8 @@ import { grantPassJob, knockNoticeJob } from "../src/lib/server/visits";
 import { recordRequestJob } from "../src/lib/server/commissions";
 import { claimJob, heartbeatJob, makeJob, notifyJob, scheduleHeartbeats } from "../src/lib/server/vendor";
 import { arkivJob, listJob, openTonightsStalls, scheduleStalls } from "../src/lib/server/market";
-import { updateDream } from "../src/lib/server/dreams";
+import { getDream, updateDream } from "../src/lib/server/dreams";
+import { asDreamer } from "../src/lib/server/zerog/account";
 import { ZeroGError } from "../src/lib/server/zerog/router";
 
 const handlers: Record<string, (ref: string) => Promise<void>> = {
@@ -36,6 +37,13 @@ const handlers: Record<string, (ref: string) => Promise<void>> = {
   "commission.notify": notifyJob,
   "agent.heartbeat": heartbeatJob,
 };
+// Jobs that spend 0G credit on one dreamer's behalf run on that dreamer's own 0G key, if they connected one.
+const DREAMER: Record<string, (ref: string) => string | undefined> = {
+  "dream.paint": (ref) => getDream(ref)?.user_id,
+  "dream.video": (ref) => getDream(ref)?.user_id,
+  "dream.animate": (ref) => ref,
+  "night.run": (ref) => ref,
+};
 // Jobs whose failure means the dream itself is stuck. A failed notice leaves the dream alone.
 const PIPELINE = new Set(["dream.paint", "dream.store"]);
 
@@ -44,7 +52,7 @@ async function run(job: Job) {
   if (!handler) return fail(job.id, `No handler for ${job.kind}`);
   const started = Date.now();
   try {
-    await handler(job.ref);
+    await asDreamer(DREAMER[job.kind]?.(job.ref), () => handler(job.ref));
     finish(job.id);
     console.log(`[worker] ${job.kind} ${job.ref} done in ${Math.round((Date.now() - started) / 1000)}s`);
   } catch (error) {

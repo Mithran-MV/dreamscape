@@ -6,6 +6,7 @@ import { addTrace, getBlob, getDream, putBlob, updateDream, type Dream, type Fee
 import { newId } from "./crypto";
 import { enqueue, hasOpenJob } from "./jobs";
 import { notify } from "./push";
+import { asDreamscape } from "./zerog/account";
 import { chatJson, downloadVideo, drawPanel, pollVideo, submitVideo } from "./zerog/router";
 
 export type Line = { who: string; text: string };
@@ -259,9 +260,12 @@ export async function pollLivingPortrait(dreamId: string) {
   const dream = getDream(dreamId);
   if (!dream?.video_job || dream.video_state !== "rendering") return;
   const mode = dream.video_mode ?? "verified";
-  const { job, trace } = await pollVideo(dream.video_job, mode);
+  // A clip belongs to the 0G account that started it, so it's fetched on that account's key.
+  const startedBy = getDb().prepare("SELECT paid_by FROM traces WHERE dream_id = ? AND step = 'video' ORDER BY id DESC LIMIT 1").get(dreamId) as { paid_by: string | null } | undefined;
+  const onStartersKey = <T,>(fn: () => Promise<T>) => (startedBy?.paid_by === "you" ? fn() : asDreamscape(fn));
+  const { job, trace } = await onStartersKey(() => pollVideo(dream.video_job!, mode));
   if (job.status === "completed") {
-    putBlob(dream.user_id, `dream/${dream.id}/video`, "video/mp4", await downloadVideo(job.id, mode));
+    putBlob(dream.user_id, `dream/${dream.id}/video`, "video/mp4", await onStartersKey(() => downloadVideo(job.id, mode)));
     addTrace(dream.id, "video done", trace);
     updateDream(dream.id, { video_state: "done" });
   } else if (job.status === "failed" || now() - (dream.video_at ?? 0) > VIDEO_WAIT_MS) {
