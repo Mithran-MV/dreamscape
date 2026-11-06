@@ -35,8 +35,10 @@ export async function GET() {
 export async function POST(request: Request) {
   const user = await currentUser();
   if (!user) return Response.json({ error: "Sign in first." }, { status: 401 });
-  // Checked before the body is read, so an oversized upload never reaches memory.
-  if (Number(request.headers.get("content-length") ?? 0) > MAX_AUDIO + 64 * 1024) return Response.json({ error: "That voice note is too long." }, { status: 413 });
+  // Checked before the body is read, so an oversized upload never reaches memory. Browsers always send the
+  // length with a form; a body without one is refused (and Apache caps the bytes themselves at 12 MB).
+  const length = request.headers.get("content-length");
+  if (length === null || !(Number(length) <= MAX_AUDIO + 64 * 1024)) return Response.json({ error: "That voice note is too long." }, { status: 413 });
   const { n } = getDb().prepare("SELECT count(*) AS n FROM dreams WHERE user_id = ? AND created_at >= ?").get(user.id, Date.now() - 86_400_000) as { n: number };
   if (n >= DREAMS_PER_DAY) return Response.json({ error: "That's ten dreams in a day. The next one can wait for tomorrow." }, { status: 429 });
   const form = await request.formData();
