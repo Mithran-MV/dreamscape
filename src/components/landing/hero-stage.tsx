@@ -1,7 +1,9 @@
 "use client";
 // The hero: a dream told aloud becomes a painting. The gold record button listens, the spoken words
 // drift up and gather into a gilt frame, and the painting lays itself down inside it, stroke by stroke.
+// A moth comes to the button's light, follows the words up and falls asleep on the frame.
 // Plays once on load (about seven seconds) and settles. With reduced motion it shows the last frame.
+import { Moth } from "../moth";
 import { DreamPainting } from "./dream-painting";
 
 // Seconds from load. The CSS in landing.css times the frame, glow and caption to match.
@@ -79,6 +81,8 @@ export function HeroStage() {
           </span>
         ))}
       </div>
+
+      <Moth className="ls-moth" />
 
       <figcaption className="ls-caption">
         <span className="font-display italic">&ldquo;I was flying over my old school, and the roof turned into the sea.&rdquo;</span>

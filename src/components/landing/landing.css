@@ -260,6 +260,18 @@
 }
 .ls-dropped { opacity: 0.4; }
 
+/* The moth. At rest it sleeps on the frame's top edge, near the right corner. */
+.ls-moth {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 1;
+  width: 12cqw;
+  margin: -4.6cqw 0 0 -6cqw;
+  translate: 73cqw 0.5cqw;
+  rotate: 12deg;
+}
+
 /* ---------- Motion ---------- */
 
 @media (prefers-reduced-motion: no-preference) {
@@ -279,6 +291,11 @@
   .ls-frame { animation: ls-arrive 0.6s var(--ease-out) 3.5s both; }
   .ls-frame-glow { animation: ls-fade 1.4s ease-out 6.2s both; }
   .ls-caption { animation: ls-lift 0.8s var(--ease-out) 6.4s both; }
+  /* The moth: drawn to the button while it listens, up with the words, then asleep on the frame. */
+  .ls-moth { animation: ls-moth-fly 7s ease-in-out 0.3s both; }
+  .ls-moth .moth-wing { animation: moth-beat 0.12s ease-in-out 0.3s 54 alternate, moth-breathe 6s ease-in-out 8s infinite; }
+  .ls-moth .moth-open { animation: ls-moth-awake 7.2s linear both; }
+  .ls-moth .moth-shut { animation: ls-moth-asleep 7.2s linear both; }
   .ls-replay { animation: ls-fade 0.5s ease-out 7.2s both; }
   .ls-paint .ls-wash { animation: ls-fade 0.6s ease-out var(--d) both; }
   .ls-paint .ls-stroke {
@@ -349,6 +366,27 @@
   .ls-replay { display: none; }
 }
 
+@keyframes ls-moth-fly {
+  0% { opacity: 0; translate: 6cqw 116cqw; rotate: 25deg; }
+  6% { opacity: 1; translate: 22cqw 104cqw; rotate: 15deg; }
+  17% { translate: 66cqw 90cqw; rotate: 22deg; }
+  27% { translate: 60cqw 108cqw; rotate: -10deg; }
+  37% { translate: 34cqw 98cqw; rotate: -25deg; }
+  47% { translate: 42cqw 78cqw; rotate: 10deg; }
+  60% { translate: 20cqw 42cqw; rotate: -20deg; }
+  73% { translate: 88cqw 22cqw; rotate: 25deg; }
+  85% { translate: 80cqw 4cqw; rotate: 5deg; }
+  93% { translate: 73cqw -0.6cqw; rotate: 14deg; }
+  100% { translate: 73cqw 0.5cqw; rotate: 12deg; }
+}
+@keyframes ls-moth-awake {
+  0%, 97% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes ls-moth-asleep {
+  0%, 97% { opacity: 0; }
+  100% { opacity: 1; }
+}
 @keyframes ls-arrive {
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: none; }

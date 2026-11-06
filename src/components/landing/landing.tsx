@@ -2,6 +2,8 @@
 // The signed-out front page. One bold moment (the hero, where a told dream becomes a painting),
 // then a quiet walk past what Dreamscape does with it. The sign-in form arrives as a slot.
 import { useState } from "react";
+import { Logo, LogoMark } from "../logo";
+import { Moth } from "../moth";
 import { ComicStrip } from "./comic-strip";
 import { HeroStage } from "./hero-stage";
 import { NamePlate, Sealed, VisitDoor, WorldDream } from "./scenes";
@@ -35,7 +37,7 @@ export function Landing({ signIn }: { signIn: React.ReactNode }) {
       <section className="ls-hero mx-auto grid w-full max-w-6xl gap-x-14 px-5 pb-16 pt-6 sm:px-8 sm:pt-10 md:pb-24 md:pt-16">
         <div className="ls-hero-text">
           <div className="flex items-center justify-between gap-4">
-            <p className="font-display text-2xl italic text-gold">Dreamscape</p>
+            <Logo className="text-[1.75rem]" />
             {/* On a phone the form sits below the picture, so this jumps straight to it. */}
             <a href="#sign-in" onClick={goToSignIn} className="ls-press rounded-full border border-gold/50 px-4 py-2 text-sm text-gold md:hidden">
               Sign in
@@ -119,17 +121,24 @@ export function Landing({ signIn }: { signIn: React.ReactNode }) {
       <section className="ls-section mx-auto flex w-full max-w-2xl flex-col items-center px-5 text-center sm:px-8">
         <Heading>Keep tomorrow morning&rsquo;s dream.</Heading>
         <Body className="max-w-[36ch]">Sign in tonight. In the morning, hold the gold button and tell it.</Body>
-        <a
-          href="#sign-in"
-          onClick={goToSignIn}
-          className="ls-press mt-8 rounded-xl bg-gold px-8 py-3.5 font-medium text-gold-ink shadow-[0_8px_30px_rgb(240_200_120/0.3)]"
-        >
-          Sign in
-        </a>
+        {/* The moth from the hero, asleep on the button until morning. */}
+        <span className="relative mt-10 inline-block">
+          <a
+            href="#sign-in"
+            onClick={goToSignIn}
+            className="ls-press block rounded-xl bg-gold px-8 py-3.5 font-medium text-gold-ink shadow-[0_8px_30px_rgb(240_200_120/0.3)]"
+          >
+            Sign in
+          </a>
+          <Moth className="moth-rest absolute -right-7 -top-8 w-14 rotate-[14deg]" />
+        </span>
       </section>
 
       <footer className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-x-8 gap-y-2 border-t border-edge px-5 py-8 text-sm text-dim sm:px-8">
-        <p>Built at ETHGlobal Mumbai on 0G, ENS and Arkiv</p>
+        <p className="flex items-center gap-2.5">
+          <LogoMark className="h-6 w-auto" />
+          Built at ETHGlobal Mumbai on 0G, ENS and Arkiv
+        </p>
         <a href={REPO} className="rounded text-mist underline decoration-line underline-offset-4 transition-colors hover:text-gold">
           Source on GitHub
         </a>
