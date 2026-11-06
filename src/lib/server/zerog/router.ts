@@ -1,6 +1,7 @@
 // 0G Private Computer router: an OpenAI-compatible API. Sealed steps send the private trust mode,
 // so they fail with 503 instead of ever falling back to a provider that can read the dream.
 import { env } from "../env";
+import { asDreamscape, currentPayer, keyRefused } from "./account";
 
 export type Trace = {
   model: string;
@@ -13,6 +14,8 @@ export type Trace = {
   // receipt key that can be checked against the provider's signature on 0G.
   e2ee: string | null;
   resKey: string | null;
+  // Whose 0G credit paid: the dreamer's own connected account, or Dreamscape's.
+  paidBy: "you" | "dreamscape";
 };
 
 export class ZeroGError extends Error {
@@ -31,7 +34,7 @@ type Sealing = "private" | "verified" | "standard";
 
 function headers(sealing: Sealing, json: boolean): Record<string, string> {
   const h: Record<string, string> = {
-    Authorization: `Bearer ${env.zgApiKey()}`,
+    Authorization: `Bearer ${currentPayer()?.key ?? env.zgApiKey()}`,
     "X-Title": "Dreamscape",
     "HTTP-Referer": "https://dreamscape.hacklabs.in",
   };
@@ -53,12 +56,20 @@ function readTrace(model: string, ms: number, res: Response, body: unknown): Tra
     ms,
     e2ee: res.headers.get("x-0g-e2ee"),
     resKey: res.headers.get("zg-res-key"),
+    paidBy: currentPayer() ? "you" : "dreamscape",
   };
 }
 
 async function call<T>(path: string, model: string, init: RequestInit): Promise<{ data: T; trace: Trace }> {
   const started = Date.now();
   const res = await fetch(`${env.zgRouter()}${path}`, { ...init, signal: AbortSignal.timeout(180_000) });
+  // The dreamer's own key was refused (revoked, or out of credit): note it, and finish on Dreamscape's key.
+  const you = currentPayer();
+  if (you && (res.status === 401 || res.status === 402 || res.status === 403)) {
+    keyRefused(you.userId, res.status, await res.text());
+    const ours = { ...(init.headers as Record<string, string>), Authorization: `Bearer ${env.zgApiKey()}` };
+    return asDreamscape(() => call<T>(path, model, { ...init, headers: ours }));
+  }
   const text = await res.text();
   let body: unknown = null;
   try {
