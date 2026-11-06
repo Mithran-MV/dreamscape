@@ -38,11 +38,15 @@ export function signInOrClaim(handle: string, pass: string): { id: string } | { 
   return passMatches(pass, user.pass_hash) ? { id: user.id } : { error: "That name is taken, or the passphrase is wrong." };
 }
 
-// Privy sign-in. A known Privy user signs straight in; a new one picks a handle first, which becomes
-// <handle>.dream-scape.eth. Either way, a dreamer with a wallet and no name yet gets one queued.
+// Privy sign-in, through 0G's app or the live site's wallet app. A known Privy user, or a wallet already on a
+// gallery, signs straight in; a new one picks a handle first, which becomes <handle>.dream-scape.eth. Either
+// way, a dreamer with a wallet and no name yet gets one queued.
 export function signInWithPrivy(privyId: string, wallet: string | null, handle?: string): { id: string } | { needsHandle: true } | { error: string } {
   const db = getDb();
-  const found = db.prepare("SELECT id, wallet, ens_json FROM users WHERE privy_id = ?").get(privyId) as { id: string; wallet: string | null; ens_json: string | null } | undefined;
+  type Found = { id: string; wallet: string | null; ens_json: string | null } | undefined;
+  const found =
+    (db.prepare("SELECT id, wallet, ens_json FROM users WHERE privy_id = ?").get(privyId) as Found) ??
+    (wallet ? (db.prepare("SELECT id, wallet, ens_json FROM users WHERE lower(wallet) = lower(?) ORDER BY created_at LIMIT 1").get(wallet) as Found) : undefined);
   if (found) {
     if (!found.wallet && wallet) db.prepare("UPDATE users SET wallet = ? WHERE id = ?").run(wallet, found.id);
     if ((found.wallet ?? wallet) && !found.ens_json && !hasOpenJob(found.id, ["ens.onboard"])) enqueue("ens.onboard", found.id);
