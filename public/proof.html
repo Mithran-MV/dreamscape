@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dreamscape receipts</title>
+<meta name="description" content="Every on-chain and 0G receipt behind Dreamscape, with links to check each one.">
+<style>
+  :root { color-scheme: dark; --ground: #0f0c1c; --card: #191430; --edge: #2c2550; --paper: #f5efe3; --mist: #b9b2c9; --gold: #f0c878; --teal: #6fd3bc; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--ground); color: var(--paper); font: 16px/1.55 ui-sans-serif, system-ui, -apple-system, sans-serif; }
+  main { max-width: 1040px; margin: 0 auto; padding: 48px 20px 64px; }
+  h1 { font: 600 clamp(32px, 5vw, 48px)/1.1 Georgia, "Times New Roman", serif; margin: 0 0 8px; }
+  .lede { color: var(--mist); margin: 0 0 36px; max-width: 46rem; }
+  .lede a { color: var(--gold); }
+  section { background: var(--card); border: 1px solid var(--edge); border-radius: 18px; padding: 22px 22px 8px; margin-bottom: 22px; }
+  h2 { font: 600 22px/1.2 Georgia, serif; margin: 0 0 4px; color: var(--gold); }
+  .what { color: var(--mist); margin: 0 0 14px; font-size: 15px; }
+  .row { display: grid; grid-template-columns: minmax(0, 15rem) minmax(0, 1fr); gap: 4px 18px; padding: 12px 0; border-top: 1px solid var(--edge); }
+  .row:first-of-type { border-top: 0; }
+  .label { font-weight: 600; }
+  .label small { display: block; font-weight: 400; color: var(--mist); font-size: 13px; }
+  .links { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .links a, .links code { font: 13.5px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--teal); overflow-wrap: anywhere; text-decoration: none; }
+  .links a:hover { text-decoration: underline; }
+  .links span { color: var(--mist); font-size: 13px; }
+  .tag { display: inline-block; font-size: 12px; font-weight: 600; color: var(--ground); background: var(--gold); border-radius: 999px; padding: 1px 9px; margin-left: 6px; vertical-align: 1px; }
+  footer { color: var(--mist); font-size: 14px; margin-top: 28px; }
+  @media (max-width: 680px) { .row { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Dreamscape receipts</h1>
+  <p class="lede">Every link below opens a public explorer, so you can check that a dream was really read, painted, stored, named and listed. Each piece's own page on <a href="https://dreamscape.hacklabs.in">dreamscape.hacklabs.in</a> shows the same proof under "How it was made".</p>
+
+  <section>
+    <h2>0G Private Computer, Storage and Chain</h2>
+    <p class="what">Each dream is read and painted on 0G Private Computer, stored encrypted on 0G Storage, and anchored in DreamRegistry on 0G Galileo.</p>
+    <div class="row">
+      <div class="label">DreamRegistry<small>One record per kept dream</small></div>
+      <div class="links"><a href="https://chainscan-galileo.0g.ai/address/0x1622A080E8c5c47b12CB6364D248228c7bF86B66">0x1622A080E8c5c47b12CB6364D248228c7bF86B66</a></div>
+    </div>
+    <div class="row">
+      <div class="label">Record #6, "River of Humming Lanterns"<small>Processed on the live server, Nov 6</small></div>
+      <div class="links">
+        <span>Anchor transaction</span><a href="https://chainscan-galileo.0g.ai/tx/0x587930b389c939d74ff4faa30c5613c8ee7ab6cb73ca02127f22b1c0ee6d1966">0x587930b389c939d74ff4faa30c5613c8ee7ab6cb73ca02127f22b1c0ee6d1966</a>
+        <span>Encrypted record on 0G Storage</span><a href="https://dreamscape.hacklabs.in/api/storage/0x53eaa785307baab07bf26a1ad8379d90721ae710b59f948c50de86e404ad16c1">0x53eaa785307baab07bf26a1ad8379d90721ae710b59f948c50de86e404ad16c1</a>
+        <span>Encrypted painting on 0G Storage</span><a href="https://dreamscape.hacklabs.in/api/storage/0xde457e2a86e9219cd62c77e469a8def47ab859868976301bc25013d73256d243">0xde457e2a86e9219cd62c77e469a8def47ab859868976301bc25013d73256d243</a>
+        <span>Read by glm-5.3, sealed <span class="tag">request ID</span></span><code>083d27b6-cba3-4a13-801c-d8df2c86fe41</code>
+        <span>Painted by z-image-turbo, TEE verified <span class="tag">request ID</span></span><code>de7a897c-6202-4977-a817-c1cb26112f0d</code>
+      </div>
+    </div>
+    <div class="row">
+      <div class="label">Record #5, "Leap Above the Palace"<small>mithran-12's gallery</small></div>
+      <div class="links">
+        <span>Anchor transaction</span><a href="https://chainscan-galileo.0g.ai/tx/0xd3f096b28a21ca6fea1f6d1bb0792537eeb50c12cb014f35431a1aecaffadc0d">0xd3f096b28a21ca6fea1f6d1bb0792537eeb50c12cb014f35431a1aecaffadc0d</a>
+        <span>Encrypted record on 0G Storage</span><a href="https://dreamscape.hacklabs.in/api/storage/0xb6de87a71f8c69eabd39772fcf11c2449cd4fc43feb31646ae726193268aabed">0xb6de87a71f8c69eabd39772fcf11c2449cd4fc43feb31646ae726193268aabed</a>
+        <span>Encrypted painting on 0G Storage</span><a href="https://dreamscape.hacklabs.in/api/storage/0x8e79e53ebd201163f22fe9e959efc5ec4bfcb2d3ab4347be34a7ad6d0b814e42">0x8e79e53ebd201163f22fe9e959efc5ec4bfcb2d3ab4347be34a7ad6d0b814e42</a>
+        <span>Read by glm-5.3, sealed <span class="tag">request ID</span></span><code>e623198d-2a68-44ef-acf7-2f698ad76bbe</code>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>ENS on Sepolia</h2>
+    <p class="what">Every gallery is a name under dream-scape.eth, owned by the dreamer's wallet, and every day is a name under it that points at that day's dream on 0G Storage.</p>
+    <div class="row">
+      <div class="label">dream-scape.eth<small>DreamscapeRegistry holds the names under it</small></div>
+      <div class="links">
+        <a href="https://sepolia.app.ens.domains/dream-scape.eth">sepolia.app.ens.domains/dream-scape.eth</a>
+        <a href="https://sepolia.etherscan.io/address/0xCB61EabBFdb446a561A29814312F5ECB542d5C87">0xCB61EabBFdb446a561A29814312F5ECB542d5C87</a>
+      </div>
+    </div>
+    <div class="row">
+      <div class="label">mithran-12.dream-scape.eth<small>A gallery, registered to the dreamer</small></div>
+      <div class="links">
+        <a href="https://sepolia.app.ens.domains/mithran-12.dream-scape.eth">sepolia.app.ens.domains/mithran-12.dream-scape.eth</a>
+        <span>Registration</span><a href="https://sepolia.etherscan.io/tx/0x2a568a9d1117e3d160fd9c5cbee984011d3d88603f9bc8bc259528eb5534101f">0x2a568a9d1117e3d160fd9c5cbee984011d3d88603f9bc8bc259528eb5534101f</a>
+      </div>
+    </div>
+    <div class="row">
+      <div class="label">2026-11-06.mithran-12.dream-scape.eth<small>A day, answered by the gallery's own resolver</small></div>
+      <div class="links">
+        <span>Records written (dreamscape.root, date, scope)</span><a href="https://sepolia.etherscan.io/tx/0xb7851716d8bf09d634a5d5c1a7a9e8af3def2b9bc7a37c22a2bc67dbbe4ce305">0xb7851716d8bf09d634a5d5c1a7a9e8af3def2b9bc7a37c22a2bc67dbbe4ce305</a>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Night Market on Sepolia</h2>
+    <p class="what">Pieces sell as numbered editions for Circle's USDC. Each edition is an ENS name the buyer owns, and 5% of every sale goes to a commons fund.</p>
+    <div class="row">
+      <div class="label">NightMarket<small>Checkout and editions</small></div>
+      <div class="links"><a href="https://sepolia.etherscan.io/address/0xD40165F204E4E1f8014d331e1d4c2CFe1eF904bC">0xD40165F204E4E1f8014d331e1d4c2CFe1eF904bC</a></div>
+    </div>
+    <div class="row">
+      <div class="label">"Leap Above the Palace"<small>A painting, 1 edition at 2 USDC</small></div>
+      <div class="links">
+        <a href="https://dreamscape.hacklabs.in/market/0xbb9ebe2d287efcca46428e3d9f82d44e87efe8824f142c5801fa0806abd2dd5b">The piece's market page</a>
+        <span>Listing</span><a href="https://sepolia.etherscan.io/tx/0x6e99700dae16f58d431e311eeba39aa04a61503209eab2c0eb37a6069fd9192a">0x6e99700dae16f58d431e311eeba39aa04a61503209eab2c0eb37a6069fd9192a</a>
+      </div>
+    </div>
+    <div class="row">
+      <div class="label">"Volcano Coding Session"<small>A nightly comic, 10 editions at 3 USDC</small></div>
+      <div class="links">
+        <a href="https://dreamscape.hacklabs.in/market/0xce8494027cc7c020f2fab6aca64c106c6f568236329579595d1ce9de0e4f9062">The piece's market page</a>
+        <span>Listing</span><a href="https://sepolia.etherscan.io/tx/0x89fbc57790fc4f65d3c337531b1bd0542c1372b73f0a3c89a0a3f59b93314ad8">0x89fbc57790fc4f65d3c337531b1bd0542c1372b73f0a3c89a0a3f59b93314ad8</a>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Arkiv on Rabdi</h2>
+    <p class="what">Listings and vendor stalls live on Arkiv, so anyone can search the market by theme, kind and price without Dreamscape's server.</p>
+    <div class="row">
+      <div class="label">Listings</div>
+      <div class="links">
+        <a href="https://rabdi.explorer.arkiv.network/entity/0xe4769d5af8265188a7519eeae7fc6bb76619cfb5a4df844f0abf2b47ee6b826d">0xe4769d5af8265188a7519eeae7fc6bb76619cfb5a4df844f0abf2b47ee6b826d</a>
+        <a href="https://rabdi.explorer.arkiv.network/entity/0x535fd19bdb13b413a248fab8faa01dca975402bf932bc57029e0691cc6aff4d0">0x535fd19bdb13b413a248fab8faa01dca975402bf932bc57029e0691cc6aff4d0</a>
+      </div>
+    </div>
+    <div class="row">
+      <div class="label">Vendor agent "portraits"<small>Its stall</small></div>
+      <div class="links"><a href="https://rabdi.explorer.arkiv.network/entity/0xc590f9a57b37bb16336d534aa384d27d03745af473b5d3c131f5b4d7acabadd7">0xc590f9a57b37bb16336d534aa384d27d03745af473b5d3c131f5b4d7acabadd7</a></div>
+    </div>
+  </section>
+
+  <footer>Source: <a href="https://github.com/Mithran-MV/dreamscape" style="color: var(--gold)">github.com/Mithran-MV/dreamscape</a>. 0G request IDs appear on no public explorer; DreamRegistry anchors each dream's storage roots on 0G Chain instead.</footer>
+</main>
+</body>
+</html>
