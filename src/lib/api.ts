@@ -107,6 +107,10 @@ export const api = {
     fetch("/api/session/zerog", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token, handle }) }).then((r) =>
       json<{ ok?: true; needsHandle?: true }>(r),
     ),
+  walletSignIn: (token: string, handle?: string) =>
+    fetch("/api/session/wallet", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token, handle }) }).then((r) =>
+      json<{ ok?: true; needsHandle?: true }>(r),
+    ),
   signIn: (handle: string, passphrase: string) =>
     fetch("/api/session", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ handle, passphrase }) }).then((r) => json<{ handle: string }>(r)),
   nightlyDrafts: () => fetch("/api/drafts").then((r) => json<NightlyDrafts>(r)),

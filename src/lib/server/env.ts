@@ -29,6 +29,7 @@ export const env = {
   zgPanel: () => ({ main: read("ZG_PANEL_MODEL") ?? "tencent/hy-image-3.5-preview", backups: list("ZG_PANEL_BACKUPS") ?? ["bytedance/seedream-5.0-flash", "minimax-image-01"] }),
   zgRouter: () => read("ZG_ROUTER_URL") ?? "https://router-api.0g.ai/v1",
   zgPrivyAppId: () => required("NEXT_PUBLIC_ZG_PRIVY_APP_ID"), // 0G's own Privy app, behind "Sign in with 0G"
+  walletPrivyAppId: () => read("NEXT_PUBLIC_PRIVY_APP_ID"), // Dreamscape's own Privy app, wallet login only, for the live site
   serverKey: () => required("SERVER_PRIVATE_KEY") as `0x${string}`,
   scribeKey: () => required("SCRIBE_PRIVATE_KEY") as `0x${string}`,
   masterKey: () => required("MASTER_KEY"),
