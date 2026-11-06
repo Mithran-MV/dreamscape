@@ -235,7 +235,7 @@ function DaySkeleton() {
 function Proof({ dream }: { dream: DreamDetail }) {
   const { traces, storage, registry, ens } = dream.proof;
   if (!traces.length && !storage.length) return null;
-  const sealed = traces.some((t) => SEALED_STEPS.has(t.step));
+  const sealed = traces.some((t) => SEALED_STEPS.has(t.step) && (t.tee_verified === 1 || t.e2ee === "sealed"));
   const verified = traces.some((t) => SEALED_STEPS.has(t.step) && t.tee_verified === 1);
   const summary = proofLine([
     verified ? "sealed and verified on 0G" : sealed ? "sealed by 0G" : traces.length > 0 && "made on 0G",
@@ -250,10 +250,14 @@ function Proof({ dream }: { dream: DreamDetail }) {
         {traces.map((t, i) => (
           <li key={i} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2.5 text-ui">
             <span className="w-24 font-semibold capitalize text-paper">{t.step}</span>
-            <span className="font-mono text-meta text-mist">{t.model}</span>
-            {SEALED_STEPS.has(t.step) && (
+            <span className="font-mono text-meta text-mist">
+              {t.model}
+              {t.stand_in && <span className="font-sans text-dim">, standing in for {t.stand_in}</span>}
+            </span>
+            {/* Sealed only when 0G said so for this step: a backup painter runs on standard trust. */}
+            {(t.tee_verified === 1 || t.e2ee === "sealed") && (
               <span className="rounded-md border border-ok/50 px-2 py-px text-meta font-semibold text-ok" title={t.res_key ? `Receipt key ${t.res_key}` : undefined}>
-                {t.tee_verified === 1 ? "Sealed, enclave verified" : t.e2ee === "sealed" ? "Sealed, encrypted end to end" : "Sealed"}
+                {t.tee_verified === 1 ? "Sealed, enclave verified" : "Sealed, encrypted end to end"}
               </span>
             )}
             <span className="font-mono text-meta text-dim">request {t.request_id ?? "n/a"}</span>

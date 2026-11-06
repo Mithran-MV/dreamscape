@@ -124,7 +124,10 @@ function EpisodeView() {
                 {ep.traces.map((t, i) => (
                   <li key={i} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2.5 text-ui">
                     <span className="w-24 font-semibold capitalize text-paper">{t.step}</span>
-                    <span className="font-mono text-meta text-mist">{t.model}</span>
+                    <span className="font-mono text-meta text-mist">
+                      {t.model}
+                      {t.stand_in && <span className="font-sans text-dim">, standing in for {t.stand_in}</span>}
+                    </span>
                     <span className="font-mono text-meta text-dim">request {t.request_id ?? "n/a"}</span>
                     {t.cost_usd != null && <span className="text-meta text-dim">${t.cost_usd.toFixed(4)}</span>}
                   </li>
