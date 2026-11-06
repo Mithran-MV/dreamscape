@@ -1,7 +1,7 @@
 // The Night Market's app side: list a hung comic or a painted dream as numbered editions, find it
 // on Arkiv, sell it through NightMarket in USDC, and open the full piece to whoever holds an edition.
 import sharp from "sharp";
-import { createPublicClient, createWalletClient, http, keccak256, parseAbi, parseEventLogs, toHex, zeroAddress, type Address, type Hex } from "viem";
+import { createPublicClient, createWalletClient, encodeFunctionData, http, keccak256, parseAbi, parseEventLogs, toHex, zeroAddress, type Address, type Hex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { sepolia } from "viem/chains";
 import { getDb, now } from "./db";
@@ -262,6 +262,48 @@ export async function holdsEdition(piece: Piece, wallet: string | null) {
 }
 
 export const editionName = (label: string, handle: string) => `${label}.${handle}.${env.ensName()}`;
+
+// Editions this wallet holds now. They move between wallets, so who holds each is read from ENS, not
+// from our note of who bought it: an edition given by a friend shows up here too.
+export async function heldEditions(wallet: string) {
+  const rows = getDb()
+    .prepare("SELECT s.piece_id, s.edition_no, s.label, s.tx, p.title, p.kind, p.user_id FROM sales s JOIN pieces p ON p.id = s.piece_id ORDER BY s.created_at DESC")
+    .all() as { piece_id: string; edition_no: number; label: string; tx: string; title: string; kind: PieceKind; user_id: string }[];
+  const client = reader();
+  const held = [];
+  for (const r of rows) {
+    const seller = sellerOf(r.user_id);
+    if (!seller) continue;
+    const owner = await client.readContract({ address: seller.ens.editions, abi: registryAbi, functionName: "findOwner", args: [r.label] }).catch(() => null);
+    if (!owner || owner.toLowerCase() !== wallet.toLowerCase()) continue;
+    held.push({ pieceId: r.piece_id, title: r.title, kind: r.kind, editionNo: r.edition_no, name: editionName(r.label, seller.handle), maker: seller.handle, boughtTx: r.tx, preview: `/api/market/${r.piece_id}/preview` });
+  }
+  return held;
+}
+
+const erc1155 = parseAbi(["function safeTransferFrom(address from, address to, uint256 id, uint256 amount, bytes data)"]);
+
+// Giving an edition to a friend: the holder's own wallet sends the ERC-1155 transfer in the maker's
+// editions registry, so the server only checks it and spells it out. `to` is a gallery name or an address.
+export async function giveTx(from: string, pieceId: string, editionNo: number, to: string): Promise<{ tx: { to: Address; data: Hex }; friend: { handle: string | null; wallet: Address } } | { error: string }> {
+  const piece = getPiece(pieceId);
+  const seller = piece && sellerOf(piece.user_id);
+  const sale = getDb().prepare("SELECT label, token_id FROM sales WHERE piece_id = ? AND edition_no = ?").get(pieceId, editionNo) as { label: string; token_id: string } | undefined;
+  if (!piece || !seller || !sale) return { error: "That edition isn't in the Night Market." };
+  const owner = await reader().readContract({ address: seller.ens.editions, abi: registryAbi, functionName: "findOwner", args: [sale.label] });
+  if (owner.toLowerCase() !== from.toLowerCase()) return { error: "That edition isn't yours to give." };
+  const name = to.trim().toLowerCase().replace(new RegExp(`\\.${env.ensName().replace(".", "\\.")}$`), "");
+  const friend = /^0x[0-9a-f]{40}$/.test(name)
+    ? { handle: (getDb().prepare("SELECT handle FROM users WHERE lower(wallet) = ?").get(name) as { handle: string } | undefined)?.handle ?? null, wallet: name as Address }
+    : (() => {
+        const row = getDb().prepare("SELECT handle, wallet FROM users WHERE handle = ?").get(name) as { handle: string; wallet: string | null } | undefined;
+        return row?.wallet ? { handle: row.handle, wallet: row.wallet as Address } : null;
+      })();
+  if (!friend) return { error: `There's no gallery called ${name}. Use their gallery name, or their wallet address.` };
+  if (friend.wallet.toLowerCase() === from.toLowerCase()) return { error: "That's your own wallet." };
+  const data = encodeFunctionData({ abi: erc1155, functionName: "safeTransferFrom", args: [from as Address, friend.wallet, BigInt(sale.token_id), BigInt(1), "0x"] });
+  return { tx: { to: seller.ens.editions, data }, friend };
+}
 export const getPreview = (pieceId: string) => getBlob(MARKET_OWNER, previewKey(pieceId));
 
 const card = (r: ListingRow) => ({
