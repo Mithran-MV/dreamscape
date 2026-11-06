@@ -8,6 +8,8 @@ import { env } from "./env";
 
 const GAS_ETH = "0.003";
 const USDC = parseUnits("5", 6);
+// At most this many new wallets a day, so throwaway accounts can't empty the server's Sepolia funds.
+const DRIPS_PER_DAY = 25;
 const erc20 = parseAbi(["function balanceOf(address) view returns (uint256)", "function transfer(address to, uint256 amount) returns (bool)"]);
 
 // Job 'wallet.drip', ref = user id. Sent once per account. If the server is out of USDC, the
@@ -15,6 +17,9 @@ const erc20 = parseAbi(["function balanceOf(address) view returns (uint256)", "f
 export async function dripJob(userId: string) {
   const user = getDb().prepare("SELECT wallet, dripped_at FROM users WHERE id = ?").get(userId) as { wallet: string | null; dripped_at: number | null } | undefined;
   if (!user?.wallet || user.dripped_at) return;
+  const { n } = getDb().prepare("SELECT count(*) AS n FROM users WHERE dripped_at >= ?").get(now() - 86_400_000) as { n: number };
+  // Skipped, not failed: the next sign-in queues the drip again.
+  if (n >= DRIPS_PER_DAY) return console.warn(`[drip] ${n} wallets funded in the last day, so ${user.wallet} waits`);
   const to = user.wallet as `0x${string}`;
   const transport = http(env.sepoliaRpc());
   const reader = createPublicClient({ chain: sepolia, transport });
