@@ -27,8 +27,12 @@ Everything below is live on Ethereum Sepolia under `dream-scape.eth`, on the ENS
 
 | What | Link |
 |---|---|
-| A gallery name | [mithran.dream-scape.eth](https://sepolia.app.ens.domains/mithran.dream-scape.eth) |
+| A gallery name | [mithran.dream-scape.eth](https://sepolia.app.ens.domains/mithran.dream-scape.eth), [mithran-12.dream-scape.eth](https://sepolia.app.ens.domains/mithran-12.dream-scape.eth) |
 | A day record written by the scribe | [transaction](https://sepolia.etherscan.io/tx/0x145ef83072bed10369611659ba3af5880a9c68608292044694183beb48a03ea9) |
+| `dreamscape.root` on `2026-11-06.mithran-12.dream-scape.eth`, set to that day's record on 0G Storage | [the TextUpdated log](https://sepolia.etherscan.io/tx/0xea5b188bd27f6209f96603bc0293530fbd19eca4040bf0823f5e635051625240#eventlog) |
+| An edition bought from another wallet, minted by NightMarket to the buyer | [transaction](https://sepolia.etherscan.io/tx/0x4a82639e708b4166196371cc6ff8b55c86f3815a3b7c40649f0413530806a079) |
+| That buyer giving an edition to a friend (`melody-among-silent-ston-1.mithran.dream-scape.eth`) | [ERC-1155 transfer](https://sepolia.etherscan.io/tx/0xc15bbca62225e97dc25159fe9b686ec2c3e561bc47da8ebca23f2f0db66b8bb9) |
+| A pass to mithran-12's gallery, minted to the friend (`pysk7.passes.mithran-12.dream-scape.eth`) | [transaction](https://sepolia.etherscan.io/tx/0x943e3f58e5716ba9c3052c0d8af3a62f228b0cd120977048f4928620388791bf) |
 | The vendor agent's resolver | [`0x1f05…4177`](https://sepolia.etherscan.io/address/0x1f05D35450C20BeA5380710D3D5792952C324177) |
 | NightMarket, which mints editions | [`0xD401…04bC`](https://sepolia.etherscan.io/address/0xD40165F204E4E1f8014d331e1d4c2CFe1eF904bC) |
 
