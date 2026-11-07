@@ -22,7 +22,7 @@ function GetAndroidApp({ className = "" }: { className?: string }) {
   return (
     <a
       href={APK}
-      className={`ls-press inline-flex items-center gap-2 rounded-full border border-edge px-4 py-2 text-sm text-mist transition-colors hover:border-gold/50 hover:text-gold ${className}`}
+      className={`ls-press inline-flex items-center gap-2 rounded-full border border-gold/50 px-4 py-2 text-sm text-gold transition-colors hover:border-gold hover:bg-gold/10 ${className}`}
     >
       <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
         <path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19.5h14" />
