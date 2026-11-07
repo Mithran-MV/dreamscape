@@ -2,6 +2,8 @@
 // The signed-out front page. One bold moment (the hero, where a told dream becomes a painting),
 // then a quiet walk past what Dreamscape does with it. The sign-in form arrives as a slot.
 import { useState } from "react";
+import { inApp } from "@/lib/native";
+import { useClientValue } from "@/lib/use-client-value";
 import { Logo, LogoMark } from "../logo";
 import { Moth } from "../moth";
 import { ComicStrip } from "./comic-strip";
@@ -10,6 +12,25 @@ import { NamePlate, Sealed, VisitDoor, WorldDream } from "./scenes";
 import "./landing.css";
 
 const REPO = "https://github.com/Mithran-MV/dreamscape";
+// Apache serves the APK on the live domain, outside the repo, so this works from localhost too.
+const APK = "https://dreamscape.hacklabs.in/dreamscape.apk";
+
+// Inside the Android app there is nothing to download.
+function GetAndroidApp({ className = "" }: { className?: string }) {
+  const app = useClientValue(inApp, false);
+  if (app) return null;
+  return (
+    <a
+      href={APK}
+      className={`ls-press inline-flex items-center gap-2 rounded-full border border-edge px-4 py-2 text-sm text-mist transition-colors hover:border-gold/50 hover:text-gold ${className}`}
+    >
+      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19.5h14" />
+      </svg>
+      Get the Android app
+    </a>
+  );
+}
 
 function goToSignIn(e: React.MouseEvent<HTMLAnchorElement>) {
   const slot = document.getElementById("sign-in");
@@ -50,6 +71,7 @@ export function Landing({ signIn }: { signIn: React.ReactNode }) {
           <p className="mt-5 max-w-[34ch] text-[17px] leading-relaxed text-mist sm:mt-6 sm:text-lg">
             Ten seconds when you wake: hold, say it, done. A few minutes later it hangs in your gallery as a painting, with your voice kept beside it.
           </p>
+          <GetAndroidApp className="mt-6" />
         </div>
 
         <div id="sign-in" tabIndex={-1} className="ls-hero-slot w-full max-w-sm scroll-mt-24 focus:outline-none">
@@ -133,6 +155,7 @@ export function Landing({ signIn }: { signIn: React.ReactNode }) {
           </a>
           <Moth className="moth-rest absolute -right-7 -top-8 w-14 rotate-[14deg]" />
         </span>
+        <GetAndroidApp className="mt-8" />
       </section>
 
       <footer className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-x-8 gap-y-2 border-t border-edge px-5 py-8 text-sm text-dim sm:px-8">
