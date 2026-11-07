@@ -185,7 +185,9 @@ export function Landing({ signIn }: { signIn: React.ReactNode }) {
                 >
                   Sign in
                 </a>
-                <Moth className="moth-rest absolute -right-7 -top-8 w-14 rotate-[14deg] md:hidden" />
+                <span className="md:hidden">
+                  <Moth className="moth-rest absolute -right-7 -top-8 w-14 rotate-[14deg]" />
+                </span>
               </span>
               <GetAndroidApp />
             </div>
