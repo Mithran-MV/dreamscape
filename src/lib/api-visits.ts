@@ -43,7 +43,7 @@ export const visitsApi = {
   revokeTx: (id: string) => post(`/api/passes/${id}`, { action: "revoke" }).then((r) => json<{ tx?: Tx; revoked?: true }>(r)),
   revoked: (id: string, hash?: string) => post(`/api/passes/${id}`, { action: "revoked", hash }).then((r) => json<{ revoked: true }>(r)),
   door: () => fetch("/api/visits").then((r) => json<Door>(r)),
-  letIn: (knock: string, length: "10m" | "1h") => post("/api/visits", { knock, length }).then((r) => json<{ key: string; endsAt: number }>(r)),
+  letIn: (knock: string, minutes: number) => post("/api/visits", { knock, minutes }).then((r) => json<{ key: string; endsAt: number }>(r)),
   knock: (handle: string) => post("/api/visits/knock", { handle }).then((r) => json<{ key: string }>(r)),
   visit: (handle: string) =>
     fetch(`/api/g/${encodeURIComponent(handle)}`, { cache: "no-store" })

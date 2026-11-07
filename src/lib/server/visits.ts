@@ -14,7 +14,7 @@ import { activeVisit, knock, letIn, liveVisits, openKnocks } from "./arkiv/visit
 
 const KNOCK_MS = 12 * 3600_000;
 const PAINTED = new Set(["painted", "storing", "done"]);
-export const VISIT_LENGTHS = { "10m": 600, "1h": 3600 } as const;
+export const VISIT_LENGTHS = { "1m": 60, "10m": 600, "1h": 3600 } as const;
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS passes (

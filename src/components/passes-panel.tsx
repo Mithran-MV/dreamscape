@@ -39,7 +39,36 @@ function useDoor(every: number) {
   return { door, reload: load };
 }
 
-function Knocks({ door, busy, onLetIn }: { door: Door; busy: string | null; onLetIn: (key: string, length: "10m" | "1h") => void }) {
+const LENGTHS = [
+  { minutes: 1, label: "1 minute" },
+  { minutes: 10, label: "10 minutes" },
+  { minutes: 60, label: "1 hour" },
+];
+
+// Any whole number of minutes, up to a day.
+function CustomLength({ disabled, onLetIn }: { disabled: boolean; onLetIn: (minutes: number) => void }) {
+  const [minutes, setMinutes] = useState("5");
+  const n = Number(minutes);
+  const ok = Number.isInteger(n) && n >= 1 && n <= 1440;
+  return (
+    <span className="inline-flex items-center gap-2">
+      <input
+        type="number"
+        min={1}
+        max={1440}
+        value={minutes}
+        onChange={(e) => setMinutes(e.target.value)}
+        aria-label="Minutes"
+        className="w-20 rounded-full border border-line bg-ground/40 px-3 py-2 text-ui text-paper"
+      />
+      <button onClick={() => onLetIn(n)} disabled={disabled || !ok} className="btn btn-line">
+        Let in for {ok ? `${n} min` : "…"}
+      </button>
+    </span>
+  );
+}
+
+function Knocks({ door, busy, onLetIn }: { door: Door; busy: string | null; onLetIn: (key: string, minutes: number) => void }) {
   return (
     <div className="space-y-3">
       {door.knocks.map((k) => (
@@ -55,12 +84,12 @@ function Knocks({ door, busy, onLetIn }: { door: Door; busy: string | null; onLe
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <button onClick={() => onLetIn(k.key, "10m")} disabled={busy === k.key} className="btn btn-gold">
-              {busy === k.key ? "Opening the door…" : "Let in for 10 minutes"}
-            </button>
-            <button onClick={() => onLetIn(k.key, "1h")} disabled={busy === k.key} className="btn btn-line">
-              Let in for 1 hour
-            </button>
+            {LENGTHS.map((l) => (
+              <button key={l.minutes} onClick={() => onLetIn(k.key, l.minutes)} disabled={busy === k.key} className={`btn ${l.minutes === 10 ? "btn-gold" : "btn-line"}`}>
+                {busy === k.key && l.minutes === 10 ? "Opening the door…" : `Let in for ${l.label}`}
+              </button>
+            ))}
+            <CustomLength disabled={busy === k.key} onLetIn={(minutes) => onLetIn(k.key, minutes)} />
           </div>
         </div>
       ))}
@@ -74,11 +103,11 @@ export function KnockBanner() {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   if (!door || (door.knocks.length === 0 && door.inside.length === 0)) return null;
-  const letIn = (key: string, length: "10m" | "1h") => {
+  const letIn = (key: string, minutes: number) => {
     setBusy(key);
     setError(null);
     visitsApi
-      .letIn(key, length)
+      .letIn(key, minutes)
       .then(reload, (e: Error) => setError(plainError(e.message)))
       .finally(() => setBusy(null));
   };
@@ -174,7 +203,7 @@ export function PassesPanel() {
   return (
     <div className="mt-10 grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,25rem)] lg:gap-16">
       <div className="min-w-0 space-y-10">
-        {door && door.knocks.length > 0 && <Knocks door={door} busy={busy} onLetIn={(key, length) => act(key, () => visitsApi.letIn(key, length))} />}
+        {door && door.knocks.length > 0 && <Knocks door={door} busy={busy} onLetIn={(key, minutes) => act(key, () => visitsApi.letIn(key, minutes))} />}
 
         {door && door.inside.length > 0 && (
           <section>
