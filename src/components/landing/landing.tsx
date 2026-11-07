@@ -110,7 +110,7 @@ export function Landing({ signIn }: { signIn: React.ReactNode }) {
         <div className="max-w-xl">
           <Heading>Overnight, a comic in your own words.</Heading>
           <Body className="max-w-[46ch]">
-            While you sleep, Dreamscape turns your newest dream into a four-panel strip, and you approve it in the morning. Image models garble text, so the panels come back with no words in them. The app letters every caption and bubble itself, and the words stay exactly yours.
+            At 21:00 UTC, three hours before your 0G credit resets, Dreamscape turns your newest dream into a four-panel strip, and you approve it in the morning. Image models garble text, so the panels come back with no words in them. The app letters every caption and bubble itself, and the words stay exactly yours.
           </Body>
         </div>
         <div className="mt-10 md:mt-12">
@@ -123,7 +123,7 @@ export function Landing({ signIn }: { signIn: React.ReactNode }) {
         <div>
           <Heading>Private by default.</Heading>
           <Body className="max-w-[40ch]">
-            Your words, your voice and your paintings run through sealed AI inside an enclave on 0G. Dreamscape stores them encrypted on 0G Storage, and only you hold the key.
+            Your words, your voice and your paintings run through sealed AI inside an enclave on 0G. Dreamscape stores them encrypted on 0G Storage, and only you hold the key. Sign in with 0G and your own credit pays, about a cent a dream.
           </Body>
         </div>
         <Sealed />
