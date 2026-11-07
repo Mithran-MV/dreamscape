@@ -1,8 +1,7 @@
 "use client";
 // The gallery wall as a calendar: one month per block, newest first, Monday to Sunday.
 // Each day shows its newest dream that painted, or up to four when there were several; a click opens the
-// newest. Only the weeks from the one the gallery began in up to this one are drawn, so a new gallery
-// isn't a month of empty boxes. Days without a dream stay dim; days before the first dream or still ahead stay blank.
+// newest. Days without a dream stay dim, days ahead stay blank.
 import Link from "next/link";
 import { PAINTED, portraitUrl, type DreamSummary } from "@/lib/api";
 import { useClientValue } from "@/lib/use-client-value";
@@ -40,8 +39,6 @@ export function CalendarWall({ dreams, feeling }: { dreams: DreamSummary[]; feel
   const byDay = new Map<number, DreamSummary[]>();
   for (const d of dreams) byDay.set(d.day, [...(byDay.get(d.day) ?? []), d]);
   const oldest = Math.min(today, ...dreams.map((d) => d.day));
-  const firstWeek = oldest - mondayIndex(oldest);
-  const lastDay = today - mondayIndex(today) + 6;
 
   return (
     <div className="mt-14 space-y-14">
@@ -50,8 +47,6 @@ export function CalendarWall({ dreams, feeling }: { dreams: DreamSummary[]; feel
         const length = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
         const name = new Date(first * DAY_MS).toLocaleDateString(undefined, { month: "long", year: "numeric", timeZone: "UTC" });
         const kept = dreams.filter((d) => d.day >= first && d.day < first + length).length;
-        const from = Math.max(first, firstWeek);
-        const to = Math.min(first + length - 1, lastDay);
         return (
           <section key={`${year}-${month}`} aria-labelledby={`m-${year}-${month}`}>
             <div className="flex items-baseline justify-between gap-4">
@@ -67,11 +62,11 @@ export function CalendarWall({ dreams, feeling }: { dreams: DreamSummary[]; feel
                   <span className="hidden sm:inline">{w.slice(0, 3)}</span>
                 </p>
               ))}
-              {Array.from({ length: mondayIndex(from) }, (_, i) => (
+              {Array.from({ length: mondayIndex(first) }, (_, i) => (
                 <span key={`lead-${i}`} aria-hidden />
               ))}
-              {Array.from({ length: to - from + 1 }, (_, i) => (
-                <DayTile key={from + i} day={from + i} n={from + i - first + 1} today={today} began={oldest} dreams={byDay.get(from + i) ?? []} feeling={feeling} />
+              {Array.from({ length }, (_, i) => (
+                <DayTile key={first + i} day={first + i} n={i + 1} today={today} dreams={byDay.get(first + i) ?? []} feeling={feeling} />
               ))}
             </div>
           </section>
@@ -81,11 +76,10 @@ export function CalendarWall({ dreams, feeling }: { dreams: DreamSummary[]; feel
   );
 }
 
-function DayTile({ day, n, today, began, dreams, feeling }: { day: number; n: number; today: number; began: number; dreams: DreamSummary[]; feeling: string | null }) {
+function DayTile({ day, n, today, dreams, feeling }: { day: number; n: number; today: number; dreams: DreamSummary[]; feeling: string | null }) {
   const isToday = day === today;
   const date = new Date(day * DAY_MS).toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
   if (day > today) return <span role="listitem" aria-label={`${date}, still ahead`} />;
-  if (day < began) return <span role="listitem" aria-label={`${date}, before your first dream`} />;
 
   // The day's newest dream that painted (or is painting), so one failed try doesn't hide that morning's picture.
   const newest = dreams.find((d) => d.status !== "failed") ?? dreams[0];
