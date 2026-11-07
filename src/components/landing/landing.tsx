@@ -1,6 +1,7 @@
 "use client";
 // The signed-out front page. One bold moment (the hero, where a told dream becomes a painting),
 // then a quiet walk past what Dreamscape does with it. The sign-in form arrives as a slot.
+import Image from "next/image";
 import { useState } from "react";
 import { inApp } from "@/lib/native";
 import { useClientValue } from "@/lib/use-client-value";
@@ -184,6 +185,11 @@ export function Landing({ signIn }: { signIn: React.ReactNode }) {
           <Moth className="moth-rest absolute -right-7 -top-8 w-14 rotate-[14deg]" />
         </span>
         <GetAndroidApp className="mt-8" />
+        {/* On a big screen, anyone in the room can scan their way in. */}
+        <figure className="mt-12 hidden flex-col items-center gap-3 md:flex">
+          <Image src="/landing/qr.png" alt="QR code that opens dreamscape.hacklabs.in" width={176} height={176} className="rounded-2xl" />
+          <figcaption className="text-sm text-dim">Scan to open it on your phone</figcaption>
+        </figure>
       </section>
 
       <footer className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-x-8 gap-y-2 border-t border-edge px-5 py-8 text-sm text-dim sm:px-8">
