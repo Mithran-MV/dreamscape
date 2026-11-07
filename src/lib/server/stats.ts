@@ -4,7 +4,7 @@ import { getDb } from "./db";
 export function liveCounts() {
   const n = (sql: string) => (getDb().prepare(sql).get() as { n: number }).n;
   return {
-    painted: n("SELECT COUNT(*) n FROM dreams WHERE status = 'done'"),
+    painted: n("SELECT COUNT(*) n FROM dreams WHERE status = 'done' AND sample IS NULL"),
     anchored: n("SELECT COUNT(*) n FROM dreams WHERE registry_tx IS NOT NULL"),
     traced: n("SELECT COUNT(*) n FROM traces WHERE request_id IS NOT NULL"),
     galleries: n("SELECT COUNT(*) n FROM users WHERE ens_json IS NOT NULL"),

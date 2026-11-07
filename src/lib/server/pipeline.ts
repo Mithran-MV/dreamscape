@@ -88,6 +88,12 @@ export async function paintDream(dreamId: string) {
     putBlob(dream.user_id, `dream/${dreamId}/portrait`, "image/png", png);
   }
 
+  // A sample dream is painted like any other, but never stored, anchored or named: those records would claim
+  // a day it wasn't told on.
+  if (dream.sample) {
+    updateDream(dreamId, { status: "done", error: null });
+    return;
+  }
   updateDream(dreamId, { status: "painted", error: null });
   enqueue("dream.store", dreamId);
   enqueue("dream.notify", dreamId);

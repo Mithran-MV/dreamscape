@@ -181,6 +181,7 @@ export function getDb(): DatabaseSync {
   addColumn(db, "dreams", "video_at", "INTEGER");
   addColumn(db, "dreams", "video_mode", "TEXT"); // verified or standard: which kind of video provider made it
   addColumn(db, "dreams", "ens_tx", "TEXT");
+  addColumn(db, "dreams", "sample", "INTEGER"); // 1 for a sample dream filed on an earlier day: painted on 0G, never stored, anchored or named
   addColumn(db, "dreams", "note", "TEXT"); // words typed alongside a voice note // the scribe's day-record transaction on Sepolia
   return db;
 }

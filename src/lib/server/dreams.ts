@@ -36,6 +36,7 @@ export type Dream = {
   video_decision: "hung" | "let-go" | null; // the dreamer's call on the moving portrait, in Drafts
   ens_tx: string | null;
   note: string | null;
+  sample: number | null; // 1 for a sample dream, painted on 0G but never stored, anchored or named
 };
 
 // A voice dream may also carry a typed note; a text dream is its own transcript.
