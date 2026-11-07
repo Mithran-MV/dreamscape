@@ -184,7 +184,7 @@ The server wallet `0x55fF4c231f90585a06dfC877af6D3001d9cf1496` writes each listi
 
 ## How it was built
 
-Built by Mithran during the event, with an AI coding assistant to help write and review code. How it was used is in [`AI_USE.md`](AI_USE.md).
+Built by the team during the event, with an AI coding assistant to help write and review code. How it was used is in [`AI_USE.md`](AI_USE.md).
 
 ## License
 

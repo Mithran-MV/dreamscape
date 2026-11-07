@@ -4,7 +4,7 @@ ETHGlobal asks every team to say where and how AI tools were used to build their
 
 ## Who built it
 
-Mithran built Dreamscape solo during the event:
+The team built Dreamscape during the event:
 - the idea, the product and how it looks and feels;
 - the architecture: what runs on 0G, what lives on ENS and what lives on Arkiv, and why;
 - the spec, and every decision about what to build, what to cut and what shipped;
@@ -12,7 +12,7 @@ Mithran built Dreamscape solo during the event:
 
 ## The coding assistant
 
-I used an AI coding assistant in my terminal as a pair programmer for parts of the work: scaffolding and boilerplate, help writing and debugging the integration code for the 0G, ENS and Arkiv SDKs, writing the fork tests, reviewing the code for bugs and security issues, and first drafts of the docs, which I edited. I directed each change, tested the results, and decided what to keep.
+We used an AI coding assistant in the terminal as a pair programmer for parts of the work: scaffolding and boilerplate, help writing and debugging the integration code for the 0G, ENS and Arkiv SDKs, writing the fork tests, reviewing the code for bugs and security issues, and first drafts of the docs, which we edited. We directed each change, tested the results, and decided what to keep.
 
 No other AI tools were used to write code, text or assets for this repository.
 
@@ -22,7 +22,7 @@ Where it helped most:
 - the fork tests and local-node tests;
 - a security review of the live site, whose fixes are in the commit history;
 - first drafts of the README, `SPEC.md` and the partner write-ups in `docs/` and `arkiv/`;
-- the logo's SVG, drawn to my brief.
+- the logo's SVG, drawn to our brief.
 
 ## AI inside the product
 
@@ -30,4 +30,4 @@ The paintings, comics, moving portraits and Morning Notes, and the landing page'
 
 ## Spec
 
-`SPEC.md` is the spec the build follows. I wrote it with the assistant at the start of the event, from my description of the idea, and changed it as the product changed.
+`SPEC.md` is the spec the build follows. We wrote it with the assistant at the start of the event, from our description of the idea, and changed it as the product changed.
