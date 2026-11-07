@@ -8,6 +8,7 @@ import { Logo, LogoMark } from "../logo";
 import { Moth } from "../moth";
 import { ComicStrip } from "./comic-strip";
 import { HeroStage } from "./hero-stage";
+import { TwoThings } from "./pitch";
 import { NamePlate, Sealed, VisitDoor, WorldDream } from "./scenes";
 import "./landing.css";
 
@@ -86,6 +87,12 @@ export function Landing({ signIn }: { signIn: React.ReactNode }) {
             </button>
           </p>
         </div>
+      </section>
+
+      <section className="ls-section mx-auto w-full max-w-6xl px-5 sm:px-8">
+        <Heading>Two things vanish while you sleep.</Heading>
+        <TwoThings />
+        <p className="mt-8 font-display text-[clamp(1.4rem,2.6vw,1.9rem)] text-paper italic">Dreamscape spends the credit to keep the dream.</p>
       </section>
 
       <section className="ls-section mx-auto w-full max-w-6xl px-5 sm:px-8">

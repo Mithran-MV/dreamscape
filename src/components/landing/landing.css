@@ -203,6 +203,17 @@
   rotate: 12deg;
 }
 
+/* ---------- What vanishes overnight: the dream's words fade, today's credit runs out ---------- */
+
+.ls-fade-word {
+  display: inline-block;
+  opacity: var(--o);
+  filter: blur(var(--b));
+}
+.ls-credit {
+  background: repeating-linear-gradient(135deg, var(--edge) 0 10px, var(--card) 10px 20px);
+}
+
 /* ---------- Motion ---------- */
 
 @media (prefers-reduced-motion: no-preference) {
@@ -230,6 +241,12 @@
   .ls-moth .moth-open { animation: ls-moth-awake 7.2s linear both; }
   .ls-moth .moth-shut { animation: ls-moth-asleep 7.2s linear both; }
   .ls-replay { animation: ls-fade 0.5s ease-out 7.2s both; }
+
+  /* What vanishes: the dream starts sharp and slips away word by word, and the day's spending fills in. */
+  .ls-fade:not([data-on]) .ls-fade-word { opacity: 1; filter: none; }
+  .ls-fade[data-on] .ls-fade-word { transition: opacity 1.4s var(--ease-out) var(--d), filter 1.4s var(--ease-out) var(--d); }
+  .ls-fade:not([data-on]) .ls-credit-spent { width: 0; }
+  .ls-fade[data-on] .ls-credit-spent { transition: width 1.2s var(--ease-out) 0.6s; }
 
   /* The comic arrives already lettered, the way it waits in Drafts. */
   .ls-comic:not([data-on]) { opacity: 0; }
