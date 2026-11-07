@@ -88,7 +88,7 @@ export function MorningPick() {
             ))}
           </ol>
           <p className="mt-4 text-ui text-mist">
-            <span className="font-semibold text-paper">{kept}</span> mornings kept. <span className="text-gold">Your first pattern</span> in {7 - kept} more.
+            <span className="font-semibold text-paper">{kept}</span> {kept === 1 ? "morning" : "mornings"} kept. <span className="text-gold">Your first pattern</span> in {7 - kept} more.
           </p>
           <p className="mt-1 text-ui text-mist">{5 - kept} more stars complete this week&rsquo;s constellation.</p>
         </div>
