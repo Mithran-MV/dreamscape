@@ -23,6 +23,7 @@ export async function GET() {
     stored: Boolean(d.portrait_root),
     anchored: Boolean(d.registry_tx),
     moving: d.video_state === "done" && d.video_decision !== "let-go",
+    sample: d.sample === 1,
   }));
   const log = noteLog(user.id);
   const notes = log.length ? notesFor(log, log[log.length - 1].id).slice(0, 2) : [];

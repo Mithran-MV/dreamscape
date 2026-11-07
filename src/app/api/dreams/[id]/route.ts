@@ -24,6 +24,7 @@ export async function GET(_request: Request, ctx: RouteContext<"/api/dreams/[id]
     feeling: dream.feeling,
     suggestedFeeling: dream.suggested_feeling,
     saga: dream.saga,
+    sample: dream.sample === 1,
     video: dream.video_decision === "let-go" ? null : dream.video_state,
     notes: notesFor(noteLog(user.id), dream.id).slice(0, 3),
     proof: {

@@ -10,6 +10,7 @@ export type DreamSummary = {
   stored: boolean;
   anchored: boolean;
   moving: boolean;
+  sample: boolean; // painted on 0G for the demo, never stored, anchored or named
 };
 
 export type Note = { kind: string; text: string; saga?: string };
@@ -41,6 +42,7 @@ export type DreamDetail = {
   feeling: string | null;
   suggestedFeeling: string | null;
   saga: string | null;
+  sample: boolean;
   video: "rendering" | "done" | "failed" | null;
   notes: Note[];
   proof: {

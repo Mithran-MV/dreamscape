@@ -99,7 +99,7 @@ function DayTile({ day, n, today, dreams, feeling }: { day: number; n: number; t
   const mosaic = dreams.filter((d) => PAINTED.has(d.status)).slice(0, 4);
   const dimmed = feeling !== null && newest.feeling !== feeling;
   const color = feelingColor(newest.feeling);
-  const parts = [newest.title ?? (newest.status === "failed" ? "didn’t paint" : "painting"), feelingLabel(newest.feeling)?.toLowerCase(), newest.moving && "moving", dreams.length > 1 && `${dreams.length} dreams that day`];
+  const parts = [newest.title ?? (newest.status === "failed" ? "didn’t paint" : "painting"), feelingLabel(newest.feeling)?.toLowerCase(), newest.moving && "moving", newest.sample && "a sample", dreams.length > 1 && `${dreams.length} dreams that day`];
   return (
     <Link
       role="listitem"
@@ -136,6 +136,7 @@ function DayTile({ day, n, today, dreams, feeling }: { day: number; n: number; t
           <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent px-1.5 pb-1 pt-4 text-[11px] font-semibold leading-tight text-paper sm:px-2 sm:pb-1.5 sm:text-meta" aria-hidden>
             {isToday ? "Today" : n}
             {newest.moving && <span className="hidden text-gold sm:inline">, moving</span>}
+            {newest.sample && <span className="hidden font-normal text-mist sm:inline"> · sample</span>}
           </span>
           {dreams.length > 1 && (
             <span className="absolute right-0.5 top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-gold px-1 text-[10px] font-bold text-gold-ink sm:right-1.5 sm:top-1.5 sm:h-5 sm:min-w-5 sm:text-[11px]" aria-hidden>

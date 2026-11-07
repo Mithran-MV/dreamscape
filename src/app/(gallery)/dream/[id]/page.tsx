@@ -101,6 +101,9 @@ function DreamView() {
             )}
           </div>
           <h1 className="mt-3 font-display text-h1 lg:text-display">{title}</h1>
+          {dream.sample && (
+            <p className="mt-2 text-ui text-dim">A sample dream for the demo, read and painted on 0G like any other. It isn&rsquo;t stored on 0G Storage, recorded on 0G Chain or named on ENS.</p>
+          )}
 
           {showSteps && <DreamProgress steps={steps} />}
           {dream.status === "failed" && (
