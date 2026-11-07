@@ -9,7 +9,7 @@ import { Logo, LogoMark } from "../logo";
 import { Moth } from "../moth";
 import { ComicStrip } from "./comic-strip";
 import { HeroStage } from "./hero-stage";
-import { ComeBack, LiveNumbers, MorningPick, TwoThings } from "./pitch";
+import { ComeBack, HeroProof, LiveNumbers, MorningPick, TwoThings } from "./pitch";
 import { NamePlate, Sealed, VisitDoor, WorldDream } from "./scenes";
 import "./landing.css";
 
@@ -66,14 +66,16 @@ export function Landing({ signIn }: { signIn: React.ReactNode }) {
               Sign in
             </a>
           </div>
-          <h1 className="mt-5 font-display text-[clamp(2.4rem,5vw,3.75rem)] leading-[1.04]">
+          <p className="mt-8 font-display text-[clamp(1.15rem,2vw,1.4rem)] text-gold italic">What did you dream last night?</p>
+          <h1 className="mt-3 font-display text-[clamp(2.4rem,5vw,3.75rem)] leading-[1.04]">
             <span className="block text-balance text-mist/70">Your brain deletes your dreams.</span>
             <span className="block text-balance text-paper">Dreamscape keeps them.</span>
           </h1>
           <p className="mt-5 max-w-[34ch] text-[17px] leading-relaxed text-mist sm:mt-6 sm:text-lg">
             Ten seconds when you wake: hold, say it, done. A few minutes later it hangs in your gallery as a painting, with your voice kept beside it.
           </p>
-          <GetAndroidApp className="mt-6" />
+          <HeroProof />
+          <GetAndroidApp className="mt-5" />
         </div>
 
         <div id="sign-in" tabIndex={-1} className="ls-hero-slot w-full max-w-sm scroll-mt-24 focus:outline-none">

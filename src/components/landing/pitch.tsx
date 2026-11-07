@@ -226,3 +226,32 @@ export function LiveNumbers() {
     </ul>
   );
 }
+
+const PARTS = ["Sealed AI on 0G", "Your gallery on ENS", "Searchable on Arkiv"];
+
+// Under the hero's promise: what it runs on, and how much it has already made.
+export function HeroProof() {
+  const [counts, setCounts] = useState<LiveCounts | null>(null);
+  useEffect(() => {
+    api.stats().then(setCounts, () => setCounts(null));
+  }, []);
+  return (
+    <div className="mt-6">
+      <ul className="flex flex-wrap gap-2">
+        {PARTS.map((p) => (
+          <li key={p} className="inline-flex items-center gap-2 rounded-full border border-line bg-ground/35 px-3 py-1.5 text-[13px] text-mist">
+            <span className="h-1.5 w-1.5 rounded-full bg-gold" aria-hidden />
+            {p}
+          </li>
+        ))}
+      </ul>
+      <p className="mt-4 min-h-[1.4em] text-sm text-dim" aria-live="polite">
+        {counts && (
+          <>
+            <span className="font-semibold text-paper">{counts.painted}</span> dreams painted so far, <span className="font-semibold text-paper">{counts.anchored}</span> recorded on 0G Chain.
+          </>
+        )}
+      </p>
+    </div>
+  );
+}
