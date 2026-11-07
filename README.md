@@ -74,8 +74,11 @@ Real transactions from the live app. The full list is on the [receipts page](htt
 | An edition given to a friend | Sepolia | [`0xc15bbca6…8bb9`](https://sepolia.etherscan.io/tx/0xc15bbca62225e97dc25159fe9b686ec2c3e561bc47da8ebca23f2f0db66b8bb9) |
 | A gallery pass minted to a friend | Sepolia | [`0x943e3f58…91bf`](https://sepolia.etherscan.io/tx/0x943e3f58e5716ba9c3052c0d8af3a62f228b0cd120977048f4928620388791bf) |
 | A listing, searchable by theme | Arkiv | [`0x535fd19b…f4d0`](https://rabdi.explorer.arkiv.network/entity/0x535fd19bdb13b413a248fab8faa01dca975402bf932bc57029e0691cc6aff4d0) |
+| A 10-minute visit that closed by itself (7 Nov, 08:14–08:24 IST) | Arkiv | [`0x84caba52…53f2`](https://rabdi.explorer.arkiv.network/entity/0x84caba527e72b5c17fd8117c7b0ed7383144311c0e7983bfcd483eac20cc53f2) |
 
 0G request IDs appear on no public explorer, so each piece's page shows them under "How it was made", and DreamRegistry anchors the storage roots on 0G Chain.
+
+The two demo galleries, mithran-12 and fabiomughilan, also hold sample dreams on 1–5 November, before the event, so their calendars show a full week. Each is marked "sample" on the calendar and on its page. 0G read and painted them like any dream, but they aren't stored on 0G Storage, recorded on 0G Chain or named on ENS, and the landing page's live numbers leave them out.
 
 ## Deployed
 
