@@ -170,26 +170,44 @@ export function Landing({ signIn }: { signIn: React.ReactNode }) {
         <LiveNumbers />
       </section>
 
-      <section className="ls-section mx-auto flex w-full max-w-2xl flex-col items-center px-5 text-center sm:px-8">
-        <Heading>Keep tomorrow morning&rsquo;s dream.</Heading>
-        <Body className="max-w-[36ch]">Sign in tonight. In the morning, hold the gold button and tell it.</Body>
-        {/* The moth from the hero, asleep on the button until morning. */}
-        <span className="relative mt-10 inline-block">
-          <a
-            href="#sign-in"
-            onClick={goToSignIn}
-            className="ls-press block rounded-xl bg-gold px-8 py-3.5 font-medium text-gold-ink shadow-[0_8px_30px_rgb(240_200_120/0.3)]"
-          >
-            Sign in
-          </a>
-          <Moth className="moth-rest absolute -right-7 -top-8 w-14 rotate-[14deg]" />
-        </span>
-        <GetAndroidApp className="mt-8" />
-        {/* On a big screen, anyone in the room can scan their way in. */}
-        <figure className="mt-12 hidden flex-col items-center gap-3 md:flex">
-          <Image src="/landing/qr.png" alt="QR code that opens dreamscape.hacklabs.in" width={176} height={176} className="rounded-2xl" />
-          <figcaption className="text-sm text-dim">Scan to open it on your phone</figcaption>
-        </figure>
+      <section className="ls-section mx-auto w-full max-w-5xl px-5 sm:px-8">
+        <div className="panel grid items-center gap-10 px-6 py-12 text-center sm:px-10 md:grid-cols-[minmax(0,1fr)_auto] md:gap-16 md:p-14 md:text-left">
+          <div className="flex flex-col items-center md:items-start">
+            <Heading>Keep tomorrow morning&rsquo;s dream.</Heading>
+            <Body className="max-w-[36ch]">Sign in tonight. In the morning, hold the gold button and tell it.</Body>
+            <div className="mt-10 flex flex-wrap items-center justify-center gap-4 md:justify-start">
+              {/* On a phone the moth from the hero sleeps on the button; on a big screen it sleeps on the QR code. */}
+              <span className="relative inline-block">
+                <a
+                  href="#sign-in"
+                  onClick={goToSignIn}
+                  className="ls-press block rounded-xl bg-gold px-8 py-3.5 font-medium text-gold-ink shadow-[0_8px_30px_rgb(240_200_120/0.3)]"
+                >
+                  Sign in
+                </a>
+                <Moth className="moth-rest absolute -right-7 -top-8 w-14 rotate-[14deg] md:hidden" />
+              </span>
+              <GetAndroidApp />
+            </div>
+          </div>
+          {/* On a big screen, anyone in the room can scan their way in. */}
+          <figure className="hidden flex-col items-center gap-4 md:flex">
+            <div className="relative">
+              <div className="frame shadow-[0_10px_30px_rgb(0_0_0/0.55),0_0_70px_rgb(240_200_120/0.18)]">
+                <div className="mat">
+                  <div className="bg-paper p-3">
+                    <Image src="/landing/qr.png" alt="QR code that opens dreamscape.hacklabs.in" width={184} height={184} />
+                  </div>
+                </div>
+              </div>
+              <Moth className="moth-rest absolute -right-8 -top-9 w-14 rotate-[14deg]" />
+            </div>
+            <figcaption className="text-center">
+              <span className="block font-mono text-sm text-paper">dreamscape.hacklabs.in</span>
+              <span className="mt-1 block text-sm text-dim">Scan to open it on your phone</span>
+            </figcaption>
+          </figure>
+        </div>
       </section>
 
       <footer className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-x-8 gap-y-2 border-t border-edge px-5 py-8 text-sm text-dim sm:px-8">
