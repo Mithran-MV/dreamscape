@@ -8,7 +8,7 @@ import { Logo, LogoMark } from "../logo";
 import { Moth } from "../moth";
 import { ComicStrip } from "./comic-strip";
 import { HeroStage } from "./hero-stage";
-import { TwoThings } from "./pitch";
+import { MorningPick, TwoThings } from "./pitch";
 import { NamePlate, Sealed, VisitDoor, WorldDream } from "./scenes";
 import "./landing.css";
 
@@ -93,6 +93,14 @@ export function Landing({ signIn }: { signIn: React.ReactNode }) {
         <Heading>Two things vanish while you sleep.</Heading>
         <TwoThings />
         <p className="mt-8 font-display text-[clamp(1.4rem,2.6vw,1.9rem)] text-paper italic">Dreamscape spends the credit to keep the dream.</p>
+      </section>
+
+      <section className="ls-section mx-auto w-full max-w-6xl px-5 sm:px-8">
+        <div className="max-w-xl">
+          <Heading>Ten seconds when you wake.</Heading>
+          <Body>Your phone nudges you at your usual wake time. Pick one. Try it here.</Body>
+        </div>
+        <MorningPick />
       </section>
 
       <section className="ls-section mx-auto w-full max-w-6xl px-5 sm:px-8">

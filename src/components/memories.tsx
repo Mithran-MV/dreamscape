@@ -9,7 +9,7 @@ import { chipColor, feelingColor, FEELINGS } from "@/components/ui";
 import "./memories.css";
 
 const DAY_LETTERS = ["M", "T", "W", "T", "F", "S", "S"];
-const STAR = "M12 2.6l2.7 6.1 6.6.6-5 4.4 1.5 6.5L12 16.8l-5.8 3.4 1.5-6.5-5-4.4 6.6-.6z";
+export const STAR = "M12 2.6l2.7 6.1 6.6.6-5 4.4 1.5 6.5L12 16.8l-5.8 3.4 1.5-6.5-5-4.4 6.6-.6z";
 
 export function MorningsAndMemories() {
   const [state, setState] = useState<Mornings | null>(null);
@@ -164,7 +164,7 @@ function litBy(star: Star | undefined) {
   return "You showed up, and that counts.";
 }
 
-function ChoiceIcon({ kind }: { kind: "dream" | "feeling" | "nothing" }) {
+export function ChoiceIcon({ kind }: { kind: "dream" | "feeling" | "nothing" }) {
   return (
     <span className="ms-choice-icon" aria-hidden>
       {kind === "dream" ? (
