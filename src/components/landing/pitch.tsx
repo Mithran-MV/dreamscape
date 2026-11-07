@@ -147,3 +147,47 @@ function DayMark({ i, lit }: { i: number; lit: boolean }) {
     </span>
   );
 }
+
+const REASONS = [
+  { title: "A nudge at your wake time", text: "One reminder a morning, at the time you usually wake, until today's star is lit." },
+  { title: "New art waiting", text: "Last night's credit made a comic, a poster or a moving portrait. It sits in Drafts for your yes." },
+  { title: "A star a day", text: "Open it, dream or not, and you light a star. Five light the week's constellation." },
+  { title: "A Morning Note", text: "Sealed AI reads your week and tells you how it compares with what most people dream." },
+];
+const LADDER = [
+  { at: 7, title: "Your first pattern", text: "What you dream of most, and how you wake" },
+  { at: 21, title: "Your dream cast", text: "The people who keep coming back, painted together" },
+  { at: 30, title: "Your month as a book", text: "Thirty mornings, a page each" },
+  { at: 100, title: "Your dream self-portrait", text: "Who you are in your sleep" },
+];
+
+// Why you open it tomorrow: something new every morning, and more the longer you keep going.
+export function ComeBack() {
+  return (
+    <div className="mt-10 grid gap-5 md:mt-12 lg:grid-cols-[minmax(0,1fr)_24rem]">
+      <ul className="grid gap-5 sm:grid-cols-2">
+        {REASONS.map((r) => (
+          <li key={r.title} className="panel p-6">
+            <p className="font-display text-xl text-gold italic">{r.title}</p>
+            <p className="mt-2 text-[15px] leading-relaxed text-mist">{r.text}</p>
+          </li>
+        ))}
+      </ul>
+      <div className="panel border-gold/35 p-6">
+        <p className="font-display text-xl text-paper">Keep going and it shows you more.</p>
+        <ol className="mt-5 space-y-4">
+          {LADDER.map((s) => (
+            <li key={s.at} className="flex items-start gap-4">
+              <span className="w-12 shrink-0 font-display text-3xl leading-none text-gold">{s.at}</span>
+              <span>
+                <span className="block font-semibold text-paper">{s.title}</span>
+                <span className="block text-[15px] text-mist">{s.text}</span>
+              </span>
+            </li>
+          ))}
+        </ol>
+        <p className="mt-5 text-meta text-dim">Mornings kept</p>
+      </div>
+    </div>
+  );
+}
