@@ -3,7 +3,7 @@
 // PassesPanel is the /passes page; KnockBanner puts anyone at the door on the wall too.
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { visitsApi, type Door, type GrantedPass, type Passes, type PassScope } from "@/lib/api-visits";
+import { arkivEntityUrl, visitsApi, type Door, type GrantedPass, type Passes, type PassScope } from "@/lib/api-visits";
 import { usePrivyWallet } from "@/lib/wallet";
 import { useClientValue } from "@/lib/use-client-value";
 import { ExternalLink } from "@/components/ui";
@@ -49,7 +49,10 @@ function Knocks({ door, busy, onLetIn }: { door: Door; busy: string | null; onLe
               <span className="breathe h-2.5 w-2.5 shrink-0 rounded-full bg-gold" aria-hidden />
               {k.handle} is at your door
             </p>
-            <p className="text-ui text-mist">Their pass shows {scopeLabel(k.scope)}.</p>
+            <p className="text-ui text-mist">
+              Their pass shows {scopeLabel(k.scope)}.{" "}
+              <ArkivLink entity={k.key}>The knock on Arkiv</ArkivLink>
+            </p>
           </div>
           <div className="flex flex-wrap gap-2">
             <button onClick={() => onLetIn(k.key, "10m")} disabled={busy === k.key} className="btn btn-gold">
@@ -88,6 +91,14 @@ export function KnockBanner() {
   );
 }
 
+function ArkivLink({ entity, children }: { entity: string; children: React.ReactNode }) {
+  return (
+    <a href={arkivEntityUrl(entity)} target="_blank" rel="noreferrer" className="text-gold underline decoration-gold/40 underline-offset-4 hover:decoration-gold">
+      {children} &#8599;
+    </a>
+  );
+}
+
 function Inside({ door }: { door: Door }) {
   return (
     <ul className="space-y-1.5 text-ui text-mist">
@@ -95,7 +106,8 @@ function Inside({ door }: { door: Door }) {
         <li key={v.key} className="flex items-center gap-2">
           <span className="breathe h-2 w-2 shrink-0 rounded-full bg-ok" aria-hidden />
           <span>
-            <span className="font-semibold text-paper">{v.handle}</span> is visiting {scopeLabel(v.scope)} until {clockTime(v.endsAt)}
+            <span className="font-semibold text-paper">{v.handle}</span> is visiting {scopeLabel(v.scope)} until {clockTime(v.endsAt)}.{" "}
+            <ArkivLink entity={v.key}>The visit on Arkiv</ArkivLink>
           </span>
         </li>
       ))}

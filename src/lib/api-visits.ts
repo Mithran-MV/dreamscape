@@ -58,3 +58,6 @@ export const visitsApi = {
 
 export const visitPortraitUrl = (handle: string, id: string) => `/api/g/${encodeURIComponent(handle)}/dream/${id}`;
 export const visitPanelUrl = (handle: string, id: string, n: number) => `/api/g/${encodeURIComponent(handle)}/panel/${id}/${n}`;
+
+// A knock or a visit on the Arkiv explorer, where anyone can check who wrote it, who owns it and when it expires.
+export const arkivEntityUrl = (key: string) => `https://rabdi.explorer.arkiv.network/entity/${key}`;
