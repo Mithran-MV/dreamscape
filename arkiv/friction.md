@@ -50,7 +50,7 @@ What got in the way while building Dreamscape on Arkiv (Rabdi testnet, `@arkiv-n
 ### 2026-11-05: No docs for running a local node
 - **Where:** docs.arkiv.network (the 28 pages in its sitemap, and `llms.txt`); SDK 1.0.1 exports a `localhost` chain
 - **Expected:** since the SDK exports `localhost` (chain 1337 on `127.0.0.1:8545`), the docs say what to run there.
-- **What happened:** no page mentions a local node. "localhost" appears only as that chain's entry in the API reference sidebar. I found `ghcr.io/arkiv-network/arkiv-reth-dev` in the SDK repo's `test/src/utils.ts` and the node repo's `docker/arkiv-reth-dev.Dockerfile`. The node repo's `kurtosis/integration/README.md` still says SDK writes aren't tested there because "SDK 0.7" sends a different format.
+- **What happened:** no page mentions a local node. "localhost" appears only as that chain's entry in the API reference sidebar. We found `ghcr.io/arkiv-network/arkiv-reth-dev` in the SDK repo's `test/src/utils.ts` and the node repo's `docker/arkiv-reth-dev.Dockerfile`. The node repo's `kurtosis/integration/README.md` still says SDK writes aren't tested there because "SDK 0.7" sends a different format.
 - **Impact:** without a local node, the only place to try writes is Rabdi, which needs faucet tGLM and an access key first.
 - **Workaround:**
   ```bash
