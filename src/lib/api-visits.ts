@@ -26,7 +26,7 @@ export type VisitorComic = {
 // endsAt is on this browser's clock; fetchedAt is when the answer arrived.
 export type VisitView =
   | { state: "own" | "no-pass" | "granting" | "outside" | "waiting" | "ended"; handle: string }
-  | { state: "inside"; handle: string; scope: PassScope; endsAt: number; fetchedAt: number; dreams: VisitorDream[]; comics: VisitorComic[] };
+  | { state: "inside"; handle: string; scope: PassScope; endsAt: number; visit: string; fetchedAt: number; dreams: VisitorDream[]; comics: VisitorComic[] };
 
 async function json<T>(res: Response): Promise<T> {
   const body = await res.json().catch(() => ({}));

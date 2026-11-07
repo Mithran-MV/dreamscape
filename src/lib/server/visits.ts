@@ -321,7 +321,7 @@ export async function letVisitorIn(hostId: string, knockKey: string, seconds: nu
 
 // ---------------------------------------------------------------- the check before every page and image
 
-export type Inside = { inside: true; host: Named; pass: Pass; scope: PassScope; endsAt: number };
+export type Inside = { inside: true; host: Named; pass: Pass; scope: PassScope; endsAt: number; visit: Hex };
 export type Outside = { inside: false; state: "no-pass" | "granting" | "outside" | "waiting" | "ended" };
 
 // All three, every time:
@@ -342,7 +342,7 @@ export async function checkVisit(visitorId: string, handle: string): Promise<Ins
     activeVisit(host.wallet, pass.node),
   ]);
   if (!same(owner, visitor.wallet) || !scope) return { inside: false, state: "no-pass" };
-  if (visit && isAddressEqual(visit.dreamer, host.wallet) && visit.scope === scope) return { inside: true, host, pass, scope, endsAt: visit.endsAt * 1000 };
+  if (visit && isAddressEqual(visit.dreamer, host.wallet) && visit.scope === scope) return { inside: true, host, pass, scope, endsAt: visit.endsAt * 1000, visit: visit.key };
   if (waitingKnock(pass.id)) return { inside: false, state: "waiting" };
   return { inside: false, state: lastVisit(pass.id) ? "ended" : "outside" };
 }

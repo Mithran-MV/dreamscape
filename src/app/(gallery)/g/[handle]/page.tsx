@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
-import { visitPanelUrl, visitPortraitUrl, visitsApi, type VisitView, type VisitorDream } from "@/lib/api-visits";
+import { arkivEntityUrl, visitPanelUrl, visitPortraitUrl, visitsApi, type VisitView, type VisitorDream } from "@/lib/api-visits";
 import { ComicPage } from "@/components/comic";
 import { AppShell } from "@/components/app-shell";
 import { BackLink, dayLabel, Frame } from "@/components/ui";
@@ -173,7 +173,10 @@ function InsideView({ view, onEnd }: { view: Inside; onEnd: () => void }) {
       <div className="sticky top-0 z-20 -mx-5 mt-4 flex items-center justify-between gap-4 border-b border-edge bg-ground/90 px-5 py-3 backdrop-blur-md md:-mx-8 md:px-8 lg:top-16">
         <p className="text-ui text-mist">
           <span className="font-semibold text-paper">Visiting until {clockTime(view.endsAt)}.</span>{" "}
-          <span className="text-dim">Your pass shows {view.scope === "gallery" ? "the whole gallery" : "hung comics only"}.</span>
+          <span className="text-dim">Your pass shows {view.scope === "gallery" ? "the whole gallery" : "hung comics only"}.</span>{" "}
+          <a href={arkivEntityUrl(view.visit)} target="_blank" rel="noreferrer" className="text-gold underline decoration-gold/40 underline-offset-4 hover:decoration-gold">
+            This visit on Arkiv &#8599;
+          </a>
         </p>
         <p className="font-mono text-title text-gold" aria-live="off" aria-label={`${Math.ceil(remaining / 60000)} minutes left`}>
           {left(remaining)}

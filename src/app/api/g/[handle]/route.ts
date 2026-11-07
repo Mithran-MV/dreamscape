@@ -12,7 +12,7 @@ export async function GET(_request: Request, ctx: RouteContext<"/api/g/[handle]"
   try {
     const access = await checkVisit(user.id, handle);
     if (!access.inside) return Response.json({ state: access.state, handle }, { headers: NO_STORE });
-    return Response.json({ state: "inside", handle, scope: access.scope, endsAt: access.endsAt, now: Date.now(), ...visitorSlice(access) }, { headers: NO_STORE });
+    return Response.json({ state: "inside", handle, scope: access.scope, endsAt: access.endsAt, visit: access.visit, now: Date.now(), ...visitorSlice(access) }, { headers: NO_STORE });
   } catch (error) {
     console.error(`[visit] ${handle}: ${(error as Error).message.slice(0, 200)}`);
     return Response.json({ error: "Couldn't check the visit just now. Try again." }, { status: 503 });
