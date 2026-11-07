@@ -4,7 +4,7 @@
 
 Tell your phone a dream when you wake up. A few minutes later it hangs on your wall as a painting, made in private on 0G. Overnight, your 0G credit's leftovers become a comic, a poster and a moving portrait. Every piece is a name you own on ENS, and you can sell editions or let a friend visit.
 
-**[Live app](https://dreamscape.hacklabs.in)** · **[Every receipt, with explorer links](https://dreamscape.hacklabs.in/proof.html)** · **[Android app](#phone-app)**
+**[Live app](https://dreamscape.hacklabs.in)** · **[Every receipt, with explorer links](https://dreamscape.hacklabs.in/proof.html)** · **[Android app (APK)](https://dreamscape.hacklabs.in/dreamscape.apk)**
 
 ![The landing page](docs/screenshots/landing.jpg)
 
@@ -131,6 +131,8 @@ cd contracts && forge build && forge test
 ## Phone app
 
 `mobile/` is an Android app made with Capacitor. It opens the live site, so the gallery, sign-in and recording run the same code as the web. It adds two things a browser tab can't do: it asks for the microphone like any app, and it schedules a morning reminder on the phone at your usual wake time. Tapping the reminder opens Tell.
+
+Download it at [dreamscape.hacklabs.in/dreamscape.apk](https://dreamscape.hacklabs.in/dreamscape.apk). It's a debug build, so Android asks you to allow installs from your browser first.
 
 It needs Android Studio, for the Android SDK and Java 21:
 
