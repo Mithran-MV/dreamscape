@@ -103,6 +103,9 @@ export type NightlyDrafts = {
 // An edition this dreamer's wallet holds (GET /api/collected).
 export type HeldEdition = { pieceId: string; title: string; kind: string; editionNo: number; name: string; maker: string; boughtTx: string; preview: string };
 
+// What Dreamscape has made so far (GET /api/stats).
+export type LiveCounts = { painted: number; anchored: number; traced: number; galleries: number; comics: number; portraits: number; sold: number };
+
 export const api = {
   session: () => fetch("/api/session").then((r) => json<{ user: { handle: string; wallet: string | null; ensName: string | null; naming: boolean } | null }>(r)),
   signOut: () => fetch("/api/session", { method: "DELETE" }).then((r) => json<{ ok: true }>(r)),
@@ -111,6 +114,7 @@ export const api = {
       json<{ ok?: true; needsHandle?: true }>(r),
     ),
   collected: () => fetch("/api/collected").then((r) => json<{ editions: HeldEdition[] }>(r)),
+  stats: () => fetch("/api/stats").then((r) => json<LiveCounts>(r)),
   giveEdition: (pieceId: string, editionNo: number, to: string) =>
     fetch("/api/collected/give", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ pieceId, editionNo, to }) }).then((r) =>
       json<{ tx: { to: `0x${string}`; data: `0x${string}` }; friend: { handle: string | null; wallet: string } }>(r),

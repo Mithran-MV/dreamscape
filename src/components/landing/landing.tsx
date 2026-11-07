@@ -8,7 +8,7 @@ import { Logo, LogoMark } from "../logo";
 import { Moth } from "../moth";
 import { ComicStrip } from "./comic-strip";
 import { HeroStage } from "./hero-stage";
-import { ComeBack, MorningPick, TwoThings } from "./pitch";
+import { ComeBack, LiveNumbers, MorningPick, TwoThings } from "./pitch";
 import { NamePlate, Sealed, VisitDoor, WorldDream } from "./scenes";
 import "./landing.css";
 
@@ -159,6 +159,14 @@ export function Landing({ signIn }: { signIn: React.ReactNode }) {
       <section className="ls-section mx-auto w-full max-w-6xl px-5 sm:px-8">
         <Heading>Why you open it tomorrow.</Heading>
         <ComeBack />
+      </section>
+
+      <section className="ls-section mx-auto w-full max-w-6xl px-5 sm:px-8">
+        <div className="max-w-xl">
+          <Heading>Real dreams, real receipts.</Heading>
+          <Body>Counted live from Dreamscape right now, on testnets with real wallets.</Body>
+        </div>
+        <LiveNumbers />
       </section>
 
       <section className="ls-section mx-auto flex w-full max-w-2xl flex-col items-center px-5 text-center sm:px-8">

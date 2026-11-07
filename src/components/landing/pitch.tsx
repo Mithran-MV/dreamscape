@@ -1,6 +1,7 @@
 "use client";
 // The landing page's pitch: what vanishes overnight, the morning tap, why you come back, and what's been made so far.
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
+import { api, type LiveCounts } from "@/lib/api";
 import { ChoiceIcon, STAR } from "../memories";
 import { useInView } from "./use-in-view";
 
@@ -189,5 +190,39 @@ export function ComeBack() {
         <p className="mt-5 text-meta text-dim">Mornings kept</p>
       </div>
     </div>
+  );
+}
+
+const TILES: { key: keyof LiveCounts; label: string }[] = [
+  { key: "painted", label: "dreams painted" },
+  { key: "anchored", label: "records on 0G Chain" },
+  { key: "traced", label: "sealed 0G calls traced" },
+  { key: "galleries", label: "galleries on ENS" },
+  { key: "comics", label: "nightly comics" },
+  { key: "portraits", label: "moving portraits" },
+  { key: "sold", label: "editions sold for USDC" },
+];
+
+// Real dreams, real receipts: what Dreamscape has made so far, counted live.
+export function LiveNumbers() {
+  const [counts, setCounts] = useState<LiveCounts | null>(null);
+  useEffect(() => {
+    api.stats().then(setCounts, () => setCounts(null));
+  }, []);
+  return (
+    <ul className="mt-10 grid grid-cols-2 gap-4 md:mt-12 md:grid-cols-4">
+      {TILES.map((t) => (
+        <li key={t.key} className="panel p-5 sm:p-6">
+          <p className="font-display text-[clamp(2.2rem,4vw,3rem)] leading-none text-gold">{counts ? counts[t.key] : "\u00a0"}</p>
+          <p className="mt-2 text-[15px] text-mist">{t.label}</p>
+        </li>
+      ))}
+      <li>
+        <a href="/proof.html" className="panel flex h-full flex-col justify-between p-5 transition-colors hover:border-gold/60 sm:p-6">
+          <span className="font-display text-xl text-paper">Every receipt</span>
+          <span className="mt-2 text-[15px] text-gold">Transactions and request IDs &rarr;</span>
+        </a>
+      </li>
+    </ul>
   );
 }
