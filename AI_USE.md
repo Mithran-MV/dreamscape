@@ -12,7 +12,7 @@ Mithran built Dreamscape solo during the event:
 
 ## The coding assistant
 
-I used one AI coding assistant in my terminal throughout the build, the way you'd pair with another engineer. It wrote and edited code to my spec and instructions, ran commands, helped debug, reviewed changes for bugs and security issues, and drafted docs that I then edited. I directed each change, tested the results, and decided what to keep.
+I used an AI coding assistant in my terminal as a pair programmer for parts of the work: scaffolding and boilerplate, help writing and debugging the integration code for the 0G, ENS and Arkiv SDKs, writing the fork tests, reviewing the code for bugs and security issues, and first drafts of the docs, which I edited. I directed each change, tested the results, and decided what to keep.
 
 No other AI tools were used to write code, text or assets for this repository.
 
